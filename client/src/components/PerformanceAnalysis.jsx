@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { api } from '../api/client.js';
 import PerformanceCharts from './PerformanceCharts.jsx';
+import { exportPerformancePDF } from '../utils/exportUtils.js';
 
-export default function PerformanceAnalysis({ tournamentId, pc }) {
+export default function PerformanceAnalysis({ tournamentId, tournament }) {
   const [data, setData] = useState([]);
   const [progression, setProgression] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -64,6 +65,12 @@ export default function PerformanceAnalysis({ tournamentId, pc }) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
           {showCharts ? 'Ocultar gráficas' : 'Mostrar gráficas'}
+        </button>
+        <button
+          onClick={() => exportPerformancePDF(tournament, data)}
+          className="bg-fide-700 hover:bg-fide-600 text-white px-3 py-1.5 rounded text-xs font-medium transition flex items-center gap-1"
+        >
+          Exportar PDF
         </button>
       </div>
 

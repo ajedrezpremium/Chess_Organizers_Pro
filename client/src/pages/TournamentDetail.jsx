@@ -241,7 +241,7 @@ export default function TournamentDetail() {
                 {t('export.viewFideReport')}
               </button>
             </div>
-            <PerformanceAnalysis tournamentId={id} />
+            <PerformanceAnalysis tournamentId={id} tournament={tournament} />
           </div>
         )}
       </div>

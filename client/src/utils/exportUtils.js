@@ -413,3 +413,67 @@ export function exportTournamentReportPDF(tournament, standings, rounds, players
 
   doc.save(`${tournament.name.replace(/\s+/g, '_')}_reporte_completo.pdf`);
 }
+
+export function exportPerformancePDF(tournament, performanceData) {
+  if (!performanceData || performanceData.length === 0) return;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const pageW = doc.internal.pageSize.getWidth();
+
+  const nRounds = Math.max(0, ...performanceData.map((p) => (p.roundChanges || []).length));
+
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text('♛ CHESS ORGANIZERS PRO', pageW / 2, 16, { align: 'center' });
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'normal');
+  doc.text(tournament.name, pageW / 2, 24, { align: 'center' });
+  doc.setFontSize(8);
+  doc.setTextColor(100);
+  doc.text(`Rendimiento · ${performanceData.length} jugadores · ${nRounds} rondas`, pageW / 2, 30, { align: 'center' });
+  doc.setTextColor(0);
+
+  const header = ['#', 'Jugador', 'Elo', 'Pts', 'TPR', ...Array.from({ length: nRounds }, (_, i) => `R${i + 1}`), 'ΔR', 'K'];
+  const body = [...performanceData]
+    .sort((a, b) => b.points - a.points || (b.rating || 0) - (a.rating || 0))
+    .map((p, i) => {
+      const kf = p.kFactor || 20;
+      const rounds = (p.roundChanges || []).map((d) => {
+        if (d === undefined || d === null) return '-';
+        const v = Math.round(d * kf);
+        return `${v > 0 ? '+' : ''}${v}`;
+      });
+      const chg = p.ratingChg !== null ? `${p.ratingChg > 0 ? '+' : ''}${p.ratingChg}` : '-';
+      return [
+        i + 1,
+        `${p.title ? p.title + ' ' : ''}${p.name} ${p.lastName || ''}`.trim(),
+        p.rating || '-',
+        `${p.points}/${p.games}`,
+        p.tpr !== null ? p.tpr : '-',
+        ...rounds,
+        chg,
+        kf,
+      ];
+    });
+
+  doc.autoTable({
+    head: [header],
+    body,
+    startY: 36,
+    styles: { fontSize: 7, cellPadding: 1.5 },
+    headStyles: { fillColor: [52, 73, 94], textColor: 255, fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: [245, 247, 250] },
+    columnStyles: {
+      0: { cellWidth: 8, halign: 'center' },
+      2: { halign: 'center', cellWidth: 12 },
+      3: { halign: 'center', cellWidth: 12, fontStyle: 'bold' },
+      4: { halign: 'center', cellWidth: 14 },
+    },
+  });
+
+  const dateStr = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+  doc.setFontSize(7);
+  doc.setTextColor(150);
+  doc.text(`Generado el ${dateStr} · Chess Organizers Pro`, pageW / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
+
+  doc.save(`${tournament.name.replace(/\s+/g, '_')}_rendimiento.pdf`);
+}

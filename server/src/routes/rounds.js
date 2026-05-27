@@ -10,7 +10,8 @@ import { buildPlayerState, savePlayerState } from '../utils/roundUtils.js';
 import { publish } from '../services/pubsub.js';
 import { notifyRoundGenerated, notifyResultUpdated } from '../services/notifications.js';
 import { dispatchWebhooks } from '../services/webhooks.js';
-import { calculateRatingChanges } from '../services/ratingChange.js';
+import { calculateRatingChanges, perRoundChanges } from '../services/ratingChange.js';
+import { generateRatingReport } from '../services/ratingReport.js';
 
 const router = Router();
 const engine = new PairingEngine({ forceBackend: 'js', verbose: false });
@@ -358,8 +359,38 @@ router.get('/tournaments/:tid/bulletin', authenticate, (req, res) => {
     ORDER BY tp.final_position IS NOT NULL DESC, tp.final_position ASC, tp.current_points DESC
   `).all(req.params.tid);
 
+  // ── Performance data ──
+  const bpPlayers = buildPlayerState(db, req.params.tid);
+  const bpRounds = rounds.filter((r) => r.status === 'closed').map((r) => {
+    const pairings = db.prepare(`
+      SELECT p.*, w.fide_rating as white_rating, w2.fide_rating as black_rating
+      FROM pairings p
+      LEFT JOIN tournament_players tpw ON p.white_id = tpw.id
+      LEFT JOIN players w ON tpw.player_id = w.id
+      LEFT JOIN tournament_players tpb ON p.black_id = tpb.id
+      LEFT JOIN players w2 ON tpb.player_id = w2.id
+      WHERE p.round_id = ? ORDER BY p.board ASC
+    `).all(r.id);
+    return { ...r, pairings };
+  });
+  const perRound = perRoundChanges(bpPlayers, bpRounds);
+
+  const playerTpr = {};
+  try {
+    const report = generateRatingReport(req.params.tid);
+    for (const p of report.players) {
+      playerTpr[p.name + '|' + p.lastName] = { tpr: p.tpr, ratingChg: p.ratingChg };
+    }
+  } catch (e) { /* TPR no disponible */ }
+
   const posMap = {};
   standings.forEach((s, i) => { posMap[s.seed_rank] = i + 1; });
+
+  const nPerfRounds = Math.max(0, ...bpPlayers.map((p) => (perRound[p.id]?.rounds || []).length));
+
+  const perfRoundCols = nPerfRounds > 0
+    ? Array.from({ length: nPerfRounds }, (_, i) => `<th class="center" style="font-size:7pt;padding:4px 2px">R${i + 1}</th>`).join('')
+    : '';
 
   let html = `<!DOCTYPE html><html><head><meta charset="utf-8">
 <style>
@@ -374,6 +405,8 @@ router.get('/tournaments/:tid/bulletin', authenticate, (req, res) => {
   .page-break { page-break-before: always; }
   .center { text-align: center; }
   .result { font-weight: bold; text-align: center; width: 30px; }
+  .pos { color: #0a0; font-weight: bold; }
+  .neg { color: #c00; font-weight: bold; }
   .bye { color: #999; font-style: italic; }
   .header-info { text-align: center; font-size: 9pt; color: #666; margin: 4px 0 12px; }
   .round-title { font-size: 13pt; font-weight: bold; margin: 16px 0 6px; border-bottom: 2px solid #1a1a2e; padding-bottom: 3px; }
@@ -396,6 +429,41 @@ router.get('/tournaments/:tid/bulletin', authenticate, (req, res) => {
     html += `<tr><td>${i + 1}</td><td><strong>${s.name} ${s.last_name || ''}</strong></td>
       <td>${s.title || ''}</td><td>${s.fide_rating || ''}</td>
       <td>${s.federation || ''}</td><td class="center"><strong>${s.current_points}</strong></td></tr>`;
+  });
+  html += `</tbody></table>`;
+
+  // Performance table
+  html += `<h2 class="round-title">Rendimiento</h2>
+<table><thead><tr><th>#</th><th>Jugador</th><th>Elo</th><th>Pts</th><th>TPR</th>${perfRoundCols}<th>ΔR</th><th>K</th></tr></thead><tbody>`;
+  standings.forEach((s, i) => {
+    const key = s.name + '|' + (s.last_name || '');
+    const tprData = playerTpr[key] || {};
+    const bp = bpPlayers.find((p) => p.name === s.name && p.lastName === s.last_name);
+    const pc = bp ? perRound[bp.id] : null;
+    const kf = pc ? pc.kFactor : 20;
+    const totalChg = pc ? pc.total : null;
+    const rounds = pc ? pc.rounds : [];
+    const tprVal = tprData.tpr !== undefined ? tprData.tpr : null;
+    const chgVal = totalChg !== null ? totalChg : (tprData.ratingChg !== undefined ? tprData.ratingChg : null);
+    const chgClass = chgVal !== null && chgVal > 0 ? 'pos' : chgVal !== null && chgVal < 0 ? 'neg' : '';
+
+    const perfCells = nPerfRounds > 0
+      ? Array.from({ length: nPerfRounds }, (_, ri) => {
+          const d = rounds[ri];
+          if (d === undefined || d === null) return '<td class="center" style="font-size:8pt;color:#ccc">-</td>';
+          const dv = Math.round(d * kf);
+          return `<td class="center" style="font-size:8pt;${dv > 0 ? 'color:#0a0' : dv < 0 ? 'color:#c00' : ''}">${dv > 0 ? '+' : ''}${dv}</td>`;
+        }).join('')
+      : '';
+
+    html += `<tr><td>${i + 1}</td>
+      <td><strong>${s.name} ${s.last_name || ''}</strong></td>
+      <td class="center">${s.fide_rating || '-'}</td>
+      <td class="center"><strong>${s.current_points}</strong></td>
+      <td class="center">${tprVal !== null ? tprVal : '-'}</td>
+      ${perfCells}
+      <td class="center ${chgClass}">${chgVal !== null ? (chgVal > 0 ? '+' : '') + chgVal : '-'}</td>
+      <td class="center" style="font-size:8pt">${kf}</td></tr>`;
   });
   html += `</tbody></table>`;
 
