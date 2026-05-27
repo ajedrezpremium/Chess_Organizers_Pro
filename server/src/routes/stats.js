@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { getDb } from '../db/index.js';
 import { authenticate } from '../middleware/auth.js';
 import { buildPlayerState } from '../utils/roundUtils.js';
+import { perRoundChanges, rawDelta } from '../../src/services/ratingChange.js';
 
 const router = Router();
 
@@ -82,7 +83,7 @@ router.get('/:tid/crosstab', authenticate, (req, res) => {
 });
 
 // ── GET /stats/:tid/performance ──────────────────────────────────
-// TPR (Tournament Performance Rating) + ΔR (Elo change estimate)
+// TPR (Tournament Performance Rating) + ΔR (Elo change estimate) + per-round delta
 router.get('/:tid/performance', authenticate, (req, res) => {
   try {
     const db = getDb();
@@ -93,11 +94,23 @@ router.get('/:tid/performance', authenticate, (req, res) => {
     const rounds = db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status = 'closed' ORDER BY round_number ASC").all(req.params.tid);
     const playerMap = Object.fromEntries(players.map((p) => [p.id, p]));
 
+    // Enrich rounds with pairings
+    for (const r of rounds) {
+      r.pairings = db.prepare(
+        `SELECT p.*, w.fide_rating as white_rating, w2.fide_rating as black_rating
+         FROM pairings p
+         LEFT JOIN tournament_players tpw ON p.white_id = tpw.id
+         LEFT JOIN players w ON tpw.player_id = w.id
+         LEFT JOIN tournament_players tpb ON p.black_id = tpb.id
+         LEFT JOIN players w2 ON tpb.player_id = w2.id
+         WHERE p.round_id = ? ORDER BY p.board ASC`
+      ).all(r.id);
+    }
+
+    const chg = perRoundChanges(players, rounds);
     const pairingsByRound = {};
     for (const r of rounds) {
-      pairingsByRound[r.round_number] = db.prepare(
-        'SELECT * FROM pairings WHERE round_id = ? ORDER BY board ASC'
-      ).all(r.id);
+      pairingsByRound[r.round_number] = r.pairings;
     }
 
     const results = players.map((player) => {
@@ -119,7 +132,6 @@ router.get('/:tid/performance', authenticate, (req, res) => {
         if (opp && opp.fideRating > 0) oppRatings.push({ rating: opp.fideRating, result: pts });
       }
 
-      // TPR (FIDE formula: avg opponent rating + 800 * (score - expected))
       let tpr = null;
       if (totalGames > 0 && oppRatings.length > 0) {
         const avgOpp = Math.round(oppRatings.reduce((s, o) => s + o.rating, 0) / oppRatings.length);
@@ -127,21 +139,15 @@ router.get('/:tid/performance', authenticate, (req, res) => {
         tpr = Math.round(avgOpp + 800 * (scorePct - 0.5));
       }
 
-      // ΔR estimado (K = 40 if rating < 2100, 20 if < 2400, 10 otherwise)
-      let ratingChg = null;
-      if (totalGames > 0 && player.fideRating > 0 && oppRatings.length > 0) {
-        const K = player.fideRating < 2100 ? 40 : player.fideRating < 2400 ? 20 : 10;
-        let expected = 0;
-        for (const o of oppRatings) {
-          expected += 1 / (1 + Math.pow(10, (o.rating - player.fideRating) / 400));
-        }
-        ratingChg = Math.round(K * (totalPts - expected));
-      }
+      const pchg = chg[player.id] || { total: null, rounds: [], kFactor: 40 };
 
       return {
         id: player.id, name: player.name, lastName: player.lastName,
         rating: player.fideRating, title: player.title, federation: player.country,
-        points: totalPts, games: totalGames, tpr, ratingChg,
+        points: totalPts, games: totalGames, tpr,
+        ratingChg: pchg.total,
+        roundChanges: pchg.rounds,
+        kFactor: pchg.kFactor,
       };
     });
 

@@ -50,6 +50,8 @@ export default function PerformanceAnalysis({ tournamentId, pc }) {
     return 'text-red-400';
   }
 
+  const maxRounds = Math.max(0, ...data.map((p) => (p.roundChanges || []).length));
+
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
       <div className="table-wrap">
@@ -65,6 +67,11 @@ export default function PerformanceAnalysis({ tournamentId, pc }) {
               <th className="text-center px-4 py-3 font-medium cursor-pointer hover:text-white" onClick={() => setSortBy('tpr')}>
                 TPR {sortBy === 'tpr' && '↓'}
               </th>
+              {maxRounds > 0 && Array.from({ length: maxRounds }, (_, i) => (
+                <th key={`r${i}`} className="text-center px-2 py-3 font-medium text-xs text-fide-500">
+                  R{i + 1}
+                </th>
+              ))}
               <th className="text-center px-4 py-3 font-medium cursor-pointer hover:text-white" onClick={() => setSortBy('ratingChg')}>
                 ΔR {sortBy === 'ratingChg' && '↓'}
               </th>
@@ -73,7 +80,8 @@ export default function PerformanceAnalysis({ tournamentId, pc }) {
           </thead>
           <tbody className="divide-y divide-gray-800">
             {sorted.map((p, i) => {
-              const K = p.rating < 2100 ? 40 : p.rating < 2400 ? 20 : 10;
+              const kFactor = p.kFactor || (p.rating < 2100 ? 40 : p.rating < 2400 ? 20 : 10);
+              const rc = p.roundChanges || [];
               return (
                 <tr key={p.id} className="hover:bg-gray-800/50 transition">
                   <td className="px-4 py-3 text-fide-400 w-10">{i + 1}</td>
@@ -89,10 +97,20 @@ export default function PerformanceAnalysis({ tournamentId, pc }) {
                   <td className={`px-4 py-3 text-center font-medium ${getTprColor(p.tpr, p.rating)}`}>
                     {p.tpr !== null ? p.tpr : '-'}
                   </td>
+                  {maxRounds > 0 && Array.from({ length: maxRounds }, (_, i) => {
+                    const d = rc[i];
+                    return (
+                      <td key={`rd${i}`} className={`px-2 py-3 text-center text-xs font-medium ${getChgColor(d !== undefined ? d * kFactor : null)}`}>
+                        {d !== undefined && d !== null
+                          ? (d * kFactor > 0 ? '+' : '') + Math.round(d * kFactor)
+                          : '-'}
+                      </td>
+                    );
+                  })}
                   <td className={`px-4 py-3 text-center font-medium ${getChgColor(p.ratingChg)}`}>
                     {p.ratingChg !== null ? (p.ratingChg > 0 ? '+' : '') + p.ratingChg : '-'}
                   </td>
-                  <td className="px-4 py-3 text-center text-fide-500 text-xs">{K}</td>
+                  <td className="px-4 py-3 text-center text-fide-500 text-xs">{kFactor}</td>
                 </tr>
               );
             })}

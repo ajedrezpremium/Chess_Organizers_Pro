@@ -144,8 +144,9 @@ export const api = {
   approveRegistration: (tid, reqId) => request('PATCH', `/tournaments/${tid}/registrations/${reqId}`, { action: 'approved' }),
   rejectRegistration: (tid, reqId) => request('PATCH', `/tournaments/${tid}/registrations/${reqId}`, { action: 'rejected' }),
 
-  public: {
-    getTournament: (id) => request('GET', `/public/tournaments/${id}`),
+    public: {
+      getTournament: (id) => request('GET', `/public/tournaments/${id}`),
+      performance: (id) => request('GET', `/public/tournaments/${id}/performance`),
     listTournaments: (params) => request('GET', `/public/tournaments?${new URLSearchParams(params)}`),
     getPlayers: (id) => request('GET', `/public/tournaments/${id}/players`),
     getRounds: (id) => request('GET', `/public/tournaments/${id}/rounds`),

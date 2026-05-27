@@ -3,7 +3,7 @@ import { getDb } from '../db/index.js';
 import config from '../config.js';
 import { buildPlayerState } from '../utils/roundUtils.js';
 import { buildStandings } from '../../../src/engine/dutch.js';
-import { calculateRatingChanges } from '../services/ratingChange.js';
+import { calculateRatingChanges, perRoundChanges } from '../services/ratingChange.js';
 import { calculateTiebreak } from '../../../src/engine/tiebreaks.js';
 import { DEFAULT_TIEBREAK_ORDER } from '../../../src/engine/types.js';
 import { subscribe } from '../services/pubsub.js';
@@ -130,6 +130,80 @@ router.get('/tournaments/:id/standings', (req, res) => {
     ratingChanges,
     tiebreaks,
   });
+});
+
+// GET /public/tournaments/:id/performance — TPR + per-round ΔR
+router.get('/tournaments/:id/performance', (req, res) => {
+  try {
+    const db = getDb();
+    const tournament = db.prepare("SELECT * FROM tournaments WHERE id = ?").get(req.params.id);
+    if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
+
+    const players = buildPlayerState(db, req.params.id);
+    const rounds = db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status = 'closed' ORDER BY round_number ASC").all(req.params.id);
+    const playerMap = Object.fromEntries(players.map((p) => [p.id, p]));
+
+    for (const r of rounds) {
+      r.pairings = db.prepare(
+        `SELECT p.*, w.fide_rating as white_rating, w2.fide_rating as black_rating
+         FROM pairings p
+         LEFT JOIN tournament_players tpw ON p.white_id = tpw.id
+         LEFT JOIN players w ON tpw.player_id = w.id
+         LEFT JOIN tournament_players tpb ON p.black_id = tpb.id
+         LEFT JOIN players w2 ON tpb.player_id = w2.id
+         WHERE p.round_id = ? ORDER BY p.board ASC`
+      ).all(r.id);
+    }
+
+    const chg = perRoundChanges(players, rounds);
+    const pairingsByRound = {};
+    for (const r of rounds) {
+      pairingsByRound[r.round_number] = r.pairings;
+    }
+
+    const results = players.map((player) => {
+      let totalPts = 0;
+      let totalGames = 0;
+      let oppRatings = [];
+
+      for (let rn = 1; rn <= tournament.n_rounds; rn++) {
+        const pbs = pairingsByRound[rn] || [];
+        const pairing = pbs.find((pb) => String(pb.white_id) === player.id || String(pb.black_id) === player.id);
+        if (!pairing) continue;
+        const isWhite = String(pairing.white_id) === player.id;
+        const oppId = isWhite ? String(pairing.black_id) : String(pairing.white_id);
+        const opp = playerMap[oppId];
+        const pts = pairing.result === '1' ? (isWhite ? 1 : 0) : pairing.result === '=' ? 0.5 : pairing.result === '0' ? (isWhite ? 0 : 1) : null;
+        if (pts === null) continue;
+        totalPts += pts;
+        totalGames++;
+        if (opp && opp.fideRating > 0) oppRatings.push({ rating: opp.fideRating, result: pts });
+      }
+
+      let tpr = null;
+      if (totalGames > 0 && oppRatings.length > 0) {
+        const avgOpp = Math.round(oppRatings.reduce((s, o) => s + o.rating, 0) / oppRatings.length);
+        const scorePct = totalPts / totalGames;
+        tpr = Math.round(avgOpp + 800 * (scorePct - 0.5));
+      }
+
+      const pchg = chg[player.id] || { total: null, rounds: [], kFactor: 40 };
+
+      return {
+        id: player.id, name: player.name, lastName: player.lastName,
+        rating: player.fideRating, title: player.title, federation: player.country,
+        points: totalPts, games: totalGames, tpr,
+        ratingChg: pchg.total,
+        roundChanges: pchg.rounds,
+        kFactor: pchg.kFactor,
+      };
+    });
+
+    results.sort((a, b) => b.points - a.points || (b.rating || 0) - (a.rating || 0));
+    res.json(results);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // GET /public/tournaments/:id/sse — Server-Sent Events
