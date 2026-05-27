@@ -11,6 +11,7 @@ export default function PublicTV() {
   const [tournament, setTournament] = useState(null);
   const [standings, setStandings] = useState(null);
   const [rounds, setRounds] = useState([]);
+  const [performance, setPerformance] = useState(null);
   const [mode, setMode] = useState('standings');
   const [page, setPage] = useState(0);
 
@@ -28,26 +29,36 @@ export default function PublicTV() {
     try { setStandings(await api.public.getStandings(id)); } catch {}
   }, [id]);
 
-  useEffect(() => { load(); loadStandings(); }, [load, loadStandings]);
+  const loadPerformance = useCallback(async () => {
+    try { setPerformance(await api.public.performance(id)); } catch {}
+  }, [id]);
+
+  useEffect(() => { load(); loadStandings(); loadPerformance(); }, [load, loadStandings, loadPerformance]);
 
   useEffect(() => {
     const BASE = import.meta.env.VITE_API_URL ?? '';
     const es = new EventSource(`${BASE}/public/tournaments/${id}/sse`);
-    es.addEventListener('result:updated', () => loadStandings());
+    es.addEventListener('result:updated', () => { loadStandings(); loadPerformance(); });
     es.addEventListener('round:generated', () => load());
-    es.addEventListener('round:closed', () => { loadStandings(); load(); });
+    es.addEventListener('round:closed', () => { loadStandings(); load(); loadPerformance(); });
     return () => es.close();
-  }, [id, load, loadStandings]);
+  }, [id, load, loadStandings, loadPerformance]);
 
+  const cycleModes = ['standings', 'pairings', 'performance'];
   useEffect(() => {
     const timer = setInterval(() => {
-      setMode((m) => m === 'standings' ? 'pairings' : 'standings');
+      setMode((m) => {
+        const idx = cycleModes.indexOf(m);
+        const next = cycleModes[(idx + 1) % cycleModes.length];
+        if (next === 'stream' && !tournament?.stream_url) return cycleModes[(idx + 2) % cycleModes.length];
+        return next;
+      });
       setPage(0);
     }, 15000);
     return () => clearInterval(timer);
-  }, []);
+  }, [tournament]);
 
-  const modes = ['standings', 'pairings', ...(tournament?.stream_url ? ['stream'] : [])];
+  const allModes = ['standings', 'pairings', 'performance', ...(tournament?.stream_url ? ['stream'] : [])];
 
   if (!tournament) return (
     <div className="h-screen bg-black flex items-center justify-center">
@@ -59,6 +70,7 @@ export default function PublicTV() {
   const logoUrl = tournament.logo_url || '';
   const activeRound = rounds.filter((r) => r.status === 'generated' || r.status === 'published').pop();
   const closedRounds = rounds.filter((r) => r.status === 'closed');
+  const perfRounds = performance && performance.length > 0 ? Math.max(0, ...performance.map((p) => (p.roundChanges || []).length)) : 0;
 
   return (
     <div className="h-screen text-white overflow-hidden flex flex-col" style={{ background: `linear-gradient(180deg, ${tournament.secondary_color || '#030712'} 0%, #030712 100%)` }}>
@@ -174,6 +186,60 @@ export default function PublicTV() {
             </div>
           </div>
         )}
+
+        {mode === 'performance' && performance && (
+          <div className="flex-1 overflow-hidden flex flex-col px-8 py-4">
+            <div className="text-2xl font-bold tv-accent mb-4 shrink-0">📊 Rendimiento</div>
+            <div className="flex-1 overflow-hidden">
+              <table className="w-full text-left">
+                <thead className="text-gray-500 text-sm uppercase tracking-wider">
+                  <tr>
+                    <th className="py-3 w-16">#</th>
+                    <th className="py-3">{t('standings.player')}</th>
+                    <th className="py-3 text-center w-20">Elo</th>
+                    <th className="py-3 text-center w-16">Pts</th>
+                    <th className="py-3 text-center w-24">TPR</th>
+                    {perfRounds > 0 && Array.from({ length: perfRounds }, (_, i) => (
+                      <th key={`pr${i}`} className="py-3 text-center w-16 text-[10px]">R{i + 1}</th>
+                    ))}
+                    <th className="py-3 text-center w-20">ΔR</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-800">
+                  {performance
+                    .sort((a, b) => b.points - a.points || (b.rating || 0) - (a.rating || 0))
+                    .slice(0, 15).map((p, i) => {
+                      const kf = p.kFactor || 20;
+                      const tprDiff = p.tpr && p.rating ? p.tpr - p.rating : null;
+                      return (
+                        <tr key={p.id} className={`${i % 2 === 0 ? 'bg-white/5' : ''}`}>
+                          <td className="py-2 text-2xl font-bold text-gray-500">{i + 1}</td>
+                          <td className="py-2">
+                            <span className="text-xl font-medium">{p.name} {p.lastName || ''}</span>
+                            {p.title && <span className="tv-accent text-sm ml-2 font-bold">{p.title}</span>}
+                          </td>
+                          <td className="py-2 text-center text-lg text-gray-400">{p.rating || '-'}</td>
+                          <td className="py-2 text-center text-xl font-bold">{p.points}/{p.games}</td>
+                          <td className={`py-2 text-center text-lg font-bold ${tprDiff !== null ? (tprDiff > 100 ? 'text-green-400' : tprDiff > 0 ? 'text-green-300' : tprDiff > -100 ? 'text-amber-300' : 'text-red-400') : 'text-gray-500'}`}>
+                            {p.tpr !== null ? p.tpr : '-'}
+                          </td>
+                          {perfRounds > 0 && Array.from({ length: perfRounds }, (_, ri) => {
+                            const d = (p.roundChanges || [])[ri];
+                            if (d === undefined || d === null) return <td key={`rd${ri}`} className="py-2 text-center text-sm text-gray-600">-</td>;
+                            const dv = Math.round(d * kf);
+                            return <td key={`rd${ri}`} className={`py-2 text-center text-base font-medium ${dv > 0 ? 'text-green-400' : dv < 0 ? 'text-red-400' : 'text-gray-500'}`}>{dv > 0 ? '+' : ''}{dv}</td>;
+                          })}
+                          <td className={`py-2 text-center text-xl font-bold ${p.ratingChg > 0 ? 'text-green-400' : p.ratingChg < 0 ? 'text-red-400' : 'text-gray-500'}`}>
+                            {p.ratingChg !== null ? (p.ratingChg > 0 ? '+' : '') + p.ratingChg : '-'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="px-8 py-3 border-t border-gray-800 flex items-center justify-between text-sm text-gray-500 shrink-0">
@@ -181,6 +247,7 @@ export default function PublicTV() {
         <span className="flex items-center gap-4">
           <button onClick={() => { setMode('standings'); setPage(0); }} className={`px-3 py-1 rounded ${mode === 'standings' ? 'tv-btn' : 'text-gray-400 hover:text-white'}`}>{t('tv.standings')}</button>
           <button onClick={() => { setMode('pairings'); setPage(0); }} className={`px-3 py-1 rounded ${mode === 'pairings' ? 'tv-btn' : 'text-gray-400 hover:text-white'}`}>{t('tv.pairings')}</button>
+          <button onClick={() => { setMode('performance'); setPage(0); }} className={`px-3 py-1 rounded ${mode === 'performance' ? 'tv-btn' : 'text-gray-400 hover:text-white'}`}>Rendimiento</button>
           {tournament.stream_url && tournament.stream_platform && (
             <button onClick={() => { setMode('stream'); setPage(0); }} className={`px-3 py-1 rounded ${mode === 'stream' ? 'tv-btn' : 'text-gray-400 hover:text-white'}`}>
               {t('tv.stream')}
