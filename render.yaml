@@ -6,7 +6,6 @@ services:
     buildCommand: cd server && npm install
     startCommand: node server/src/index.js
     healthCheckPath: /health
-    preDeployCommand: node server/src/db/schema.js
     envVars:
       - key: NODE_ENV
         value: production
@@ -17,14 +16,10 @@ services:
       - key: JWT_EXPIRES
         value: 7d
       - key: DB_PATH
-        value: /var/data/chessorganizers.db
+        value: ./data/chessorganizers.db
       - key: CORS_ORIGIN
         value: https://chess-organizers-pro.vercel.app
       - key: PUBLIC_URL
         value: https://chess-organizers-pro.vercel.app
       - key: FIDE_API_KEY
         sync: false
-    disk:
-      name: data
-      mountPath: /var/data
-      sizeGB: 1
