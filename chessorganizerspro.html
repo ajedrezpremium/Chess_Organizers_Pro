@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chess Organizers Pro — El gestor de torneos del ajedrez profesional</title>
+<meta name="description" content="Organiza torneos de ajedrez con motor FIDE endorsed, CRM, ChessArbiter IA y el Método XG Premium. Para federaciones, organizadores y árbitros.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & base ──────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --black:   #09090b;
+  --surface: #111115;
+  --card:    #16161a;
+  --border:  rgba(255,255,255,.08);
+  --border-hi: rgba(255,255,255,.15);
+
+  --gold:    #c9a84c;
+  --gold-dim:#8b6f2e;
+  --gold-bg: rgba(201,168,76,.07);
+  --white:   #f0ede6;
+  --muted:   #8a8880;
+  --dim:     #4a4845;
+
+  --green:   #3a9e6a;
+  --green-bg:rgba(58,158,106,.1);
+  --blue:    #4a7fd4;
+  --blue-bg: rgba(74,127,212,.1);
+
+  --serif: 'Playfair Display', Georgia, serif;
+  --sans:  'DM Sans', system-ui, sans-serif;
+  --mono:  'DM Mono', monospace;
+
+  --max: 1160px;
+  --r:   8px;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--sans);
+  background:  var(--black);
+  color:       var(--white);
+  line-height: 1.6;
+  overflow-x:  hidden;
+}
+
+/* ── Chessboard texture overlay ────────────────────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    repeating-conic-gradient(rgba(255,255,255,.018) 0% 25%, transparent 0% 50%);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Layout utilities ───────────────────────────────────────────────────────── */
+.container { max-width: var(--max); margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+section { position: relative; z-index: 1; }
+
+/* ── Nav ────────────────────────────────────────────────────────────────────── */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  border-bottom: 1px solid var(--border);
+  background: rgba(9,9,11,.92);
+  backdrop-filter: blur(12px);
+}
+.nav-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  height: 60px;
+}
+.logo {
+  font-family: var(--serif); font-size: 17px; font-weight: 700;
+  color: var(--white); text-decoration: none; letter-spacing: -.01em;
+}
+.logo span { color: var(--gold); }
+.nav-links { display: flex; align-items: center; gap: 28px; }
+.nav-links a {
+  font-size: 13px; color: var(--muted); text-decoration: none;
+  transition: color .15s;
+}
+.nav-links a:hover { color: var(--white); }
+.nav-cta {
+  font-size: 13px; font-weight: 500; padding: 8px 20px;
+  background: var(--gold); color: #09090b; border-radius: var(--r);
+  text-decoration: none; border: none; cursor: pointer;
+  transition: background .15s, transform .1s;
+}
+.nav-cta:hover { background: #dab85a; }
+.nav-cta:active { transform: scale(.97); }
+
+/* ── Hero ───────────────────────────────────────────────────────────────────── */
+.hero {
+  padding: 120px 0 100px;
+  border-bottom: 1px solid var(--border);
+}
+.hero-eyebrow {
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--gold);
+  margin-bottom: 20px;
+  display: flex; align-items: center; gap: 8px;
+}
+.hero-eyebrow::before {
+  content: ''; display: block; width: 24px; height: 1px; background: var(--gold);
+}
+.hero h1 {
+  font-family: var(--serif); font-size: clamp(40px, 6vw, 72px);
+  font-weight: 700; line-height: 1.1; letter-spacing: -.02em;
+  color: var(--white); max-width: 760px; margin-bottom: 24px;
+}
+.hero h1 em { font-style: normal; color: var(--gold); }
+.hero-sub {
+  font-size: 18px; color: var(--muted); max-width: 560px;
+  line-height: 1.65; margin-bottom: 40px;
+}
+.hero-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.btn-primary {
+  font-size: 15px; font-weight: 500; padding: 13px 28px;
+  background: var(--gold); color: #09090b;
+  border-radius: var(--r); text-decoration: none; border: none; cursor: pointer;
+  transition: background .15s, transform .1s; display: inline-flex; align-items: center; gap: 8px;
+}
+.btn-primary:hover { background: #dab85a; }
+.btn-primary:active { transform: scale(.97); }
+.btn-ghost {
+  font-size: 15px; padding: 13px 28px; color: var(--muted);
+  border: 1px solid var(--border-hi); border-radius: var(--r);
+  text-decoration: none; transition: color .15s, border-color .15s;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.btn-ghost:hover { color: var(--white); border-color: rgba(255,255,255,.3); }
+
+.hero-stats {
+  display: flex; gap: 40px; margin-top: 64px; padding-top: 40px;
+  border-top: 1px solid var(--border); flex-wrap: wrap;
+}
+.stat-item { }
+.stat-value {
+  font-family: var(--serif); font-size: 32px; font-weight: 700;
+  color: var(--white); line-height: 1;
+}
+.stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+/* ── Section header ─────────────────────────────────────────────────────────── */
+.section-header { text-align: center; margin-bottom: 56px; }
+.section-eyebrow {
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--gold);
+  margin-bottom: 14px;
+}
+.section-title {
+  font-family: var(--serif); font-size: clamp(28px, 4vw, 42px);
+  font-weight: 700; letter-spacing: -.02em; line-height: 1.15;
+  color: var(--white); max-width: 600px; margin: 0 auto 16px;
+}
+.section-sub {
+  font-size: 16px; color: var(--muted); max-width: 500px;
+  margin: 0 auto; line-height: 1.65;
+}
+
+/* ── Features grid ──────────────────────────────────────────────────────────── */
+.features { padding: 100px 0; border-bottom: 1px solid var(--border); }
+.features-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+.feature-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 28px;
+  transition: border-color .2s, transform .2s;
+}
+.feature-card:hover { border-color: var(--border-hi); transform: translateY(-2px); }
+.feature-icon {
+  width: 40px; height: 40px; border-radius: var(--r);
+  background: var(--gold-bg); border: 1px solid var(--gold-dim);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; margin-bottom: 18px;
+}
+.feature-title {
+  font-family: var(--serif); font-size: 18px; font-weight: 600;
+  color: var(--white); margin-bottom: 10px; line-height: 1.3;
+}
+.feature-body { font-size: 14px; color: var(--muted); line-height: 1.65; }
+.feature-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: var(--mono); font-size: 10px; font-weight: 500;
+  letter-spacing: .08em; padding: 3px 8px; border-radius: 4px;
+  margin-top: 14px;
+}
+.badge-gold  { background: var(--gold-bg);  color: var(--gold);  border: 1px solid var(--gold-dim); }
+.badge-green { background: var(--green-bg); color: var(--green); border: 1px solid rgba(58,158,106,.3); }
+.badge-blue  { background: var(--blue-bg);  color: var(--blue);  border: 1px solid rgba(74,127,212,.3); }
+
+/* ── Método XG ──────────────────────────────────────────────────────────────── */
+.metodo { padding: 100px 0; border-bottom: 1px solid var(--border); }
+.metodo-inner {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center;
+}
+.metodo-left { }
+.metodo-left .section-header { text-align: left; margin-bottom: 32px; }
+.metodo-left .section-title { margin: 0 0 16px; }
+.metodo-left .section-sub   { margin: 0 0 32px; }
+.metodo-phases { display: flex; flex-direction: column; gap: 12px; }
+.phase-item {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 14px 16px; background: var(--card);
+  border: 1px solid var(--border); border-radius: var(--r);
+  transition: border-color .15s;
+}
+.phase-item:hover { border-color: var(--gold-dim); }
+.phase-num-badge {
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  background: var(--gold-bg); color: var(--gold); border: 1px solid var(--gold-dim);
+  padding: 2px 8px; border-radius: 4px; flex-shrink: 0; margin-top: 1px;
+}
+.phase-item-title { font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 3px; }
+.phase-item-desc  { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+.metodo-right {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 32px; position: relative;
+}
+.metodo-counter-label {
+  font-family: var(--mono); font-size: 11px; color: var(--muted);
+  letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px;
+}
+.metodo-counter {
+  font-family: var(--serif); font-size: 80px; font-weight: 700;
+  color: var(--gold); line-height: 1; letter-spacing: -.03em;
+}
+.metodo-counter-sub { font-size: 16px; color: var(--muted); margin-top: 4px; margin-bottom: 28px; }
+.task-sample { display: flex; flex-direction: column; gap: 8px; }
+.task-row {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+}
+.task-check {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--green-bg); border: 1px solid var(--green);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+}
+.task-check::after { content: '✓'; font-size: 9px; color: var(--green); }
+.task-text { font-size: 12px; color: var(--muted); }
+
+/* ── Pricing ────────────────────────────────────────────────────────────────── */
+.pricing { padding: 100px 0; border-bottom: 1px solid var(--border); }
+.pricing-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; max-width: 920px; margin: 0 auto; }
+.pricing-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 32px 28px;
+}
+.pricing-card.featured { border-color: var(--gold); position: relative; }
+.pricing-card.featured::before {
+  content: 'Más popular';
+  position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+  font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: .08em;
+  background: var(--gold); color: #09090b;
+  padding: 4px 14px; border-radius: 20px;
+}
+.pricing-name { font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: .08em; font-family: var(--mono); }
+.pricing-price { font-family: var(--serif); font-size: 40px; font-weight: 700; color: var(--white); line-height: 1; }
+.pricing-price span { font-family: var(--sans); font-size: 14px; font-weight: 400; color: var(--muted); }
+.pricing-target { font-size: 13px; color: var(--muted); margin-top: 8px; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+.pricing-features { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+.pricing-features li { font-size: 13px; color: var(--muted); display: flex; gap: 8px; align-items: flex-start; }
+.pricing-features li::before { content: '–'; color: var(--gold-dim); flex-shrink: 0; }
+.pricing-features li.on { color: var(--white); }
+.pricing-features li.on::before { content: '✓'; color: var(--green); }
+.pricing-btn {
+  display: block; width: 100%; text-align: center; padding: 12px;
+  border-radius: var(--r); font-size: 14px; font-weight: 500;
+  text-decoration: none; transition: all .15s; cursor: pointer; border: none;
+}
+.pricing-btn-outline { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.pricing-btn-outline:hover { border-color: var(--border-hi); color: var(--white); }
+.pricing-btn-gold { background: var(--gold); color: #09090b; }
+.pricing-btn-gold:hover { background: #dab85a; }
+
+/* ── CTA final ──────────────────────────────────────────────────────────────── */
+.cta-section { padding: 120px 0; text-align: center; }
+.cta-section h2 {
+  font-family: var(--serif); font-size: clamp(32px, 5vw, 56px);
+  font-weight: 700; letter-spacing: -.02em; line-height: 1.15;
+  color: var(--white); max-width: 640px; margin: 0 auto 20px;
+}
+.cta-section h2 em { font-style: normal; color: var(--gold); }
+.cta-section p { font-size: 17px; color: var(--muted); max-width: 440px; margin: 0 auto 40px; }
+.cta-note { font-size: 12px; color: var(--dim); margin-top: 14px; }
+
+/* ── Footer ─────────────────────────────────────────────────────────────────── */
+footer {
+  border-top: 1px solid var(--border); padding: 40px 0;
+}
+.footer-inner {
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;
+}
+.footer-logo { font-family: var(--serif); font-size: 15px; color: var(--muted); }
+.footer-logo span { color: var(--gold); }
+.footer-links { display: flex; gap: 24px; }
+.footer-links a { font-size: 13px; color: var(--dim); text-decoration: none; transition: color .15s; }
+.footer-links a:hover { color: var(--muted); }
+.footer-copy { font-size: 12px; color: var(--dim); }
+
+/* ── Stagger animation ───────────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hero-eyebrow, .hero h1, .hero-sub, .hero-actions, .hero-stats {
+  animation: fadeUp .6s ease both;
+}
+.hero h1       { animation-delay: .08s; }
+.hero-sub      { animation-delay: .16s; }
+.hero-actions  { animation-delay: .24s; }
+.hero-stats    { animation-delay: .32s; }
+
+/* ── Responsive ─────────────────────────────────────────────────────────────── */
+@media (max-width: 860px) {
+  .features-grid  { grid-template-columns: 1fr 1fr; }
+  .pricing-grid   { grid-template-columns: 1fr; max-width: 400px; }
+  .metodo-inner   { grid-template-columns: 1fr; gap: 40px; }
+  .nav-links      { display: none; }
+}
+@media (max-width: 560px) {
+  .features-grid  { grid-template-columns: 1fr; }
+  .hero           { padding: 80px 0 60px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Nav ── -->
+<nav>
+  <div class="container nav-inner">
+    <a href="#" class="logo">Chess<span>Organizers</span>Pro</span></a>
+    <div class="nav-links">
+      <a href="#features">Funcionalidades</a>
+      <a href="#metodo">Método XG</a>
+      <a href="#pricing">Precios</a>
+      <a href="#federaciones">Federaciones</a>
+    </div>
+    <a href="#pricing" class="nav-cta">Empezar gratis</a>
+  </div>
+</nav>
+
+<!-- ── Hero ── -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-eyebrow">El gestor de Torneos del ajedrez profesional</div>
+    <h1>Organiza torneos con <em>Eficiencia</em> y Productividad</h1>
+    <p class="hero-sub">Motor de emparejamientos FIDE endorsed, ChessArbiter IA, CRM de jugadores y el Método XG Premium. Todo en una plataforma diseñada para federaciones, organizadores y árbitros profesionales.</p>
+    <div class="hero-actions">
+      <a href="#pricing" class="btn-primary">
+        Empieza gratis
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <a href="#demo" class="btn-ghost">Ver demo en vivo</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <div class="stat-value">200</div>
+        <div class="stat-label">Tareas del Método XG</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">FIDE</div>
+        <div class="stat-label">Motor endorsed (bbpPairings)</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">TRF-25</div>
+        <div class="stat-label">Formato 2025/2026 nativo</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">4 fases</div>
+        <div class="stat-label">Sistema operativo XG</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Features ── -->
+<section class="features" id="features">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-eyebrow">Funcionalidades</div>
+      <h2 class="section-title">Todo lo que un torneo profesional necesita</h2>
+      <p class="section-sub">Construido por organizadores, para organizadores. Sin concesiones al aficionado.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">♟</div>
+        <div class="feature-title">Motor de emparejamientos FIDE</div>
+        <div class="feature-body">bbpPairings v6.0.0 integrado nativamente. Sistema Dutch 2025, Burstein, Round Robin. Genera TRF-2025 compatible con el Rating Server FIDE en un clic.</div>
+        <div class="feature-badge badge-green">✓ FIDE endorsed</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">◈</div>
+        <div class="feature-title">ChessArbiter IA</div>
+        <div class="feature-body">Asistente de IA en tiempo real durante el torneo. Detecta incidencias, sugiere resoluciones según el reglamento FIDE y guía al árbitro paso a paso.</div>
+        <div class="feature-badge badge-gold">Pro · Enterprise</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">◉</div>
+        <div class="feature-title">Método XG Premium</div>
+        <div class="feature-body">200 tareas organizadas en 4 fases operativas: pre-torneo, apertura, competición y cierre. La metodología que convierte un torneo caótico en una operación profesional.</div>
+        <div class="feature-badge badge-gold">Exclusivo ChessOrganizers</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">☰</div>
+        <div class="feature-title">CRM de jugadores</div>
+        <div class="feature-body">Perfiles completos con historial FIDE, ELO, títulos, federación y estadísticas por torneo. Importa directamente desde el ranking FIDE o desde cualquier TRF.</div>
+        <div class="feature-badge badge-blue">Pro · Enterprise</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">◎</div>
+        <div class="feature-title">Panel de sponsors</div>
+        <div class="feature-body">Gestión de patrocinadores con métricas de visibilidad en tiempo real: impresiones en live stream, alcance en redes, activaciones digitales. El único en el mercado.</div>
+        <div class="feature-badge badge-gold">Enterprise</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">▷</div>
+        <div class="feature-title">Chess Kings Events</div>
+        <div class="feature-body">Módulo de producción premium para eventos de alto nivel. Retransmisión en directo, comentaristas, overlay gráfico y gestión de acreditaciones integrada.</div>
+        <div class="feature-badge badge-gold">Enterprise</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Método XG ── -->
+<section class="metodo" id="metodo">
+  <div class="container">
+    <div class="metodo-inner">
+      <div class="metodo-left">
+        <div class="section-header">
+          <div class="section-eyebrow">Método XG Premium</div>
+          <h2 class="section-title">Una metodología inovadora y versátil</h2>
+          <p class="section-sub">Desarrollada a partir de cientos de torneos reales. 200 tareas concretas divididas en 4 fases operativas.</p>
+        </div>
+        <div class="metodo-phases">
+          <div class="phase-item">
+            <div class="phase-num-badge">F1</div>
+            <div>
+              <div class="phase-item-title">Pre-torneo</div>
+              <div class="phase-item-desc">Inscripciones, comunicación, logística del recinto, montaje técnico y validación de jugadores FIDE.</div>
+            </div>
+          </div>
+          <div class="phase-item">
+            <div class="phase-num-badge">F2</div>
+            <div>
+              <div class="phase-item-title">Apertura</div>
+              <div class="phase-item-desc">Ceremonia, verificación de participantes, configuración del sistema y primera ronda.</div>
+            </div>
+          </div>
+          <div class="phase-item">
+            <div class="phase-num-badge">F3</div>
+            <div>
+              <div class="phase-item-title">Competición</div>
+              <div class="phase-item-desc">Control de rondas, gestión de incidencias, actualización de resultados y comunicación en tiempo real.</div>
+            </div>
+          </div>
+          <div class="phase-item">
+            <div class="phase-num-badge">F4</div>
+            <div>
+              <div class="phase-item-title">Cierre</div>
+              <div class="phase-item-desc">Standings finales, envío TRF a FIDE, certificados, facturación sponsors y post-análisis.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="metodo-right">
+        <div class="metodo-counter-label">Total tareas</div>
+        <div class="metodo-counter">200</div>
+        <div class="metodo-counter-sub">organizadas en 4 fases operativas</div>
+        <div class="task-sample">
+          <div class="task-row"><div class="task-check"></div><div class="task-text">Verificar ELO mínimo de participantes vs. bases del torneo</div></div>
+          <div class="task-row"><div class="task-check"></div><div class="task-text">Configurar ritmo de juego y número de rondas en el sistema</div></div>
+          <div class="task-row"><div class="task-check"></div><div class="task-text">Generar emparejamientos y publicar en el tablón físico y digital</div></div>
+          <div class="task-row"><div class="task-check"></div><div class="task-text">Exportar TRF final y enviar al Rating Server FIDE</div></div>
+          <div class="task-row"><div class="task-check"></div><div class="task-text">Enviar informe de visibilidad a patrocinadores (PDF automático)</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Pricing ── -->
+<section class="pricing" id="pricing">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-eyebrow">Precios</div>
+      <h2 class="section-title">Empieza gratis, escala cuando lo necesites</h2>
+      <p class="section-sub">Sin permanencias. Sin sorpresas. Cambia de plan en cualquier momento.</p>
+    </div>
+    <div class="pricing-grid">
+      <div class="pricing-card">
+        <div class="pricing-name">Club</div>
+        <div class="pricing-price">0 €<span> / mes</span></div>
+        <div class="pricing-target">Para clubes pequeños y árbitros individuales</div>
+        <ul class="pricing-features">
+          <li class="on">Hasta 2 torneos activos</li>
+          <li class="on">Hasta 32 jugadores / torneo</li>
+          <li class="on">Sistema suizo básico</li>
+          <li class="on">Exportación TRF</li>
+          <li>ChessArbiter IA</li>
+          <li>Motor bbpPairings (FIDE)</li>
+          <li>CRM avanzado</li>
+        </ul>
+        <a href="#" class="pricing-btn pricing-btn-outline">Crear cuenta gratis</a>
+      </div>
+      <div class="pricing-card featured">
+        <div class="pricing-name">Pro</div>
+        <div class="pricing-price">79 €<span> / mes</span></div>
+        <div class="pricing-target">Para organizadores profesionales y federaciones regionales</div>
+        <ul class="pricing-features">
+          <li class="on">Torneos ilimitados</li>
+          <li class="on">Jugadores ilimitados</li>
+          <li class="on">Motor bbpPairings (FIDE endorsed)</li>
+          <li class="on">ChessArbiter IA</li>
+          <li class="on">CRM completo + historial FIDE</li>
+          <li class="on">Método XG Premium (200 tareas)</li>
+          <li class="on">Retransmisión en directo</li>
+        </ul>
+        <a href="#" class="pricing-btn pricing-btn-gold">Empezar con Pro</a>
+      </div>
+      <div class="pricing-card">
+        <div class="pricing-name">Enterprise</div>
+        <div class="pricing-price">299 €<span> / mes</span></div>
+        <div class="pricing-target">Para federaciones nacionales y Chess Kings Events</div>
+        <ul class="pricing-features">
+          <li class="on">Todo lo de Pro</li>
+          <li class="on">Panel de sponsors con ROI</li>
+          <li class="on">Multi-árbitro / multi-sede</li>
+          <li class="on">Certificación FIDE gestionada</li>
+          <li class="on">API acceso completo</li>
+          <li class="on">White-label disponible</li>
+          <li class="on">Soporte prioritario + SLA</li>
+        </ul>
+        <a href="mailto:enterprise@chessorganizerspro.com" class="pricing-btn pricing-btn-outline">Contactar ventas</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ── -->
+<section class="cta-section" id="federaciones">
+  <div class="container">
+    <h2>¿Eres árbitro o directivo de <em>federación</em>?</h2>
+    <p>Importa tu último torneo desde ratings.fide.com y ve en 5 minutos cómo quedaría en la plataforma. Sin tarjeta de crédito.</p>
+    <a href="#" class="btn-primary" style="display:inline-flex;font-size:16px">
+      Demo con tu torneo real
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+    <div class="cta-note">El piloto gratuito incluye soporte directo durante el primer torneo oficial.</div>
+  </div>
+</section>
+
+<!-- ── Footer ── -->
+<footer>
+  <div class="container footer-inner">
+    <div class="footer-logo">Chess<span>Organizers</span>Pro</span></div>
+    <div class="footer-links">
+      <a href="#">Documentación</a>
+      <a href="#">Blog</a>
+      <a href="#">FIDE endorsement</a>
+      <a href="#">Contacto</a>
+    </div>
+    <div class="footer-copy">© 2026 Chess Organizers Pro. Todos los derechos reservados.</div>
+  </div>
+</footer>
+
+</body>
+</html>
