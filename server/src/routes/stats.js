@@ -308,7 +308,7 @@ router.get('/:tid/overview', authenticate, (req, res) => {
     const roundResults = [];
     for (let rn = 1; rn <= totalRounds; rn++) {
       const round = db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND round_number = ?").get(req.params.tid, rn);
-      if (!round) { roundResults.push({ round: rn, status: 'pending', whiteWins: 0, draws: 0, blackWins: 0, byes: 0 }); continue; }
+      if (!round) { roundResults.push({ round: rn, status: 'pending', whiteWins: 0, draws: 0, blackWins: 0, byes: 0, total: 0, whitePct: 0, drawPct: 0, blackPct: 0 }); continue; }
       const pairings = db.prepare('SELECT * FROM pairings WHERE round_id = ?').all(round.id);
       const stats = { whiteWins: 0, draws: 0, blackWins: 0, byes: 0 };
       for (const p of pairings) {
@@ -317,8 +317,46 @@ router.get('/:tid/overview', authenticate, (req, res) => {
         else if (p.result === '0') stats.blackWins++;
         else if (p.result === '=') stats.draws++;
       }
-      roundResults.push({ round: rn, status: round.status, ...stats });
+      const total = stats.whiteWins + stats.draws + stats.blackWins;
+      roundResults.push({
+        round: rn, status: round.status, ...stats, total,
+        whitePct: total > 0 ? Math.round(stats.whiteWins / total * 100) : 0,
+        drawPct: total > 0 ? Math.round(stats.draws / total * 100) : 0,
+        blackPct: total > 0 ? Math.round(stats.blackWins / total * 100) : 0,
+      });
     }
+
+    // Performance por color
+    const colorPerf = players.map((player) => {
+      let wGames = 0, wPts = 0, bGames = 0, bPts = 0;
+      for (let rn = 1; rn <= totalRounds; rn++) {
+        const round = db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND round_number = ?").get(req.params.tid, rn);
+        if (!round) continue;
+        const pairings = db.prepare('SELECT * FROM pairings WHERE round_id = ?').all(round.id);
+        const pairing = pairings.find((pb) => String(pb.white_id) === player.id || String(pb.black_id) === player.id);
+        if (!pairing || pairing.result === '-' || pairing.is_bye) continue;
+        const isWhite = String(pairing.white_id) === player.id;
+        if (isWhite) { wGames++; if (pairing.result === '1') wPts += 1; else if (pairing.result === '=') wPts += 0.5; }
+        else { bGames++; if (pairing.result === '0') bPts += 1; else if (pairing.result === '=') bPts += 0.5; }
+      }
+      return {
+        id: player.id, name: player.name, lastName: player.lastName,
+        title: player.title, rating: player.fideRating,
+        white: { games: wGames, points: wPts, pct: wGames > 0 ? Math.round(wPts / wGames * 100) : 0 },
+        black: { games: bGames, points: bPts, pct: bGames > 0 ? Math.round(bPts / bGames * 100) : 0 },
+      };
+    }).filter((p) => p.white.games > 0 || p.black.games > 0);
+    colorPerf.sort((a, b) => (b.white.pct + b.black.pct) - (a.white.pct + a.black.pct));
+
+    // Totals acumulados
+    const totals = roundResults.reduce((acc, r) => {
+      acc.whiteWins += r.whiteWins; acc.draws += r.draws; acc.blackWins += r.blackWins; acc.byes += r.byes;
+      return acc;
+    }, { whiteWins: 0, draws: 0, blackWins: 0, byes: 0 });
+    const totalGames = totals.whiteWins + totals.draws + totals.blackWins;
+    totals.whitePct = totalGames > 0 ? Math.round(totals.whiteWins / totalGames * 100) : 0;
+    totals.drawPct = totalGames > 0 ? Math.round(totals.draws / totalGames * 100) : 0;
+    totals.blackPct = totalGames > 0 ? Math.round(totals.blackWins / totalGames * 100) : 0;
 
     res.json({
       name: tournament.name, system: tournament.system,
@@ -328,6 +366,8 @@ router.get('/:tid/overview', authenticate, (req, res) => {
       ratingDist,
       titles: Object.entries(titleCount).map(([title, count]) => ({ title, count })).sort((a, b) => b.count - a.count),
       roundResults,
+      colorPerformance: colorPerf,
+      totals,
       avgRating: players.length > 0
         ? Math.round(players.reduce((s, p) => s + (p.fideRating || 0), 0) / players.length)
         : 0,
