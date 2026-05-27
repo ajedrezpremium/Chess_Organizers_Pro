@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import { DatabaseSync } from 'node:sqlite';
 import { existsSync, mkdirSync } from 'fs';
 import { dirname } from 'path';
 import config from '../config.js';
@@ -11,10 +11,10 @@ export function getDb() {
   const dir = dirname(config.db.path);
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
 
-  db = new Database(config.db.path);
-  db.pragma('journal_mode = WAL');
-  db.pragma('foreign_keys = ON');
-  db.pragma('busy_timeout = 5000');
+  db = new DatabaseSync(config.db.path);
+  db.exec('PRAGMA journal_mode = WAL');
+  db.exec('PRAGMA foreign_keys = ON');
+  db.exec('PRAGMA busy_timeout = 5000');
 
   return db;
 }

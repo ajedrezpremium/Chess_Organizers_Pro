@@ -12,9 +12,11 @@
     "test:clean": "node --experimental-vm-modules tests/api.test.js && node --experimental-vm-modules ..\\tests\\engine.test.js",
     "prod:setup": "npm run migrate && npm run seed"
   },
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "dependencies": {
     "bcryptjs": "^2.4.3",
-    "better-sqlite3": "^11.6.0",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
     "express": "^4.21.0",
