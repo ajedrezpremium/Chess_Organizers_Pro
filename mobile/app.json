@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "Chess Organizers Pro",
+    "slug": "chess-organizers-pro",
+    "version": "1.0.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "scheme": "chessorg",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "backgroundColor": "#0f172a",
+      "resizeMode": "contain"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.chessorganizers.pro",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Escanea códigos QR para check-in de jugadores",
+        "NSPhotoLibraryUsageDescription": "Guardar resultados de partidas"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0f172a"
+      },
+      "package": "com.chessorganizers.pro",
+      "permissions": ["CAMERA", "VIBRATE", "RECEIVE_BOOT_COMPLETED"],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [{ "scheme": "chessorg", "host": "*", "pathPrefix": "/public" }],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
+    },
+    "plugins": [
+      "expo-camera",
+      "expo-notifications",
+      "expo-updates"
+    ],
+    "extra": {
+      "apiUrl": "https://chessorganizerspro.com"
+    }
+  }
+}

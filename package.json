@@ -1,0 +1,67 @@
+{
+  "name": "@chessorganizers/pairings-engine",
+  "version": "2.1.0",
+  "description": "Motor de emparejamientos FIDE: Dutch, Round Robin, Burstein, Dubov + bbpPairings (endorsed). TRF-2025/2026.",
+  "type": "module",
+  "exports": {
+    ".": "./src/engine/pairingEngine.js",
+    "./engine": "./src/engine/pairingEngine.js",
+    "./dutch": "./src/engine/dutch.js",
+    "./roundrobin": "./src/engine/roundrobin.js",
+    "./burstein": "./src/engine/burstein.js",
+    "./dubov": "./src/engine/dubov.js",
+    "./tiebreaks": "./src/engine/tiebreaks.js",
+    "./types": "./src/engine/types.js",
+    "./trf": "./src/trf/trf.js",
+    "./adapter": "./src/engine/usePairings.js",
+    "./bbp": "./src/bbp/bbpBridge.js"
+  },
+  "bin": {
+    "co-checker": "./src/cli/checker.js",
+    "co-rtg": "./src/cli/rtg.js"
+  },
+  "scripts": {
+    "postinstall": "node src/bbp/bbpDownload.js",
+    "download-bbp": "node src/bbp/bbpDownload.js",
+    "check-bbp": "node src/bbp/bbpDownload.js --check",
+    "test": "node --experimental-vm-modules tests/engine.test.js && node tests/integration.test.js",
+    "test:unit": "node --experimental-vm-modules tests/engine.test.js",
+    "test:integration": "node tests/integration.test.js",
+    "test:bbp": "node tests/integration.test.js --bbp-only",
+    "test:js": "node tests/integration.test.js --js-only",
+    "test:rr": "node tests/rr-verify.js",
+    "test:e2e": "npx playwright test --config=tests/e2e/playwright.config.js",
+    "test:e2e:headed": "npx playwright test --config=tests/e2e/playwright.config.js --headed",
+    "checker": "node src/cli/checker.js",
+    "rtg": "node src/cli/rtg.js",
+    "rtg:fide": "node src/cli/rtg.js --count 5000 --output ./fide-verification/",
+    "verify:fide": "node src/cli/rtg.js --count 5000 --output ./fide-verify/ && node src/cli/checker.js --check ./fide-verify/tournament_00001.trf",
+    "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "start": "node server/src/index.js",
+    "migrate": "node server/src/db/schema.js",
+    "seed": "node server/src/seed.js"
+  },
+  "keywords": [
+    "chess",
+    "fide",
+    "swiss",
+    "round-robin",
+    "burstein",
+    "dubov",
+    "pairing",
+    "tournament",
+    "trf",
+    "bbpPairings",
+    "endorsed"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "concurrently": "^9.2.1"
+  }
+}

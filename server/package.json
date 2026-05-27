@@ -1,0 +1,28 @@
+{
+  "name": "@chessorganizers/server",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Chess Organizers Pro — Backend API",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "seed": "node src/seed.js",
+    "migrate": "node src/db/schema.js",
+    "test": "node --experimental-vm-modules tests/api.test.js",
+    "test:clean": "node --experimental-vm-modules tests/api.test.js && node --experimental-vm-modules ..\\tests\\engine.test.js",
+    "prod:setup": "npm run migrate && npm run seed"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.6.0",
+    "compression": "^1.8.1",
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "express-rate-limit": "^8.5.2",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "nodemailer": "^8.0.8",
+    "stripe": "^22.1.1"
+  }
+}
