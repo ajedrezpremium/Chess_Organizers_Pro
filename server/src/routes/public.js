@@ -181,19 +181,15 @@ router.get('/tournaments/:id/performance', (req, res) => {
         if (opp && opp.fideRating > 0) oppRatings.push({ rating: opp.fideRating, result: pts });
       }
 
-      let tpr = null;
-      if (totalGames > 0 && oppRatings.length > 0) {
-        const avgOpp = Math.round(oppRatings.reduce((s, o) => s + o.rating, 0) / oppRatings.length);
-        const scorePct = totalPts / totalGames;
-        tpr = Math.round(avgOpp + 800 * (scorePct - 0.5));
-      }
-
-      const pchg = chg[player.id] || { total: null, rounds: [], kFactor: 40 };
+      const pchg = chg[player.id] || { total: null, rounds: [], kFactor: 40, tpr: null };
+      const fallbackTpr = oppRatings.length > 0
+        ? Math.round(oppRatings.reduce((s, o) => s + o.rating, 0) / oppRatings.length + 800 * (totalPts / totalGames - 0.5))
+        : null;
 
       return {
         id: player.id, name: player.name, lastName: player.lastName,
         rating: player.fideRating, title: player.title, federation: player.country,
-        points: totalPts, games: totalGames, tpr,
+        points: totalPts, games: totalGames, tpr: pchg.tpr || fallbackTpr,
         ratingChg: pchg.total,
         roundChanges: pchg.rounds,
         kFactor: pchg.kFactor,

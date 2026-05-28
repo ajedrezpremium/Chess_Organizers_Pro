@@ -325,6 +325,10 @@ export function serializeTRF(config, players, rounds) {
 
   if (config.chiefArbiter)  lines.push(`102 ${config.chiefArbiter}`);
   if (config.deputyArbiter) lines.push(`112 ${config.deputyArbiter}`);
+  if (config.deputyArbiter2) lines.push(`118 ${config.deputyArbiter2}`);
+  if (config.tournamentDirector) lines.push(`125 ${config.tournamentDirector}`);
+  if (config.address) lines.push(`128 ${config.address}`);
+  if (config.roundTime) lines.push(`138 ${config.roundTime}`);
   lines.push(`132 ${rounds.length}`);
 
   // TRF-2025: desempates (obligatorio si se solicita endorsement)

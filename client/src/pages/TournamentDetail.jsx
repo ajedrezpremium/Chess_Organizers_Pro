@@ -1,26 +1,29 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';
 import { useI18n } from '../i18n/context.jsx';
 import { CardSkeleton } from '../components/Skeleton.jsx';
 import ConfirmModal from '../components/ConfirmModal.jsx';
 import { useToast } from '../components/Toast.jsx';
-import CrossTable from '../components/CrossTable.jsx';
-import BoardWall from '../components/BoardWall.jsx';
-import StatsDashboard from '../components/StatsDashboard.jsx';
-import RegistrationsTab from '../components/RegistrationsTab.jsx';
-import TeamsTab from '../components/TeamsTab.jsx';
-import MatchesTab from '../components/MatchesTab.jsx';
 import QRCode from '../components/QRCode.jsx';
-import BulkImportFide from '../components/BulkImportFide.jsx';
-import ImportPlayers from '../components/ImportPlayers.jsx';
-import PairingIntelligence from '../components/PairingIntelligence.jsx';
-import PointsProgression from '../components/PointsProgression.jsx';
-import HeatMap from '../components/HeatMap.jsx';
-import HeadToHead from '../components/HeadToHead.jsx';
-import PerformanceAnalysis from '../components/PerformanceAnalysis.jsx';
-import CustomFieldsEditor from '../components/CustomFieldsEditor.jsx';
 import { exportStandingsPDF, exportPairingsPDF, exportCrosstablePDF, exportTournamentReportPDF, exportPGN, exportPlayersCSV, exportStandingsCSV, exportPairingsCSV } from '../utils/exportUtils.js';
+
+const CrossTable = lazy(() => import('../components/CrossTable.jsx'));
+const BoardWall = lazy(() => import('../components/BoardWall.jsx'));
+const StatsDashboard = lazy(() => import('../components/StatsDashboard.jsx'));
+const RegistrationsTab = lazy(() => import('../components/RegistrationsTab.jsx'));
+const TeamsTab = lazy(() => import('../components/TeamsTab.jsx'));
+const MatchesTab = lazy(() => import('../components/MatchesTab.jsx'));
+const BulkImportFide = lazy(() => import('../components/BulkImportFide.jsx'));
+const ImportPlayers = lazy(() => import('../components/ImportPlayers.jsx'));
+const PairingIntelligence = lazy(() => import('../components/PairingIntelligence.jsx'));
+const PointsProgression = lazy(() => import('../components/PointsProgression.jsx'));
+const HeatMap = lazy(() => import('../components/HeatMap.jsx'));
+const HeadToHead = lazy(() => import('../components/HeadToHead.jsx'));
+const PerformanceAnalysis = lazy(() => import('../components/PerformanceAnalysis.jsx'));
+const CustomFieldsEditor = lazy(() => import('../components/CustomFieldsEditor.jsx'));
+
+const LazyTab = ({ children }) => <Suspense fallback={<div className="animate-pulse h-32 bg-fide-800/50 rounded-xl" />}>{children}</Suspense>;
 
 const RESULT_OPTIONS = ['-', '1', '0', '=', 'U', 'F', 'H', 'Z'];
 
@@ -229,17 +232,17 @@ export default function TournamentDetail() {
       <div className="tab-content">
         {tab === 'info' && <InfoTab tournament={tournament} />}
         {tab === 'players' && <PlayersTab tournamentId={id} players={players} onUpdate={load} />}
-        {tab === 'registrations' && <RegistrationsTab tournamentId={id} />}
-        {tab === 'teams' && <TeamsTab tournamentId={id} players={players} />}
-        {tab === 'matches' && <MatchesTab tournamentId={id} players={players} teams={teams} />}
+        {tab === 'registrations' && <LazyTab><RegistrationsTab tournamentId={id} /></LazyTab>}
+        {tab === 'teams' && <LazyTab><TeamsTab tournamentId={id} players={players} /></LazyTab>}
+        {tab === 'matches' && <LazyTab><MatchesTab tournamentId={id} players={players} teams={teams} /></LazyTab>}
         {tab === 'rounds' && <RoundsTab tournament={tournament} rounds={rounds} players={players} onGenerate={handleGenerate} onResult={handleResult} onClose={handleClose} onPublish={handlePublish} onAddPairing={handleAddPairing} onDeletePairing={handleDeletePairing} onSwapColors={handleSwapColors} />}
         {tab === 'standings' && <StandingsTab standings={standings} onLoad={loadStandings} autoRefresh={tournament?.status !== 'finished'} />}
         {tab === 'schedule' && <ScheduleTab tournament={tournament} rounds={rounds} onUpdate={load} />}
         {tab === 'settings' && <SettingsTab tournament={tournament} onUpdate={load} />}
-        {tab === 'intel' && <PairingIntelligence tournamentId={id} />}
-        {tab === 'progression' && <ProgressionTab onLoad={loadProgression} data={progression} />}
-        {tab === 'heatmap' && <HeatmapTab onLoad={loadProgression} data={heatmap} />}
-        {tab === 'h2h' && <HeadToHead tournamentId={id} players={players} />}
+        {tab === 'intel' && <LazyTab><PairingIntelligence tournamentId={id} /></LazyTab>}
+        {tab === 'progression' && <LazyTab><ProgressionTab onLoad={loadProgression} data={progression} /></LazyTab>}
+        {tab === 'heatmap' && <LazyTab><HeatmapTab onLoad={loadProgression} data={heatmap} /></LazyTab>}
+        {tab === 'h2h' && <LazyTab><HeadToHead tournamentId={id} players={players} /></LazyTab>}
         {tab === 'performance' && (
           <div>
             <div className="flex justify-end gap-2 mb-4">
