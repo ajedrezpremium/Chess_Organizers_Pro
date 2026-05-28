@@ -11,10 +11,12 @@ import config from './config.js';
 import authRoutes from './routes/auth.js';
 import tournamentRoutes from './routes/tournaments.js';
 import playerRoutes from './routes/players.js';
-import roundRoutes from './routes/rounds.js';
 import fideRoutes from './routes/fide.js';
 import statsRoutes from './routes/stats.js';
+import roundRoutes from './routes/rounds.js';
 import publicRoutes from './routes/public.js';
+import leagueRoutes from './routes/leagues.js';
+import matchRoutes from './routes/matches.js';
 import teamRoutes from './routes/teams.js';
 import arbiterRoutes from './routes/arbiters.js';
 import membershipRoutes from './routes/membership.js';
@@ -56,6 +58,8 @@ app.use('/auth', authRoutes);
 app.use('/tournaments', tournamentRoutes);
 app.use('/players', playerRoutes);
 app.use('/', roundRoutes);
+app.use('/leagues', leagueRoutes);
+app.use('/matches', matchRoutes);
 app.use('/fide', fideRoutes);
 app.use('/stats', statsRoutes);
 app.use('/arbiters', arbiterRoutes);
@@ -74,7 +78,7 @@ app.use('/public', publicRoutes);
 app.use(express.static(config.clientDist, { index: 'index.html' }));
 
 // ── SPA fallback (antes de teamRoutes que tiene auth global) ──────
-const API_PREFIXES = ['/auth/', '/tournaments/', '/players/', '/fide/', '/stats/', '/health', '/pairings/', '/rounds/', '/membership/', '/validation/', '/stripe/', '/api/v1/', '/external/', '/webhooks/', '/api-keys/', '/import/', '/notifications/'];
+const API_PREFIXES = ['/auth/', '/tournaments/', '/players/', '/fide/', '/stats/', '/health', '/pairings/', '/rounds/', '/membership/', '/validation/', '/stripe/', '/api/v1/', '/external/', '/webhooks/', '/api-keys/', '/import/', '/notifications/', '/leagues/', '/matches/', '/teams/', '/team_members/'];
 app.use((req, res, next) => {
   if (req.method === 'GET' && !API_PREFIXES.some((p) => req.path.startsWith(p))) {
     return res.sendFile('index.html', { root: config.clientDist });

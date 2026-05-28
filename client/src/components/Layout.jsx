@@ -24,6 +24,7 @@ export default function Layout() {
     { to: '/new', label: t('nav.newTournament'), icon: '+' },
     { to: '/player', label: t('nav.myProfile'), icon: '♟' },
     { to: '/arbiter', label: t('nav.arbiter'), icon: '⚖️' },
+    { to: '/leagues', label: 'Ligas', icon: '🏆' },
   ];
 
   return (
@@ -141,6 +142,7 @@ export default function Layout() {
                 <li><Link to="/new" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('nav.newTournament')}</Link></li>
                 <li><Link to="/player" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('nav.myProfile')}</Link></li>
                 <li><Link to="/arbiter" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('nav.arbiter')}</Link></li>
+                <li><Link to="/leagues" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">Ligas</Link></li>
                 <li><a href="/public" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('register.viewTournaments')}</a></li>
                 <li><a href="/pricing" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('nav.pricing') || 'Planes'}</a></li>
               </ul>

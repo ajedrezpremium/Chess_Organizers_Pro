@@ -10,6 +10,7 @@ import BoardWall from '../components/BoardWall.jsx';
 import StatsDashboard from '../components/StatsDashboard.jsx';
 import RegistrationsTab from '../components/RegistrationsTab.jsx';
 import TeamsTab from '../components/TeamsTab.jsx';
+import MatchesTab from '../components/MatchesTab.jsx';
 import QRCode from '../components/QRCode.jsx';
 import BulkImportFide from '../components/BulkImportFide.jsx';
 import ImportPlayers from '../components/ImportPlayers.jsx';
@@ -189,6 +190,10 @@ export default function TournamentDetail() {
             className="border dark:border-fide-600 px-3 py-1.5 rounded text-xs font-medium hover:bg-gray-50 dark:hover:bg-fide-700 dark:text-fide-200 transition flex items-center gap-1">
             <span>{t('export.fideSubmit')}</span>
           </button>
+          <button onClick={() => window.open(`/fide/report/${id}`, '_blank')} title="Reporte FIDE"
+            className="border dark:border-fide-600 px-3 py-1.5 rounded text-xs font-medium hover:bg-gray-50 dark:hover:bg-fide-700 dark:text-fide-200 transition flex items-center gap-1">
+            <span>📋 Reporte FIDE</span>
+          </button>
           {tournament.status !== 'finished' && (
             <button onClick={() => setConfirmFinish(true)} title={t('rounds.close')} className="bg-blue-700 hover:bg-blue-800 text-white px-3 py-1.5 rounded text-xs font-medium transition">{t('rounds.close')}</button>
           )}
@@ -201,6 +206,7 @@ export default function TournamentDetail() {
           { key: 'players', label: `${t('tournament.players')} (${players.length})` },
           { key: 'registrations', label: t('registrationsTab.title', 'Solicitudes') },
           { key: 'teams', label: t('teamsTab.title', 'Equipos') },
+          { key: 'matches', label: 'Matches' },
           { key: 'rounds', label: `${t('tournament.rounds')} (${rounds.length})` },
           { key: 'standings', label: t('tournament.standings') },
           { key: 'crosstab', label: t('tv.crosstab') },
@@ -225,6 +231,7 @@ export default function TournamentDetail() {
         {tab === 'players' && <PlayersTab tournamentId={id} players={players} onUpdate={load} />}
         {tab === 'registrations' && <RegistrationsTab tournamentId={id} />}
         {tab === 'teams' && <TeamsTab tournamentId={id} players={players} />}
+        {tab === 'matches' && <MatchesTab tournamentId={id} players={players} teams={teams} />}
         {tab === 'rounds' && <RoundsTab tournament={tournament} rounds={rounds} players={players} onGenerate={handleGenerate} onResult={handleResult} onClose={handleClose} onPublish={handlePublish} onAddPairing={handleAddPairing} onDeletePairing={handleDeletePairing} onSwapColors={handleSwapColors} />}
         {tab === 'standings' && <StandingsTab standings={standings} onLoad={loadStandings} autoRefresh={tournament?.status !== 'finished'} />}
         {tab === 'schedule' && <ScheduleTab tournament={tournament} rounds={rounds} onUpdate={load} />}

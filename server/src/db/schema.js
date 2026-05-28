@@ -355,6 +355,109 @@ export function migrate() {
   try { db.exec(`ALTER TABLE tournaments ADD COLUMN max_players INTEGER DEFAULT 0`); } catch {}
   try { db.exec(`ALTER TABLE tournaments ADD COLUMN registered_count INTEGER DEFAULT 0`); } catch {}
 
+  // 2026-05: FIDE homologation columns
+  try { db.exec(`ALTER TABLE tournaments ADD COLUMN fide_event_id TEXT DEFAULT ''`); } catch {}
+  try { db.exec(`ALTER TABLE tournaments ADD COLUMN fide_approved INTEGER DEFAULT 0`); } catch {}
+  try { db.exec(`ALTER TABLE tournaments ADD COLUMN deputy_arbiter_2 TEXT DEFAULT ''`); } catch {}
+  try { db.exec(`ALTER TABLE tournaments ADD COLUMN tournament_director TEXT DEFAULT ''`); } catch {}
+  try { db.exec(`ALTER TABLE tournaments ADD COLUMN location_address TEXT DEFAULT ''`); } catch {}
+  try { db.exec(`ALTER TABLE tournaments ADD COLUMN round_time TEXT DEFAULT ''`); } catch {}
+
+  // 2026-05: Ligas / Circuits
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS leagues (
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        name          TEXT    NOT NULL,
+        description   TEXT    DEFAULT '',
+        federation    TEXT    DEFAULT '',
+        season        TEXT    DEFAULT '',
+        scoring_system TEXT   DEFAULT 'placement',
+        status        TEXT    DEFAULT 'active' CHECK(status IN ('active','finished','cancelled')),
+        created_by    INTEGER REFERENCES users(id),
+        logo_url      TEXT    DEFAULT '',
+        tiebreaks     TEXT    DEFAULT 'BH1,BH,SB,DE,PR',
+        created_at    TEXT    DEFAULT (datetime('now')),
+        updated_at    TEXT    DEFAULT (datetime('now'))
+      )
+    `);
+  } catch {}
+
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS league_tournaments (
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        league_id     INTEGER NOT NULL REFERENCES leagues(id) ON DELETE CASCADE,
+        tournament_id INTEGER NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+        round_number  INTEGER DEFAULT 1,
+        weight        REAL    DEFAULT 1.0,
+        created_at    TEXT    DEFAULT (datetime('now')),
+        UNIQUE(league_id, tournament_id)
+      )
+    `);
+  } catch {}
+
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS league_participants (
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        league_id     INTEGER NOT NULL REFERENCES leagues(id) ON DELETE CASCADE,
+        player_id     INTEGER NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+        total_points  REAL    DEFAULT 0,
+        tournaments_played INTEGER DEFAULT 0,
+        best_result   INTEGER,
+        created_at    TEXT    DEFAULT (datetime('now')),
+        UNIQUE(league_id, player_id)
+      )
+    `);
+  } catch {}
+
+  // 2026-05: Team Matches (enfrentamientos directos entre equipos)
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS team_matches (
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        tournament_id INTEGER REFERENCES tournaments(id) ON DELETE SET NULL,
+        home_team_id  INTEGER NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+        away_team_id  INTEGER NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+        match_date    TEXT,
+        location      TEXT    DEFAULT '',
+        round         INTEGER DEFAULT 1,
+        status        TEXT    DEFAULT 'pending' CHECK(status IN ('pending','active','finished','cancelled')),
+        home_score    REAL    DEFAULT 0,
+        away_score    REAL    DEFAULT 0,
+        created_by    INTEGER REFERENCES users(id),
+        created_at    TEXT    DEFAULT (datetime('now')),
+        updated_at    TEXT    DEFAULT (datetime('now'))
+      )
+    `);
+  } catch {}
+
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS match_pairings (
+        id              INTEGER PRIMARY KEY AUTOINCREMENT,
+        team_match_id   INTEGER NOT NULL REFERENCES team_matches(id) ON DELETE CASCADE,
+        board           INTEGER NOT NULL,
+        home_player_id  INTEGER REFERENCES tournament_players(id) ON DELETE SET NULL,
+        away_player_id  INTEGER REFERENCES tournament_players(id) ON DELETE SET NULL,
+        result          TEXT    DEFAULT '-' CHECK(result IN ('1','0','=','U','F','H','Z','-')),
+        home_rating     INTEGER DEFAULT 0,
+        away_rating     INTEGER DEFAULT 0,
+        created_at      TEXT    DEFAULT (datetime('now')),
+        UNIQUE(team_match_id, board)
+      )
+    `);
+  } catch {}
+
+  try {
+    // Índices
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_league_tournaments_league ON league_tournaments(league_id)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_league_participants_league ON league_participants(league_id)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_team_matches_tournament ON team_matches(tournament_id)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_match_pairings_match ON match_pairings(team_match_id)`);
+  } catch {}
+
   console.log(`✓ Migración completada: ${DB_PATH}`);
   db.close();
   return true;

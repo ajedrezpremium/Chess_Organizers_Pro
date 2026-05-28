@@ -20,6 +20,8 @@ const PublicOrganizersList = lazy(() => import('./pages/PublicOrganizersList.jsx
 const PublicOrganizerProfile = lazy(() => import('./pages/PublicOrganizerProfile.jsx'));
 const PricingPage = lazy(() => import('./pages/PricingPage.jsx'));
 const PlayerDashboard = lazy(() => import('./pages/PlayerDashboard.jsx'));
+const LeaguesPage = lazy(() => import('./pages/LeaguesPage.jsx'));
+const LeagueDetailPage = lazy(() => import('./pages/LeagueDetailPage.jsx'));
 const ArbiterTournamentsList = lazy(() => import('./pages/ArbiterTournamentsList.jsx'));
 const ArbiterPanel = lazy(() => import('./pages/ArbiterPanel.jsx'));
 
@@ -64,6 +66,8 @@ function App() {
                 <Route path="new" element={<TournamentNew />} />
                 <Route path="tournament/:id" element={<TournamentDetail />} />
                 <Route path="player" element={<PlayerDashboard />} />
+                <Route path="leagues" element={<LeaguesPage />} />
+                <Route path="leagues/:id" element={<LeagueDetailPage />} />
               </Route>
             </Routes>
           </Suspense>

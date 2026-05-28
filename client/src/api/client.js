@@ -100,6 +100,7 @@ export const api = {
 
   exportTrf: (tid) => request('GET', `/tournaments/${tid}/trf`),
   fideSubmit: (tid) => request('POST', `/fide/submit/${tid}`),
+  fideReport: (tid) => request('GET', `/fide/report/${tid}`),
   scheduleRound: (rid, scheduled_at) => request('PATCH', `/rounds/${rid}/schedule`, { scheduled_at }),
   bulletin: (tid) => request('GET', `/tournaments/${tid}/bulletin`),
 
@@ -144,7 +145,27 @@ export const api = {
   approveRegistration: (tid, reqId) => request('PATCH', `/tournaments/${tid}/registrations/${reqId}`, { action: 'approved' }),
   rejectRegistration: (tid, reqId) => request('PATCH', `/tournaments/${tid}/registrations/${reqId}`, { action: 'rejected' }),
 
-    public: {
+  // ── Ligas ─────────────────────────────────────────────────
+  listLeagues: () => request('GET', '/leagues'),
+  getLeague: (id) => request('GET', `/leagues/${id}`),
+  createLeague: (data) => request('POST', '/leagues', data),
+  updateLeague: (id, data) => request('PUT', `/leagues/${id}`, data),
+  deleteLeague: (id) => request('DELETE', `/leagues/${id}`),
+  addLeagueTournament: (lid, tid, weight) => request('POST', `/leagues/${lid}/tournaments`, { tournament_id: tid, weight }),
+  removeLeagueTournament: (lid, tid) => request('DELETE', `/leagues/${lid}/tournaments/${tid}`),
+  calculateLeagueStandings: (id) => request('POST', `/leagues/${id}/calculate-standings`),
+
+  // ── Team Matches ───────────────────────────────────────────
+  listMatches: (tid) => request('GET', `/matches${tid ? `?tournament_id=${tid}` : ''}`),
+  getMatch: (id) => request('GET', `/matches/${id}`),
+  createMatch: (data) => request('POST', '/matches', data),
+  updateMatch: (id, data) => request('PUT', `/matches/${id}`, data),
+  deleteMatch: (id) => request('DELETE', `/matches/${id}`),
+  addMatchPairing: (mid, data) => request('POST', `/matches/${mid}/pairings`, data),
+  updateMatchPairingResult: (mid, pid, result) => request('PUT', `/matches/${mid}/pairings/${pid}`, { result }),
+  removeMatchPairing: (mid, pid) => request('DELETE', `/matches/${mid}/pairings/${pid}`),
+
+  public: {
       getTournament: (id) => request('GET', `/public/tournaments/${id}`),
       performance: (id) => request('GET', `/public/tournaments/${id}/performance`),
       registrationStatus: (id) => request('GET', `/public/tournaments/${id}/registration-status`),
