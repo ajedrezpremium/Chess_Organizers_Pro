@@ -179,6 +179,7 @@ router.post('/submit/:tournamentId', authenticate, async (req, res) => {
     }, players, rounds);
 
     const submission = await submitTRF(req.params.tournamentId, trfContent, tournament.federation);
+    db.prepare('UPDATE tournaments SET submitted_to_fide = 1, submitted_at = datetime(\'now\') WHERE id = ?').run(req.params.tournamentId);
     res.json(submission);
   } catch (err) {
     res.status(502).json({ error: 'Error al enviar a FIDE', details: err.message });
