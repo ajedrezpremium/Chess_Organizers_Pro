@@ -120,7 +120,7 @@ export async function handleWebhook(rawBody, signature) {
         const tournamentId = parseInt(session.metadata?.tournament_id);
         if (regId && tournamentId) {
           db.prepare(`
-            UPDATE registration_requests SET paid = 1, status = 'approved',
+            UPDATE registration_requests SET paid = 1,
               stripe_payment_intent_id = ?,
               updated_at = datetime('now')
             WHERE id = ? AND tournament_id = ?
@@ -128,7 +128,8 @@ export async function handleWebhook(rawBody, signature) {
 
           const tournament = db.prepare('SELECT * FROM tournaments WHERE id = ?').get(tournamentId);
           if (tournament?.auto_approve) {
-            // Auto-approve: find or create player and enroll
+            // Auto-approve: set status approved, find or create player and enroll
+            db.prepare("UPDATE registration_requests SET status = 'approved' WHERE id = ?").run(regId);
             const reg = db.prepare('SELECT * FROM registration_requests WHERE id = ?').get(regId);
             if (reg) {
               let player = null;
@@ -149,6 +150,7 @@ export async function handleWebhook(rawBody, signature) {
               }
             }
           }
+          // else: keep status as pending_payment (paid), organizer must approve manually
         }
         break;
       }

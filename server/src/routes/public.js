@@ -570,6 +570,7 @@ router.get('/tournaments/:id/registration-status', (req, res) => {
     currency: t.registration_currency || 'usd',
     autoApprove: !!t.auto_approve,
     status: t.status,
+    needsPayment: (t.registration_fee || 0) > 0 && t.status !== 'finished',
   });
 });
 
