@@ -108,6 +108,26 @@ export async function notifyResultUpdated(tournamentId) {
     `<b>${t.name}</b>\nResultado actualizado.\n<a href="${link}">Ver clasificación</a>`);
 }
 
+// Notificar recepción de inscripción
+export async function notifyRegistrationReceived(tournamentId, playerEmail, playerName) {
+  if (!playerEmail) return;
+  const db = getDb();
+  const t = getTournament(db, tournamentId);
+  if (!t) return;
+
+  const owner = getTournamentOwner(db, tournamentId);
+  if (owner) {
+    createInAppNotification(db, owner.id, tournamentId, 'registration_received',
+      `Nueva inscripción`, `${playerName} solicitó inscribirse a ${t.name}`);
+  }
+
+  const link = `${config.publicUrl}/public/tournament/${tournamentId}`;
+  const subject = `[Chess Organizers] Solicitud recibida — ${t.name}`;
+  const html = `<h2>${t.name}</h2><p>Hola ${playerName}, hemos recibido tu solicitud de inscripción.</p><p>El organizador revisará tu solicitud y te notificaremos cuando sea aprobada.</p><p><a href="${link}">Ver torneo</a></p>`;
+
+  await sendMail({ to: playerEmail, subject, html });
+}
+
 // Notificar inscripción aprobada
 export async function notifyRegistrationApproved(tournamentId, playerEmail, playerName) {
   if (!playerEmail) return;
@@ -126,4 +146,29 @@ export async function notifyRegistrationApproved(tournamentId, playerEmail, play
   const html = `<h2>${t.name}</h2><p>Hola ${playerName}, tu inscripción ha sido aprobada.</p><p><a href="${link}">Ver torneo</a></p>`;
 
   await sendMail({ to: playerEmail, subject, html });
+}
+
+// Notificar torneo finalizado
+export async function notifyTournamentFinished(tournamentId) {
+  const db = getDb();
+  const t = getTournament(db, tournamentId);
+  if (!t) return;
+
+  const owner = getTournamentOwner(db, tournamentId);
+  if (owner) {
+    createInAppNotification(db, owner.id, tournamentId, 'tournament_finished',
+      `Torneo finalizado`, `El torneo ${t.name} ha finalizado`);
+  }
+
+  const link = `${config.publicUrl}/public/tournament/${tournamentId}`;
+  const subject = `[Chess Organizers] Torneo finalizado — ${t.name}`;
+  const html = `<h2>${t.name}</h2><p>El torneo ha finalizado. Puedes consultar los resultados y descargar tu certificado en la página del torneo.</p><p><a href="${link}">Ver resultados</a></p>`;
+
+  const players = getPlayersByTournament(db, tournamentId);
+  for (const p of players) {
+    await sendMail({ to: p.email, subject, html });
+  }
+
+  await sendTelegramToOwner(db, tournamentId,
+    `<b>${t.name}</b> — Torneo finalizado.\n<a href="${link}">Ver resultados</a>`);
 }

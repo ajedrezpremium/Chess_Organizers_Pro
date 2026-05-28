@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { getDb } from '../db/index.js';
 import { authenticate } from '../middleware/auth.js';
-import { notifyRegistrationApproved } from '../services/notifications.js';
+import { notifyRegistrationApproved, notifyTournamentFinished } from '../services/notifications.js';
 import { dispatchWebhooks } from '../services/webhooks.js';
 import { validate } from '../middleware/validate.js';
 
@@ -83,9 +83,10 @@ router.patch('/:id', authenticate, (req, res) => {
   db.prepare(`UPDATE tournaments SET ${updates.join(', ')} WHERE id = ?`).run(...params);
   const tournament = db.prepare('SELECT * FROM tournaments WHERE id = ?').get(req.params.id);
 
-  // Webhook for tournament finished
+  // Webhook + notifications for tournament finished
   if (req.body.status === 'finished') {
     dispatchWebhooks('tournament.finished', tournament.id, { name: tournament.name });
+    notifyTournamentFinished(tournament.id);
   }
 
   res.json(tournament);

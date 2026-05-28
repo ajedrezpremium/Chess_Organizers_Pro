@@ -7,6 +7,7 @@ import { calculateRatingChanges, perRoundChanges } from '../services/ratingChang
 import { calculateTiebreak } from '../../../src/engine/tiebreaks.js';
 import { DEFAULT_TIEBREAK_ORDER } from '../../../src/engine/types.js';
 import { subscribe } from '../services/pubsub.js';
+import { notifyRegistrationReceived } from '../services/notifications.js';
 
 const router = Router();
 
@@ -663,6 +664,9 @@ router.post('/tournaments/:id/register', async (req, res) => {
 
   // Increment registered_count
   db.prepare('UPDATE tournaments SET registered_count = registered_count + 1 WHERE id = ?').run(req.params.id);
+
+  // Notify
+  notifyRegistrationReceived(req.params.id, email, name);
 
   // If payment required, create Stripe Checkout Session
   if (needsPayment) {
