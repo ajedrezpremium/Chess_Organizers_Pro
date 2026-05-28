@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { api } from '../api/client.js';
 import PerformanceCharts from './PerformanceCharts.jsx';
-import { exportPerformancePDF } from '../utils/exportUtils.js';
+import { exportPerformancePDF, exportCertificatePDF } from '../utils/exportUtils.js';
 
 export default function PerformanceAnalysis({ tournamentId, tournament }) {
   const [data, setData] = useState([]);
@@ -98,45 +98,56 @@ export default function PerformanceAnalysis({ tournamentId, tournament }) {
                 <th className="text-center px-4 py-3 font-medium cursor-pointer hover:text-white" onClick={() => setSortBy('ratingChg')}>
                   ΔR {sortBy === 'ratingChg' && '↓'}
                 </th>
-                <th className="text-center px-4 py-3 font-medium">K</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-800">
-              {sorted.map((p, i) => {
-                const kFactor = p.kFactor || (p.rating < 2100 ? 40 : p.rating < 2400 ? 20 : 10);
-                const rc = p.roundChanges || [];
-                return (
-                  <tr key={p.id} className="hover:bg-gray-800/50 transition">
-                    <td className="px-4 py-3 text-fide-400 w-10">{i + 1}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        {p.title && <span className="text-xs text-amber-500 font-medium">{p.title}</span>}
-                        <span className="font-medium text-white">{p.name} {p.lastName || ''}</span>
-                        {p.federation && <span className="text-[10px] text-fide-500 bg-fide-800 px-1.5 py-0.5 rounded">{p.federation}</span>}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-center text-fide-300">{p.rating || '-'}</td>
-                    <td className="px-4 py-3 text-center font-medium text-white">{p.points}/{p.games}</td>
-                    <td className={`px-4 py-3 text-center font-medium ${getTprColor(p.tpr, p.rating)}`}>
-                      {p.tpr !== null ? p.tpr : '-'}
-                    </td>
-                    {maxRounds > 0 && Array.from({ length: maxRounds }, (_, i) => {
-                      const d = rc[i];
-                      return (
-                        <td key={`rd${i}`} className={`px-2 py-3 text-center text-xs font-medium ${getChgColor(d !== undefined ? d * kFactor : null)}`}>
-                          {d !== undefined && d !== null
-                            ? (d * kFactor > 0 ? '+' : '') + Math.round(d * kFactor)
-                            : '-'}
-                        </td>
-                      );
-                    })}
-                    <td className={`px-4 py-3 text-center font-medium ${getChgColor(p.ratingChg)}`}>
-                      {p.ratingChg !== null ? (p.ratingChg > 0 ? '+' : '') + p.ratingChg : '-'}
-                    </td>
-                    <td className="px-4 py-3 text-center text-fide-500 text-xs">{kFactor}</td>
-                  </tr>
-                );
-              })}
+              <th className="text-center px-4 py-3 font-medium">K</th>
+              <th className="text-center px-4 py-3 font-medium w-10"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-800">
+            {sorted.map((p, i) => {
+              const kFactor = p.kFactor || (p.rating < 2100 ? 40 : p.rating < 2400 ? 20 : 10);
+              const rc = p.roundChanges || [];
+              const playerWithPos = { ...p, position: i + 1 };
+              return (
+                <tr key={p.id} className="hover:bg-gray-800/50 transition">
+                  <td className="px-4 py-3 text-fide-400 w-10">{i + 1}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      {p.title && <span className="text-xs text-amber-500 font-medium">{p.title}</span>}
+                      <span className="font-medium text-white">{p.name} {p.lastName || ''}</span>
+                      {p.federation && <span className="text-[10px] text-fide-500 bg-fide-800 px-1.5 py-0.5 rounded">{p.federation}</span>}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-center text-fide-300">{p.rating || '-'}</td>
+                  <td className="px-4 py-3 text-center font-medium text-white">{p.points}/{p.games}</td>
+                  <td className={`px-4 py-3 text-center font-medium ${getTprColor(p.tpr, p.rating)}`}>
+                    {p.tpr !== null ? p.tpr : '-'}
+                  </td>
+                  {maxRounds > 0 && Array.from({ length: maxRounds }, (_, i) => {
+                    const d = rc[i];
+                    return (
+                      <td key={`rd${i}`} className={`px-2 py-3 text-center text-xs font-medium ${getChgColor(d !== undefined ? d * kFactor : null)}`}>
+                        {d !== undefined && d !== null
+                          ? (d * kFactor > 0 ? '+' : '') + Math.round(d * kFactor)
+                          : '-'}
+                      </td>
+                    );
+                  })}
+                  <td className={`px-4 py-3 text-center font-medium ${getChgColor(p.ratingChg)}`}>
+                    {p.ratingChg !== null ? (p.ratingChg > 0 ? '+' : '') + p.ratingChg : '-'}
+                  </td>
+                  <td className="px-4 py-3 text-center text-fide-500 text-xs">{kFactor}</td>
+                  <td className="px-4 py-3 text-center">
+                    <button
+                      onClick={() => exportCertificatePDF(tournament, playerWithPos)}
+                      className="text-fide-500 hover:text-amber-400 transition text-xs"
+                      title="Descargar certificado"
+                    >
+                      🎓
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
             </tbody>
           </table>
         </div>

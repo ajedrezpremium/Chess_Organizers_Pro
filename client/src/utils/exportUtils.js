@@ -477,3 +477,137 @@ export function exportPerformancePDF(tournament, performanceData) {
 
   doc.save(`${tournament.name.replace(/\s+/g, '_')}_rendimiento.pdf`);
 }
+
+export function exportCertificatePDF(tournament, playerData) {
+  if (!playerData) return;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const pw = doc.internal.pageSize.getWidth();
+  const ph = doc.internal.pageSize.getHeight();
+
+  const kf = playerData.kFactor || 20;
+  const rank = playerData.position || '-';
+  const dateStr = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  // Border
+  doc.setDrawColor(212, 175, 55);
+  doc.setLineWidth(2);
+  doc.rect(8, 8, pw - 16, ph - 16);
+  doc.setDrawColor(180, 150, 40);
+  doc.setLineWidth(0.5);
+  doc.rect(11, 11, pw - 22, ph - 22);
+
+  // Decorative top line
+  doc.setDrawColor(212, 175, 55);
+  doc.setLineWidth(0.3);
+  doc.line(30, 35, pw - 30, 35);
+
+  // Header
+  doc.setFontSize(36);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(212, 175, 55);
+  doc.text('♛', pw / 2, 28, { align: 'center' });
+
+  doc.setFontSize(22);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(52, 73, 94);
+  doc.text('CERTIFICADO DE PARTICIPACIÓN', pw / 2, 50, { align: 'center' });
+
+  // Decorative line
+  doc.setDrawColor(212, 175, 55);
+  doc.setLineWidth(0.3);
+  doc.line(30, 56, pw - 30, 56);
+
+  // Body
+  doc.setFontSize(13);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(80);
+  doc.text('Otorgado a', pw / 2, 75, { align: 'center' });
+
+  // Player name
+  doc.setFontSize(28);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0);
+  const playerName = `${playerData.title ? playerData.title + ' ' : ''}${playerData.name} ${playerData.lastName || ''}`.trim();
+  doc.text(playerName, pw / 2, 95, { align: 'center' });
+
+  doc.setFontSize(13);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(80);
+  doc.text(`Por su participación en el torneo`, pw / 2, 112, { align: 'center' });
+
+  // Tournament name
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(52, 73, 94);
+  const tName = tournament.name || '';
+  doc.text(tName, pw / 2, 130, { align: 'center' });
+
+  // Performance details
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(60);
+  const details = [
+    `Sistema: ${SYS_LABELS[tournament.system] || tournament.system} · ${tournament.n_rounds} rondas`,
+    `${tournament.start_date || ''}${tournament.end_date ? ' — ' + tournament.end_date : ''}`,
+  ].filter(Boolean);
+  let dy = 148;
+  for (const line of details) {
+    doc.text(line, pw / 2, dy, { align: 'center' });
+    dy += 7;
+  }
+
+  // Stats table
+  const stHeader = ['Posición', 'Puntos', 'Elo', 'TPR', 'ΔR', 'K'];
+  const stBody = [[
+    rank,
+    playerData.points != null ? `${playerData.points}/${playerData.games || '-'}` : '-',
+    playerData.rating || '-',
+    playerData.tpr != null ? playerData.tpr : '-',
+    playerData.ratingChg != null ? `${playerData.ratingChg > 0 ? '+' : ''}${playerData.ratingChg}` : '-',
+    kf,
+  ]];
+  doc.autoTable({
+    head: [stHeader],
+    body: stBody,
+    startY: dy + 4,
+    theme: 'grid',
+    styles: { fontSize: 11, cellPadding: 4, halign: 'center' },
+    headStyles: { fillColor: [52, 73, 94], textColor: 255, fontStyle: 'bold', fontSize: 10 },
+    bodyStyles: { fontStyle: 'bold', fontSize: 12 },
+    columnStyles: {
+      0: { cellWidth: 30 },
+      1: { cellWidth: 30 },
+      2: { cellWidth: 25 },
+      3: { cellWidth: 25 },
+      4: { cellWidth: 25 },
+      5: { cellWidth: 20 },
+    },
+    margin: { left: 60, right: 60 },
+  });
+
+  // Federation & Date
+  const fy = doc.lastAutoTable.finalY + 16;
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(100);
+
+  const footerLines = [];
+  if (playerData.federation) footerLines.push(`Federación: ${playerData.federation}`);
+  footerLines.push(`Expedido el ${dateStr}`);
+
+  let fry = fy;
+  for (const line of footerLines) {
+    doc.text(line, pw / 2, fry, { align: 'center' });
+    fry += 6;
+  }
+
+  // Bottom decorative line & branding
+  doc.setDrawColor(212, 175, 55);
+  doc.setLineWidth(0.3);
+  doc.line(30, ph - 28, pw - 30, ph - 28);
+  doc.setFontSize(8);
+  doc.setTextColor(150);
+  doc.text('Generado por Chess Organizers Pro', pw / 2, ph - 18, { align: 'center' });
+
+  doc.save(`${tournament.name.replace(/\s+/g, '_')}_certificado_${playerData.name.replace(/\s+/g, '_')}.pdf`);
+}
