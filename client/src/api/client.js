@@ -147,6 +147,7 @@ export const api = {
     public: {
       getTournament: (id) => request('GET', `/public/tournaments/${id}`),
       performance: (id) => request('GET', `/public/tournaments/${id}/performance`),
+      registrationStatus: (id) => request('GET', `/public/tournaments/${id}/registration-status`),
     listTournaments: (params) => request('GET', `/public/tournaments?${new URLSearchParams(params)}`),
     getPlayers: (id) => request('GET', `/public/tournaments/${id}/players`),
     getRounds: (id) => request('GET', `/public/tournaments/${id}/rounds`),

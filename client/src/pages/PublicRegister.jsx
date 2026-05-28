@@ -19,12 +19,19 @@ export default function PublicRegister() {
   const [error, setError] = useState('');
   const [requiresPayment, setRequiresPayment] = useState(false);
   const [checkoutUrl, setCheckoutUrl] = useState(null);
+  const [regStatus, setRegStatus] = useState(null);
 
   const isPaymentSuccess = searchParams.get('success') === '1';
   const paymentRegId = searchParams.get('reg_id');
 
   useEffect(() => {
-    api.public.getTournament(id).then(setTournament).catch(() => setError(t('register.notAvailable')));
+    Promise.all([
+      api.public.getTournament(id),
+      api.public.registrationStatus(id).catch(() => null),
+    ]).then(([t, rs]) => {
+      setTournament(t);
+      setRegStatus(rs);
+    }).catch(() => setError(t('register.notAvailable')));
   }, [id]);
 
   const customFields = (() => {
@@ -136,6 +143,19 @@ export default function PublicRegister() {
             <div className="mt-3 inline-flex items-center gap-2 bg-amber-900/30 border border-amber-700/50 rounded-lg px-4 py-2">
               <span className="text-amber-400 font-bold text-lg">{formattedFee} {currency.toUpperCase()}</span>
               <span className="text-gray-400 text-xs">{t('register.registrationFee')}</span>
+            </div>
+          )}
+          {regStatus && (
+            <div className="mt-3 flex items-center justify-center gap-4 text-xs text-gray-500">
+              {regStatus.maxPlayers > 0 && (
+                <span>{regStatus.registeredCount}/{regStatus.maxPlayers} jugadores inscritos</span>
+              )}
+              {regStatus.spotsRemaining > 0 && regStatus.spotsRemaining <= 10 && (
+                <span className="text-amber-400 font-medium">¡Solo {regStatus.spotsRemaining} lugares!</span>
+              )}
+              {!regStatus.canRegister && (
+                <span className="text-red-400">{regStatus.message}</span>
+              )}
             </div>
           )}
         </div>

@@ -538,14 +538,98 @@ router.get('/tournaments/:id/head-to-head', (req, res) => {
   }
 });
 
+// GET /public/tournaments/:id/registration-status — estado de inscripción
+router.get('/tournaments/:id/registration-status', (req, res) => {
+  const db = getDb();
+  const t = db.prepare("SELECT registration_open, registration_opens_at, registration_closes_at, max_players, registered_count, registration_fee, registration_currency, status, auto_approve FROM tournaments WHERE id = ?").get(req.params.id);
+  if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
+
+  const now = new Date();
+  const opensAt = t.registration_opens_at ? new Date(t.registration_opens_at) : null;
+  const closesAt = t.registration_closes_at ? new Date(t.registration_closes_at) : null;
+
+  let canRegister = !!t.registration_open;
+  let message = '';
+
+  if (!canRegister) message = 'Las inscripciones están cerradas.';
+  else if (opensAt && now < opensAt) { canRegister = false; message = `Las inscripciones abren el ${opensAt.toLocaleDateString()}.`; }
+  else if (closesAt && now > closesAt) { canRegister = false; message = 'Las inscripciones han cerrado.'; }
+  else if (t.max_players > 0 && (t.registered_count || 0) >= t.max_players) { canRegister = false; message = `Torneo completo (${t.max_players} jugadores).`; }
+
+  res.json({
+    canRegister,
+    message,
+    isOpen: !!t.registration_open,
+    opensAt: t.registration_opens_at || null,
+    closesAt: t.registration_closes_at || null,
+    maxPlayers: t.max_players || 0,
+    registeredCount: t.registered_count || 0,
+    spotsRemaining: t.max_players > 0 ? Math.max(0, t.max_players - (t.registered_count || 0)) : -1,
+    hasFee: (t.registration_fee || 0) > 0,
+    fee: t.registration_fee || 0,
+    currency: t.registration_currency || 'usd',
+    autoApprove: !!t.auto_approve,
+    status: t.status,
+  });
+});
+
 // POST /public/tournaments/:id/register — auto-registro de jugador
 router.post('/tournaments/:id/register', async (req, res) => {
   const db = getDb();
   const t = db.prepare("SELECT * FROM tournaments WHERE id = ? AND status != 'pending'").get(req.params.id);
   if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
 
+  // ── Registration open checks ──
+  if (!t.registration_open) {
+    return res.status(403).json({ error: 'Las inscripciones están cerradas para este torneo.' });
+  }
+
+  const now = new Date();
+  if (t.registration_opens_at) {
+    const opensAt = new Date(t.registration_opens_at);
+    if (now < opensAt) {
+      return res.status(403).json({ error: `Las inscripciones abren el ${opensAt.toLocaleDateString()}` });
+    }
+  }
+  if (t.registration_closes_at) {
+    const closesAt = new Date(t.registration_closes_at);
+    if (now > closesAt) {
+      return res.status(403).json({ error: 'Las inscripciones han cerrado para este torneo.' });
+    }
+  }
+
+  // ── Max players check ──
+  if (t.max_players > 0) {
+    const currentCount = db.prepare(`
+      SELECT COUNT(*) as c FROM tournament_players WHERE tournament_id = ?
+    `).get(req.params.id).c;
+    if (currentCount >= t.max_players) {
+      return res.status(403).json({ error: `El torneo ha alcanzado el límite de ${t.max_players} jugadores.` });
+    }
+  }
+
   const { name, last_name, email, fide_id, fide_rating, federation, title, phone, notes, custom_data } = req.body;
   if (!name || name.trim().length === 0) return res.status(400).json({ error: 'El nombre es obligatorio' });
+
+  // ── Duplicate check ──
+  if (email || fide_id) {
+    const dupes = db.prepare(`
+      SELECT COUNT(*) as c FROM registration_requests
+      WHERE tournament_id = ? AND status IN ('pending','pending_payment','approved')
+      AND (? != '' AND email = ?) OR (? != '' AND fide_id = ?)
+    `).get(req.params.id, email || '', email || '', fide_id || '', fide_id || '');
+    if (dupes.c > 0) {
+      return res.status(409).json({ error: 'Ya tienes una solicitud activa para este torneo.' });
+    }
+    const enrolled = db.prepare(`
+      SELECT COUNT(*) as c FROM tournament_players tp
+      JOIN players p ON tp.player_id = p.id
+      WHERE tp.tournament_id = ? AND ((? != '' AND p.email = ?) OR (? != '' AND p.fide_id = ?))
+    `).get(req.params.id, email || '', email || '', fide_id || '', fide_id || '');
+    if (enrolled.c > 0) {
+      return res.status(409).json({ error: 'Ya estás inscrito en este torneo.' });
+    }
+  }
 
   // Validate custom_data against tournament's custom_fields definition
   let customFields = [];
@@ -575,6 +659,9 @@ router.post('/tournaments/:id/register', async (req, res) => {
          notes?.trim() ?? '', JSON.stringify(validatedCustomData), status);
 
   const regId = result.lastInsertRowid;
+
+  // Increment registered_count
+  db.prepare('UPDATE tournaments SET registered_count = registered_count + 1 WHERE id = ?').run(req.params.id);
 
   // If payment required, create Stripe Checkout Session
   if (needsPayment) {

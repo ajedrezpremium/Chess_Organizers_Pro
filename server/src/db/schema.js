@@ -348,6 +348,13 @@ export function migrate() {
     try { db.exec(sql); console.log(`  ✓ ${sql.slice(0, 50)}…`); } catch { /* ya existe */ }
   }
 
+  // 2026-05: Control de registro (apertura/cierre, límite jugadores)
+  try { db.exec(`ALTER TABLE tournaments ADD COLUMN registration_open INTEGER DEFAULT 1`); } catch {}
+  try { db.exec(`ALTER TABLE tournaments ADD COLUMN registration_opens_at TEXT DEFAULT ''`); } catch {}
+  try { db.exec(`ALTER TABLE tournaments ADD COLUMN registration_closes_at TEXT DEFAULT ''`); } catch {}
+  try { db.exec(`ALTER TABLE tournaments ADD COLUMN max_players INTEGER DEFAULT 0`); } catch {}
+  try { db.exec(`ALTER TABLE tournaments ADD COLUMN registered_count INTEGER DEFAULT 0`); } catch {}
+
   console.log(`✓ Migración completada: ${DB_PATH}`);
   db.close();
   return true;
