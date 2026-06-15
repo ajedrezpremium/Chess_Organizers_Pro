@@ -4,7 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
-import { getDb, closeDb } from './db/index.js';
+import { getDb, closeDb } from './db/supabase.js';
 import { migrate } from './db/schema.js';
 import config from './config.js';
 
@@ -28,6 +28,7 @@ import apiV1Routes from './routes/apiV1.js';
 import externalRoutes from './routes/external.js';
 import importRoutes from './routes/import.js';
 import notificationRoutes from './routes/notifications.js';
+import aiRoutes from './routes/ai.js';
 
 const app = express();
 
@@ -72,6 +73,7 @@ app.use('/api/v1', apiV1Routes);
 app.use('/external', externalRoutes);
 app.use('/import', importRoutes);
 app.use('/notifications', notificationRoutes);
+app.use('/ai', aiRoutes);
 app.use('/public', publicRoutes);
 
 // ── Static files (client build) ────────────────────────────────────
@@ -87,10 +89,10 @@ app.use((req, res, next) => {
 });
 
 // ── Health check ───────────────────────────────────────────────────
-app.get('/health', (req, res) => {
+app.get('/health', async (req, res) => {
   const db = getDb();
   let dbOk = false;
-  try { db.prepare('SELECT 1').get(); dbOk = true; } catch {}
+  try { await db.prepare('SELECT 1').get(); dbOk = true; } catch (e) { console.error('Health check DB error:', e); }
   res.json({
     status: 'ok',
     version: '1.0.0',
@@ -100,12 +102,13 @@ app.get('/health', (req, res) => {
   });
 });
 
-app.get('/health/readiness', (req, res) => {
+app.get('/health/readiness', async (req, res) => {
   try {
     const db = getDb();
-    db.prepare('SELECT 1').get();
+    await db.prepare('SELECT 1').get();
     res.json({ status: 'ready', database: 'connected' });
-  } catch {
+  } catch (e) {
+    console.error('Readiness check error:', e);
     res.status(503).json({ status: 'not ready', database: 'disconnected' });
   }
 });
@@ -124,26 +127,29 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ── Graceful shutdown ──────────────────────────────────────────────
-function shutdown() {
-  console.log('\n🛑 Cerrando servidor...');
-  server.close(() => {
-    closeDb();
-    console.log('✅ Servidor detenido');
-    process.exit(0);
-  });
-}
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
-
 // ── Migración de BD ────────────────────────────────────────────────
-migrate();
+migrate().catch(e => console.error('Migration error:', e));
 
-// ── Inicio ─────────────────────────────────────────────────────────
-const server = app.listen(config.port, () => {
+// ── Inicio (solo en standalone; Vercel serverless no ejecuta listen) ──
+let server;
+if (!process.env.VERCEL) {
   const db = getDb();
-  console.log(`✅ Chess Organizers Pro API — puerto ${config.port} [${config.nodeEnv}]`);
-  console.log(`🗄️  BD SQLite: ${config.db.path}`);
-});
+  server = app.listen(config.port, () => {
+    console.log(`✅ Chess Organizers Pro API — puerto ${config.port} [${config.nodeEnv}]`);
+    console.log(`🗄️  BD: ${config.db.url || config.db.path}`);
+  });
 
-export { app, server };
+  // ── Graceful shutdown ────────────────────────────────────────────
+  function shutdown() {
+    console.log('\n🛑 Cerrando servidor...');
+    server.close(() => {
+      closeDb();
+      console.log('✅ Servidor detenido');
+      process.exit(0);
+    });
+  }
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
+}
+
+export default app;

@@ -23,14 +23,14 @@ router.post('/preview-csv', authenticate, (req, res) => {
 });
 
 // POST /import/players/:tid — importar jugadores desde CSV/TSV
-router.post('/players/:tid', authenticate, (req, res) => {
+router.post('/players/:tid', authenticate, async (req, res) => {
   try {
     const db = getDb();
     const { csv, column_map, format } = req.body;
     if (!csv || !column_map) return res.status(400).json({ error: 'csv y column_map requeridos' });
 
     // Verify ownership
-    const t = db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
+    const t = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
     if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
 
     const delimiter = format === 'tsv' ? '\t' : format === 'vega' ? ';' : undefined;
@@ -44,13 +44,13 @@ router.post('/players/:tid', authenticate, (req, res) => {
 });
 
 // POST /import/trf/:tid — importar desde archivo TRF
-router.post('/trf/:tid', authenticate, (req, res) => {
+router.post('/trf/:tid', authenticate, async (req, res) => {
   try {
     const db = getDb();
     const { trf } = req.body;
     if (!trf) return res.status(400).json({ error: 'Contenido TRF requerido' });
 
-    const t = db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
+    const t = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
     if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
 
     const results = importPlayersFromTRF(db, req.params.tid, trf);
@@ -61,13 +61,13 @@ router.post('/trf/:tid', authenticate, (req, res) => {
 });
 
 // POST /import/tsv/:tid — importar TSV (Vega-style)
-router.post('/tsv/:tid', authenticate, (req, res) => {
+router.post('/tsv/:tid', authenticate, async (req, res) => {
   try {
     const db = getDb();
     const { tsv, column_map } = req.body;
     if (!tsv || !column_map) return res.status(400).json({ error: 'tsv y column_map requeridos' });
 
-    const t = db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
+    const t = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
     if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
 
     const { rows } = parseCSV(tsv, { delimiter: '\t' });

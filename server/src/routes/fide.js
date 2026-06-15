@@ -38,10 +38,10 @@ router.post('/import/:fideId', authenticate, async (req, res) => {
     const db = getDb();
     const data = await fideService.getRating(req.params.fideId);
 
-    const existing = db.prepare('SELECT id FROM players WHERE fide_id = ?').get(data.fide_id || req.params.fideId);
+    const existing = await db.prepare('SELECT id FROM players WHERE fide_id = ?').get(data.fide_id || req.params.fideId);
     if (existing) return res.json({ id: existing.id, message: 'Jugador ya existente' });
 
-    const result = db.prepare(`
+    const result = await db.prepare(`
       INSERT INTO players (fide_id, name, last_name, title, federation, fide_rating)
       VALUES (?, ?, ?, ?, ?, ?)
     `).run(
@@ -53,7 +53,7 @@ router.post('/import/:fideId', authenticate, async (req, res) => {
       data.rating || 0,
     );
 
-    const player = db.prepare('SELECT * FROM players WHERE id = ?').get(result.lastInsertRowid);
+    const player = await db.prepare('SELECT * FROM players WHERE id = ?').get(result.lastInsertRowid);
     res.status(201).json(player);
   } catch (err) {
     res.status(502).json({ error: 'Error al importar desde FIDE', details: err.message });
@@ -73,14 +73,14 @@ router.post('/bulk-import', authenticate, async (req, res) => {
 
     for (const fid of fide_ids) {
       try {
-        const existing = db.prepare('SELECT id, name, last_name FROM players WHERE fide_id = ?').get(fid);
+        const existing = await db.prepare('SELECT id, name, last_name FROM players WHERE fide_id = ?').get(fid);
         if (existing) { skipped.push({ fide_id: fid, name: `${existing.name} ${existing.last_name}` }); continue; }
 
         const data = await fideService.getRating(fid);
-        const result = db.prepare(`INSERT INTO players (fide_id, name, last_name, title, federation, fide_rating) VALUES (?, ?, ?, ?, ?, ?)`).run(
+        const result = await db.prepare(`INSERT INTO players (fide_id, name, last_name, title, federation, fide_rating) VALUES (?, ?, ?, ?, ?, ?)`).run(
           data.fide_id || fid, data.name || '', data.last_name || '', data.title || '', data.federation || '', data.rating || 0,
         );
-        const player = db.prepare('SELECT id, fide_id, name, last_name, fide_rating FROM players WHERE id = ?').get(result.lastInsertRowid);
+        const player = await db.prepare('SELECT id, fide_id, name, last_name, fide_rating FROM players WHERE id = ?').get(result.lastInsertRowid);
         imported.push(player);
       } catch (e) {
         errors.push({ fide_id: fid, error: e.message });
@@ -123,7 +123,7 @@ router.post('/bulk-import-fed', authenticate, async (req, res) => {
         const fid = parts[0]?.trim();
         if (!fid) continue;
 
-        const existing = db.prepare('SELECT id FROM players WHERE fide_id = ?').get(fid);
+        const existing = await db.prepare('SELECT id FROM players WHERE fide_id = ?').get(fid);
         if (existing) { skipped.push(fid); continue; }
 
         const name = parts[1]?.trim() || '';
@@ -131,8 +131,8 @@ router.post('/bulk-import-fed', authenticate, async (req, res) => {
         const title = parts[4]?.trim() || '';
         const rating = parseInt(parts[6]?.trim()) || 0;
 
-        const result = db.prepare(`INSERT INTO players (fide_id, name, last_name, title, federation, fide_rating) VALUES (?, ?, ?, ?, ?, ?)`).run(fid, name, lastName, title, federation, rating);
-        const player = db.prepare('SELECT id, fide_id, name, last_name, fide_rating FROM players WHERE id = ?').get(result.lastInsertRowid);
+        const result = await db.prepare(`INSERT INTO players (fide_id, name, last_name, title, federation, fide_rating) VALUES (?, ?, ?, ?, ?, ?)`).run(fid, name, lastName, title, federation, rating);
+        const player = await db.prepare('SELECT id, fide_id, name, last_name, fide_rating FROM players WHERE id = ?').get(result.lastInsertRowid);
         imported.push(player);
       } catch {
         errors++;
@@ -149,14 +149,14 @@ router.post('/bulk-import-fed', authenticate, async (req, res) => {
 router.post('/submit/:tournamentId', authenticate, async (req, res) => {
   try {
     const db = getDb();
-    const tournament = db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tournamentId, req.user.id);
+    const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tournamentId, req.user.id);
     if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
 
     const players = buildPlayerState(db, req.params.tournamentId);
-    const closedRounds = db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status = 'closed' ORDER BY round_number ASC").all(req.params.tournamentId);
+    const closedRounds = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status = 'closed' ORDER BY round_number ASC").all(req.params.tournamentId);
 
     const rounds = closedRounds.map((r) => {
-      const pairings = db.prepare('SELECT * FROM pairings WHERE round_id = ? ORDER BY board ASC').all(r.id);
+      const pairings = await db.prepare('SELECT * FROM pairings WHERE round_id = ? ORDER BY board ASC').all(r.id);
       return {
         number: r.round_number,
         published: true,
@@ -185,7 +185,7 @@ router.post('/submit/:tournamentId', authenticate, async (req, res) => {
     }, players, rounds);
 
     const submission = await submitTRF(req.params.tournamentId, trfContent, tournament.federation);
-    db.prepare('UPDATE tournaments SET submitted_to_fide = 1, submitted_at = datetime(\'now\') WHERE id = ?').run(req.params.tournamentId);
+    await db.prepare('UPDATE tournaments SET submitted_to_fide = 1, submitted_at = datetime(\'now\') WHERE id = ?').run(req.params.tournamentId);
     res.json(submission);
   } catch (err) {
     res.status(502).json({ error: 'Error al enviar a FIDE', details: err.message });
@@ -195,14 +195,14 @@ router.post('/submit/:tournamentId', authenticate, async (req, res) => {
 // GET /fide/report/:tournamentId — Reporte FIDE homologado (HTML)
 router.get('/report/:tournamentId', authenticate, (req, res) => {
   const db = getDb();
-  const tournament = db.prepare('SELECT * FROM tournaments WHERE id = ?').get(req.params.tournamentId);
+  const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ?').get(req.params.tournamentId);
   if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
 
   const players = buildPlayerState(db, req.params.tournamentId);
   const tOrder = (tournament.tiebreaks || DEFAULT_TIEBREAK_ORDER).split(',').filter(Boolean);
   const standings = calculateTiebreak(players, null, tOrder);
 
-  const rounds = db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status = 'closed' ORDER BY round_number ASC").all(req.params.tournamentId);
+  const rounds = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status = 'closed' ORDER BY round_number ASC").all(req.params.tournamentId);
 
   const tBody = (label, val) => `<tr><td style="font-weight:600;padding:4px 12px;border:1px solid #ccc;background:#f5f5f5">${label}</td><td style="padding:4px 12px;border:1px solid #ccc">${val || '-'}</td></tr>`;
 
@@ -231,7 +231,7 @@ td{padding:4px 8px;border:1px solid #ccc;font-size:11px}
   if (rounds.length) {
     html += `<h2>Round Schedule & Results</h2>`;
     for (const r of rounds) {
-      const pairings = db.prepare('SELECT * FROM pairings WHERE round_id = ? ORDER BY board ASC').all(r.id);
+      const pairings = await db.prepare('SELECT * FROM pairings WHERE round_id = ? ORDER BY board ASC').all(r.id);
       html += `<h3>Round ${r.round_number}</h3><table><thead><tr><th>Board</th><th>White</th><th>Result</th><th>Black</th></tr></thead><tbody>`;
       for (const p of pairings) {
         const w = players.find(x => x.id == p.white_id);

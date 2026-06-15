@@ -18,14 +18,14 @@ router.get('/', authenticate, (req, res) => {
   sql += ' ORDER BY fide_rating DESC LIMIT ? OFFSET ?';
   params.push(parseInt(limit), (parseInt(page) - 1) * parseInt(limit));
 
-  const players = db.prepare(sql).all(...params);
+  const players = await db.prepare(sql).all(...params);
   res.json({ players, page: parseInt(page) });
 });
 
 // GET /players/:id
 router.get('/:id', authenticate, (req, res) => {
   const db = getDb();
-  const player = db.prepare('SELECT * FROM players WHERE id = ?').get(req.params.id);
+  const player = await db.prepare('SELECT * FROM players WHERE id = ?').get(req.params.id);
   if (!player) return res.status(404).json({ error: 'Jugador no encontrado' });
   res.json(player);
 });
@@ -41,23 +41,23 @@ router.post('/', authenticate, validate({
 
   // Si tiene fide_id, verificar duplicado
   if (fide_id) {
-    const existing = db.prepare('SELECT id FROM players WHERE fide_id = ?').get(fide_id);
+    const existing = await db.prepare('SELECT id FROM players WHERE fide_id = ?').get(fide_id);
     if (existing) return res.status(409).json({ error: 'Jugador con ese FIDE ID ya existe', id: existing.id });
   }
 
-  const result = db.prepare(`
+  const result = await db.prepare(`
     INSERT INTO players (fide_id, name, last_name, title, federation, fide_rating, national_rating, birth_date, sex, email, phone, notes)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(fide_id ?? '', name, last_name ?? '', title ?? '', federation ?? '', fide_rating ?? 0, national_rating ?? 0, birth_date ?? '', sex ?? '', email ?? '', phone ?? '', notes ?? '');
 
-  const player = db.prepare('SELECT * FROM players WHERE id = ?').get(result.lastInsertRowid);
+  const player = await db.prepare('SELECT * FROM players WHERE id = ?').get(result.lastInsertRowid);
   res.status(201).json(player);
 });
 
 // PATCH /players/:id
 router.patch('/:id', authenticate, (req, res) => {
   const db = getDb();
-  const p = db.prepare('SELECT * FROM players WHERE id = ?').get(req.params.id);
+  const p = await db.prepare('SELECT * FROM players WHERE id = ?').get(req.params.id);
   if (!p) return res.status(404).json({ error: 'Jugador no encontrado' });
 
   const allowed = ['fide_id','name','last_name','title','federation','fide_rating','national_rating','birth_date','sex','email','phone','notes'];
@@ -73,8 +73,8 @@ router.patch('/:id', authenticate, (req, res) => {
   if (updates.length === 0) return res.status(400).json({ error: 'Sin cambios' });
 
   params.push(req.params.id);
-  db.prepare(`UPDATE players SET ${updates.join(', ')} WHERE id = ?`).run(...params);
-  res.json(db.prepare('SELECT * FROM players WHERE id = ?').get(req.params.id));
+  await db.prepare(`UPDATE players SET ${updates.join(', ')} WHERE id = ?`).run(...params);
+  res.json(await db.prepare('SELECT * FROM players WHERE id = ?').get(req.params.id));
 });
 
 // GET /players/my-tournaments — historial y estadísticas del jugador autenticado
@@ -84,11 +84,11 @@ router.get('/my-tournaments', authenticate, (req, res) => {
     const user = req.user;
 
     // Buscar player(s) por email del usuario
-    const player = db.prepare(`SELECT * FROM players WHERE email = ? AND email != ''`).get(user.email);
+    const player = await db.prepare(`SELECT * FROM players WHERE email = ? AND email != ''`).get(user.email);
     if (!player) return res.json({ player: null, tournaments: [], stats: null });
 
     // Torneos donde participó este player
-    const participations = db.prepare(`
+    const participations = await db.prepare(`
       SELECT tp.*, t.name, t.system, t.n_rounds, t.federation, t.status, t.end_date as finished_date
       FROM tournament_players tp
       JOIN tournaments t ON t.id = tp.tournament_id
@@ -100,7 +100,7 @@ router.get('/my-tournaments', authenticate, (req, res) => {
 
     const tournaments = participations.map((p) => {
       // Obtener rondas y resultados para este jugador en este torneo
-      const rounds = db.prepare(`
+      const rounds = await db.prepare(`
         SELECT r.round_number, pa.*, pw.name as white_name, pw.fide_rating as white_rating,
                pb.name as black_name, pb.fide_rating as black_rating
         FROM rounds r
@@ -113,7 +113,7 @@ router.get('/my-tournaments', authenticate, (req, res) => {
         ORDER BY r.round_number ASC
       `).all(player.id, p.tournament_id);
 
-      const playerTpId = db.prepare(`SELECT id FROM tournament_players WHERE tournament_id = ? AND player_id = ?`).get(p.tournament_id, player.id)?.id;
+      const playerTpId = await db.prepare(`SELECT id FROM tournament_players WHERE tournament_id = ? AND player_id = ?`).get(p.tournament_id, player.id)?.id;
 
       const roundData = rounds.map((r) => {
         const isWhite = String(r.white_id) === String(playerTpId);

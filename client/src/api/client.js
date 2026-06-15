@@ -140,6 +140,7 @@ export const api = {
   playerTournaments: () => request('GET', '/players/my-tournaments'),
 
   category: (tid, tpId, category) => request('PATCH', `/tournaments/${tid}/players/${tpId}/category`, { category }),
+  penalty: (tid, tpId, points) => request('PATCH', `/tournaments/${tid}/players/${tpId}/penalty`, { points }),
 
   listRegistrations: (tid, status) => request('GET', `/tournaments/${tid}/registrations${status ? `?status=${status}` : ''}`),
   approveRegistration: (tid, reqId) => request('PATCH', `/tournaments/${tid}/registrations/${reqId}`, { action: 'approved' }),
@@ -164,6 +165,8 @@ export const api = {
   addMatchPairing: (mid, data) => request('POST', `/matches/${mid}/pairings`, data),
   updateMatchPairingResult: (mid, pid, result) => request('PUT', `/matches/${mid}/pairings/${pid}`, { result }),
   removeMatchPairing: (mid, pid) => request('DELETE', `/matches/${mid}/pairings/${pid}`),
+
+  askFide: (question, history) => request('POST', '/ai/fide', { question, history }),
 
   public: {
       getTournament: (id) => request('GET', `/public/tournaments/${id}`),

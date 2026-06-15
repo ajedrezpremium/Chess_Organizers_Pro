@@ -20,15 +20,15 @@ function resultPoints(r) {
 router.get('/:tid/crosstab', authenticate, (req, res) => {
   try {
     const db = getDb();
-    const tournament = db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
+    const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
     if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
 
     const players = buildPlayerState(db, req.params.tid);
-    const rounds = db.prepare("SELECT * FROM rounds WHERE tournament_id = ? ORDER BY round_number ASC").all(req.params.tid);
+    const rounds = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? ORDER BY round_number ASC").all(req.params.tid);
 
     const pairingsByRound = {};
     for (const r of rounds) {
-      pairingsByRound[r.round_number] = db.prepare(
+      pairingsByRound[r.round_number] = await db.prepare(
         'SELECT * FROM pairings WHERE round_id = ? ORDER BY board ASC'
       ).all(r.id);
     }
@@ -87,16 +87,16 @@ router.get('/:tid/crosstab', authenticate, (req, res) => {
 router.get('/:tid/performance', authenticate, (req, res) => {
   try {
     const db = getDb();
-    const tournament = db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
+    const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
     if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
 
     const players = buildPlayerState(db, req.params.tid);
-    const rounds = db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status = 'closed' ORDER BY round_number ASC").all(req.params.tid);
+    const rounds = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status = 'closed' ORDER BY round_number ASC").all(req.params.tid);
     const playerMap = Object.fromEntries(players.map((p) => [p.id, p]));
 
     // Enrich rounds with pairings
     for (const r of rounds) {
-      r.pairings = db.prepare(
+      r.pairings = await db.prepare(
         `SELECT p.*, w.fide_rating as white_rating, w2.fide_rating as black_rating
          FROM pairings p
          LEFT JOIN tournament_players tpw ON p.white_id = tpw.id
@@ -163,14 +163,14 @@ router.get('/:tid/performance', authenticate, (req, res) => {
 router.get('/:tid/progression', authenticate, (req, res) => {
   try {
     const db = getDb();
-    const tournament = db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
+    const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
     if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
 
     const players = buildPlayerState(db, req.params.tid);
-    const rounds = db.prepare("SELECT * FROM rounds WHERE tournament_id = ? ORDER BY round_number ASC").all(req.params.tid);
+    const rounds = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? ORDER BY round_number ASC").all(req.params.tid);
     const pairingsByRound = {};
     for (const r of rounds) {
-      pairingsByRound[r.round_number] = db.prepare('SELECT * FROM pairings WHERE round_id = ? ORDER BY board ASC').all(r.id);
+      pairingsByRound[r.round_number] = await db.prepare('SELECT * FROM pairings WHERE round_id = ? ORDER BY board ASC').all(r.id);
     }
 
     const playerMap = Object.fromEntries(players.map((p) => [p.id, p]));
@@ -219,18 +219,18 @@ router.get('/:tid/progression', authenticate, (req, res) => {
 router.get('/:tid/head-to-head', authenticate, (req, res) => {
   try {
     const db = getDb();
-    const tournament = db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
+    const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
     if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
 
     const { p1, p2 } = req.query;
     if (!p1 || !p2) return res.status(400).json({ error: 'Se requieren p1 y p2 (player IDs)' });
 
     const players = buildPlayerState(db, req.params.tid);
-    const rounds = db.prepare("SELECT * FROM rounds WHERE tournament_id = ? ORDER BY round_number ASC").all(req.params.tid);
+    const rounds = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? ORDER BY round_number ASC").all(req.params.tid);
 
     const encounters = [];
     for (const r of rounds) {
-      const pairings = db.prepare('SELECT * FROM pairings WHERE round_id = ? ORDER BY board ASC').all(r.id);
+      const pairings = await db.prepare('SELECT * FROM pairings WHERE round_id = ? ORDER BY board ASC').all(r.id);
       const pairing = pairings.find((pb) => {
         const w = String(pb.white_id), bl = String(pb.black_id);
         return (w === p1 && bl === p2) || (w === p2 && bl === p1);
@@ -266,11 +266,11 @@ router.get('/:tid/head-to-head', authenticate, (req, res) => {
 router.get('/:tid/overview', authenticate, (req, res) => {
   try {
     const db = getDb();
-    const tournament = db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
+    const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
     if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
 
     const players = buildPlayerState(db, req.params.tid);
-    const closedRounds = db.prepare("SELECT COUNT(*) as c FROM rounds WHERE tournament_id = ? AND status = 'closed'").get(req.params.tid).c;
+    const closedRounds = await db.prepare("SELECT COUNT(*) as c FROM rounds WHERE tournament_id = ? AND status = 'closed'").get(req.params.tid).c;
     const totalRounds = tournament.n_rounds;
 
     // Federaciones
@@ -307,9 +307,9 @@ router.get('/:tid/overview', authenticate, (req, res) => {
     // Resultados por ronda
     const roundResults = [];
     for (let rn = 1; rn <= totalRounds; rn++) {
-      const round = db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND round_number = ?").get(req.params.tid, rn);
+      const round = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND round_number = ?").get(req.params.tid, rn);
       if (!round) { roundResults.push({ round: rn, status: 'pending', whiteWins: 0, draws: 0, blackWins: 0, byes: 0, total: 0, whitePct: 0, drawPct: 0, blackPct: 0 }); continue; }
-      const pairings = db.prepare('SELECT * FROM pairings WHERE round_id = ?').all(round.id);
+      const pairings = await db.prepare('SELECT * FROM pairings WHERE round_id = ?').all(round.id);
       const stats = { whiteWins: 0, draws: 0, blackWins: 0, byes: 0 };
       for (const p of pairings) {
         if (p.is_bye) { stats.byes++; continue; }
@@ -330,9 +330,9 @@ router.get('/:tid/overview', authenticate, (req, res) => {
     const colorPerf = players.map((player) => {
       let wGames = 0, wPts = 0, bGames = 0, bPts = 0;
       for (let rn = 1; rn <= totalRounds; rn++) {
-        const round = db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND round_number = ?").get(req.params.tid, rn);
+        const round = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND round_number = ?").get(req.params.tid, rn);
         if (!round) continue;
-        const pairings = db.prepare('SELECT * FROM pairings WHERE round_id = ?').all(round.id);
+        const pairings = await db.prepare('SELECT * FROM pairings WHERE round_id = ?').all(round.id);
         const pairing = pairings.find((pb) => String(pb.white_id) === player.id || String(pb.black_id) === player.id);
         if (!pairing || pairing.result === '-' || pairing.is_bye) continue;
         const isWhite = String(pairing.white_id) === player.id;
@@ -382,7 +382,7 @@ router.get('/:tid/overview', authenticate, (req, res) => {
 router.get('/:tid/rating-report', authenticate, async (req, res) => {
   try {
     const db = getDb();
-    const tournament = db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
+    const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
     if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
 
     const ratingReport = await import('../services/ratingReport.js');

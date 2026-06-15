@@ -27,25 +27,25 @@ router.get('/tournaments', (req, res) => {
   sql += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
   params.push(parseInt(limit), (parseInt(page) - 1) * parseInt(limit));
 
-  const tournaments = db.prepare(sql).all(...params);
+  const tournaments = await db.prepare(sql).all(...params);
   for (const t of tournaments) {
-    const cnt = db.prepare('SELECT COUNT(*) as c FROM tournament_players WHERE tournament_id = ?').get(t.id);
+    const cnt = await db.prepare('SELECT COUNT(*) as c FROM tournament_players WHERE tournament_id = ?').get(t.id);
     t.player_count = cnt.c;
   }
-  const total = db.prepare("SELECT COUNT(*) as count FROM tournaments WHERE status != 'pending'").get();
+  const total = await db.prepare("SELECT COUNT(*) as count FROM tournaments WHERE status != 'pending'").get();
   res.json({ tournaments, total: total.count, page: parseInt(page) });
 });
 
 // GET /public/tournaments/:id
 router.get('/tournaments/:id', (req, res) => {
   const db = getDb();
-  const t = db.prepare("SELECT * FROM tournaments WHERE id = ?").get(req.params.id);
+  const t = await db.prepare("SELECT * FROM tournaments WHERE id = ?").get(req.params.id);
   if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
   if (t.status === 'pending') return res.status(404).json({ error: 'Torneo no encontrado' });
 
   t.tiebreaks = t.tiebreaks ? t.tiebreaks.split(',') : ['BH1','BH','SB','DE','PR'];
   t.categories = t.categories ? t.categories.split(',').map((c) => c.trim()).filter(Boolean) : [];
-  const players = db.prepare('SELECT COUNT(*) as count FROM tournament_players WHERE tournament_id = ?').get(req.params.id);
+  const players = await db.prepare('SELECT COUNT(*) as count FROM tournament_players WHERE tournament_id = ?').get(req.params.id);
   t.player_count = players.count;
 
   res.json(t);
@@ -54,7 +54,7 @@ router.get('/tournaments/:id', (req, res) => {
 // GET /public/tournaments/:id/players
 router.get('/tournaments/:id/players', (req, res) => {
   const db = getDb();
-  const players = db.prepare(`
+  const players = await db.prepare(`
     SELECT tp.seed_rank, tp.current_points, tp.category, p.name, p.last_name, p.fide_rating, p.title, p.federation, p.fide_id
     FROM tournament_players tp JOIN players p ON tp.player_id = p.id
     WHERE tp.tournament_id = ?
@@ -67,9 +67,9 @@ router.get('/tournaments/:id/players', (req, res) => {
 // GET /public/tournaments/:id/rounds
 router.get('/tournaments/:id/rounds', (req, res) => {
   const db = getDb();
-  const rounds = db.prepare('SELECT * FROM rounds WHERE tournament_id = ? ORDER BY round_number ASC').all(req.params.id);
+  const rounds = await db.prepare('SELECT * FROM rounds WHERE tournament_id = ? ORDER BY round_number ASC').all(req.params.id);
   for (const r of rounds) {
-    r.pairings = db.prepare(`
+    r.pairings = await db.prepare(`
       SELECT p.*, w.name as white_name, w.last_name as white_last, w.fide_rating as white_rating,
              b.name as black_name, b.last_name as black_last, b.fide_rating as black_rating
       FROM pairings p
@@ -87,11 +87,11 @@ router.get('/tournaments/:id/rounds', (req, res) => {
 // GET /public/tournaments/:id/standings
 router.get('/tournaments/:id/standings', (req, res) => {
   const db = getDb();
-  const tournament = db.prepare("SELECT * FROM tournaments WHERE id = ?").get(req.params.id);
+  const tournament = await db.prepare("SELECT * FROM tournaments WHERE id = ?").get(req.params.id);
   if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
 
   let players = buildPlayerState(db, req.params.id);
-  const totalRounds = db.prepare("SELECT MAX(round_number) as max FROM rounds WHERE tournament_id = ? AND status = 'closed'").get(req.params.id)?.max ?? 0;
+  const totalRounds = await db.prepare("SELECT MAX(round_number) as max FROM rounds WHERE tournament_id = ? AND status = 'closed'").get(req.params.id)?.max ?? 0;
   const tiebreaks = tournament.tiebreaks ? tournament.tiebreaks.split(',') : DEFAULT_TIEBREAK_ORDER;
 
   // Category filter
@@ -108,9 +108,9 @@ router.get('/tournaments/:id/standings', (req, res) => {
 
   const standings = buildStandings(withTb);
 
-  const closedRounds = db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status = 'closed' ORDER BY round_number ASC").all(req.params.id);
+  const closedRounds = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status = 'closed' ORDER BY round_number ASC").all(req.params.id);
   const roundPairings = closedRounds.map((r) => {
-    const pairings = db.prepare('SELECT * FROM pairings WHERE round_id = ? ORDER BY board ASC').all(r.id);
+    const pairings = await db.prepare('SELECT * FROM pairings WHERE round_id = ? ORDER BY board ASC').all(r.id);
     return { number: r.round_number, pairings };
   });
   const ratingChanges = calculateRatingChanges(players, roundPairings);
@@ -137,15 +137,15 @@ router.get('/tournaments/:id/standings', (req, res) => {
 router.get('/tournaments/:id/performance', (req, res) => {
   try {
     const db = getDb();
-    const tournament = db.prepare("SELECT * FROM tournaments WHERE id = ?").get(req.params.id);
+    const tournament = await db.prepare("SELECT * FROM tournaments WHERE id = ?").get(req.params.id);
     if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
 
     const players = buildPlayerState(db, req.params.id);
-    const rounds = db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status = 'closed' ORDER BY round_number ASC").all(req.params.id);
+    const rounds = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status = 'closed' ORDER BY round_number ASC").all(req.params.id);
     const playerMap = Object.fromEntries(players.map((p) => [p.id, p]));
 
     for (const r of rounds) {
-      r.pairings = db.prepare(
+      r.pairings = await db.prepare(
         `SELECT p.*, w.fide_rating as white_rating, w2.fide_rating as black_rating
          FROM pairings p
          LEFT JOIN tournament_players tpw ON p.white_id = tpw.id
@@ -232,18 +232,18 @@ router.get('/players/search', (req, res) => {
   const sql = `SELECT id, fide_id, name, last_name, title, federation, fide_rating, national_rating
                FROM players WHERE name LIKE ? OR last_name LIKE ? OR fide_id LIKE ?
                ORDER BY fide_rating DESC LIMIT ? OFFSET ?`;
-  const players = db.prepare(sql).all(search, search, search, parseInt(limit), (parseInt(page) - 1) * parseInt(limit));
-  const total = db.prepare(`SELECT COUNT(*) as c FROM players WHERE name LIKE ? OR last_name LIKE ? OR fide_id LIKE ?`).get(search, search, search);
+  const players = await db.prepare(sql).all(search, search, search, parseInt(limit), (parseInt(page) - 1) * parseInt(limit));
+  const total = await db.prepare(`SELECT COUNT(*) as c FROM players WHERE name LIKE ? OR last_name LIKE ? OR fide_id LIKE ?`).get(search, search, search);
   res.json({ players, total: total.c, page: parseInt(page) });
 });
 
 // GET /public/players/:id/tournaments — historial de torneos de un jugador
 router.get('/players/:id/tournaments', (req, res) => {
   const db = getDb();
-  const player = db.prepare('SELECT id, fide_id, name, last_name, title, federation, fide_rating FROM players WHERE id = ?').get(req.params.id);
+  const player = await db.prepare('SELECT id, fide_id, name, last_name, title, federation, fide_rating FROM players WHERE id = ?').get(req.params.id);
   if (!player) return res.status(404).json({ error: 'Jugador no encontrado' });
 
-  const tournaments = db.prepare(`
+  const tournaments = await db.prepare(`
     SELECT t.id, t.name, t.system, t.federation, t.city, t.start_date, t.end_date, t.status, t.n_rounds,
            tp.seed_rank, tp.current_points, tp.final_position
     FROM tournament_players tp
@@ -260,8 +260,8 @@ router.get('/players/:id/tournaments', (req, res) => {
 // GET /public/federations — lista de federaciones con torneos
 router.get('/federations', (req, res) => {
   const db = getDb();
-  const fromTours = db.prepare("SELECT DISTINCT federation FROM tournaments WHERE federation != '' AND status != 'pending' ORDER BY federation").all();
-  const fromSettings = db.prepare("SELECT federation, name, logo_url FROM federation_settings ORDER BY name").all();
+  const fromTours = await db.prepare("SELECT DISTINCT federation FROM tournaments WHERE federation != '' AND status != 'pending' ORDER BY federation").all();
+  const fromSettings = await db.prepare("SELECT federation, name, logo_url FROM federation_settings ORDER BY name").all();
   const fedMap = {};
   for (const t of fromTours) if (t.federation) fedMap[t.federation] = { code: t.federation, name: t.federation, logo_url: '' };
   for (const s of fromSettings) fedMap[s.federation] = { code: s.federation, name: s.name, logo_url: s.logo_url || '' };
@@ -271,26 +271,26 @@ router.get('/federations', (req, res) => {
 // GET /public/stats — estadísticas globales del catálogo
 router.get('/stats', (req, res) => {
   const db = getDb();
-  const total = db.prepare("SELECT COUNT(*) as c FROM tournaments WHERE status != 'pending'").get().c;
-  const active = db.prepare("SELECT COUNT(*) as c FROM tournaments WHERE status = 'active'").get().c;
-  const finished = db.prepare("SELECT COUNT(*) as c FROM tournaments WHERE status = 'finished'").get().c;
-  const totalPlayers = db.prepare("SELECT COUNT(*) as c FROM tournament_players tp JOIN tournaments t ON t.id = tp.tournament_id WHERE t.status != 'pending'").get().c;
-  const byFederation = db.prepare(`
+  const total = await db.prepare("SELECT COUNT(*) as c FROM tournaments WHERE status != 'pending'").get().c;
+  const active = await db.prepare("SELECT COUNT(*) as c FROM tournaments WHERE status = 'active'").get().c;
+  const finished = await db.prepare("SELECT COUNT(*) as c FROM tournaments WHERE status = 'finished'").get().c;
+  const totalPlayers = await db.prepare("SELECT COUNT(*) as c FROM tournament_players tp JOIN tournaments t ON t.id = tp.tournament_id WHERE t.status != 'pending'").get().c;
+  const byFederation = await db.prepare(`
     SELECT federation, COUNT(*) as count FROM tournaments
     WHERE federation != '' AND status != 'pending' GROUP BY federation ORDER BY count DESC LIMIT 10
   `).all();
-  const bySystem = db.prepare(`
+  const bySystem = await db.prepare(`
     SELECT system, COUNT(*) as count FROM tournaments
     WHERE status != 'pending' GROUP BY system ORDER BY count DESC
   `).all();
-  const totalOrganizers = db.prepare("SELECT COUNT(DISTINCT created_by) as c FROM tournaments WHERE status != 'pending'").get().c;
+  const totalOrganizers = await db.prepare("SELECT COUNT(DISTINCT created_by) as c FROM tournaments WHERE status != 'pending'").get().c;
   res.json({ total, active, finished, totalPlayers, byFederation, bySystem, totalOrganizers });
 });
 
 // GET /public/organizers — lista de organizadores
 router.get('/organizers', (req, res) => {
   const db = getDb();
-  const organizers = db.prepare(`
+  const organizers = await db.prepare(`
     SELECT u.id, u.name, u.email, u.federation,
            (SELECT COUNT(*) FROM tournaments t WHERE t.created_by = u.id AND t.status != 'pending') as tournament_count,
            (SELECT COUNT(*) FROM tournaments t WHERE t.created_by = u.id AND t.status = 'active') as active_count,
@@ -305,10 +305,10 @@ router.get('/organizers', (req, res) => {
 // GET /public/organizers/:id — detalle de organizador + sus torneos
 router.get('/organizers/:id', (req, res) => {
   const db = getDb();
-  const org = db.prepare("SELECT id, name, email, federation FROM users WHERE id = ?").get(req.params.id);
+  const org = await db.prepare("SELECT id, name, email, federation FROM users WHERE id = ?").get(req.params.id);
   if (!org) return res.status(404).json({ error: 'Organizador no encontrado' });
 
-  const tournaments = db.prepare(`
+  const tournaments = await db.prepare(`
     SELECT t.id, t.name, t.system, t.n_rounds, t.federation, t.city, t.start_date, t.status,
            (SELECT COUNT(*) FROM tournament_players WHERE tournament_id = t.id) as player_count
     FROM tournaments t WHERE t.created_by = ? AND t.status != 'pending' ORDER BY t.created_at DESC
@@ -321,19 +321,19 @@ router.get('/organizers/:id', (req, res) => {
 
 router.get('/widget/tournaments/:id/standings', (req, res) => {
   const db = getDb();
-  const tournament = db.prepare("SELECT id, name, federation, system, n_rounds, tiebreaks, primary_color, secondary_color, logo_url FROM tournaments WHERE id = ? AND status != 'pending'").get(req.params.id);
+  const tournament = await db.prepare("SELECT id, name, federation, system, n_rounds, tiebreaks, primary_color, secondary_color, logo_url FROM tournaments WHERE id = ? AND status != 'pending'").get(req.params.id);
   if (!tournament) return res.status(404).send('Torneo no encontrado');
 
   const players = buildPlayerState(db, req.params.id);
-  const totalRounds = db.prepare("SELECT MAX(round_number) as max FROM rounds WHERE tournament_id = ? AND status = 'closed'").get(req.params.id)?.max ?? 0;
+  const totalRounds = await db.prepare("SELECT MAX(round_number) as max FROM rounds WHERE tournament_id = ? AND status = 'closed'").get(req.params.id)?.max ?? 0;
   const tiebreaks = tournament.tiebreaks ? tournament.tiebreaks.split(',') : DEFAULT_TIEBREAK_ORDER;
   const playersById = Object.fromEntries(players.map((p) => [p.id, p]));
   const withTb = players.map((p) => ({ ...p, tiebreakValues: tiebreaks.map((tb) => calculateTiebreak(tb, p, playersById, totalRounds)) }));
   const standings = buildStandings(withTb);
 
-  const closedRounds = db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status = 'closed' ORDER BY round_number ASC").all(req.params.id);
+  const closedRounds = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status = 'closed' ORDER BY round_number ASC").all(req.params.id);
   const roundPairings = closedRounds.map((r) => {
-    const pairings = db.prepare('SELECT * FROM pairings WHERE round_id = ? ORDER BY board ASC').all(r.id);
+    const pairings = await db.prepare('SELECT * FROM pairings WHERE round_id = ? ORDER BY board ASC').all(r.id);
     return { number: r.round_number, pairings };
   });
   const ratingChanges = calculateRatingChanges(players, roundPairings);
@@ -379,13 +379,13 @@ router.get('/widget/tournaments/:id/standings', (req, res) => {
 
 router.get('/widget/tournaments/:id/wall', (req, res) => {
   const db = getDb();
-  const tournament = db.prepare("SELECT id, name, primary_color, secondary_color, logo_url, system, n_rounds FROM tournaments WHERE id = ? AND status != 'pending'").get(req.params.id);
+  const tournament = await db.prepare("SELECT id, name, primary_color, secondary_color, logo_url, system, n_rounds FROM tournaments WHERE id = ? AND status != 'pending'").get(req.params.id);
   if (!tournament) return res.status(404).send('Torneo no encontrado');
 
-  const round = db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status IN ('generated','published') ORDER BY round_number ASC").all(req.params.id).pop();
+  const round = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status IN ('generated','published') ORDER BY round_number ASC").all(req.params.id).pop();
   if (!round) return res.status(200).send(`<!DOCTYPE html><html><body style="font-family:sans-serif;background:#1f2937;color:#666;text-align:center;padding:40px;font-size:14px">⏳ Esperando próxima ronda</body></html>`);
 
-  const pairings = db.prepare(`
+  const pairings = await db.prepare(`
     SELECT p.board, p.result, p.is_bye,
            w.name as w_name, w.last_name as w_last, w.fide_rating as w_elo,
            b.name as b_name, b.last_name as b_last, b.fide_rating as b_elo
@@ -448,15 +448,15 @@ function resultPoints(r) {
 router.get('/tournaments/:id/crosstab', (req, res) => {
   try {
     const db = getDb();
-    const tournament = db.prepare("SELECT * FROM tournaments WHERE id = ? AND status != 'pending'").get(req.params.id);
+    const tournament = await db.prepare("SELECT * FROM tournaments WHERE id = ? AND status != 'pending'").get(req.params.id);
     if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
 
     const players = buildPlayerState(db, req.params.id);
-    const rounds = db.prepare("SELECT * FROM rounds WHERE tournament_id = ? ORDER BY round_number ASC").all(req.params.id);
+    const rounds = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? ORDER BY round_number ASC").all(req.params.id);
 
     const pairingsByRound = {};
     for (const r of rounds) {
-      pairingsByRound[r.round_number] = db.prepare('SELECT * FROM pairings WHERE round_id = ? ORDER BY board ASC').all(r.id);
+      pairingsByRound[r.round_number] = await db.prepare('SELECT * FROM pairings WHERE round_id = ? ORDER BY board ASC').all(r.id);
     }
 
     const playerMap = Object.fromEntries(players.map((p) => [p.id, p]));
@@ -504,15 +504,15 @@ router.get('/tournaments/:id/head-to-head', (req, res) => {
     const { p1, p2 } = req.query;
     if (!p1 || !p2) return res.status(400).json({ error: 'Se requieren p1 y p2 (IDs de jugadores)' });
 
-    const tps1 = db.prepare('SELECT id FROM tournament_players WHERE tournament_id = ? AND id = ?').get(req.params.id, p1);
-    const tps2 = db.prepare('SELECT id FROM tournament_players WHERE tournament_id = ? AND id = ?').get(req.params.id, p2);
+    const tps1 = await db.prepare('SELECT id FROM tournament_players WHERE tournament_id = ? AND id = ?').get(req.params.id, p1);
+    const tps2 = await db.prepare('SELECT id FROM tournament_players WHERE tournament_id = ? AND id = ?').get(req.params.id, p2);
     if (!tps1 || !tps2) return res.status(404).json({ error: 'Jugador no encontrado en este torneo' });
 
-    const rounds = db.prepare("SELECT id, round_number, status FROM rounds WHERE tournament_id = ? ORDER BY round_number ASC").all(req.params.id);
+    const rounds = await db.prepare("SELECT id, round_number, status FROM rounds WHERE tournament_id = ? ORDER BY round_number ASC").all(req.params.id);
 
     const encounters = [];
     for (const round of rounds) {
-      const pairing = db.prepare(
+      const pairing = await db.prepare(
         "SELECT * FROM pairings WHERE round_id = ? AND ((white_id = ? AND black_id = ?) OR (white_id = ? AND black_id = ?))"
       ).get(round.id, p1, p2, p2, p1);
 
@@ -526,8 +526,8 @@ router.get('/tournaments/:id/head-to-head', (req, res) => {
       }
     }
 
-    const p1d = db.prepare("SELECT tp.id, p.name, p.last_name, p.fide_rating, p.title FROM tournament_players tp JOIN players p ON tp.player_id = p.id WHERE tp.id = ?").get(p1);
-    const p2d = db.prepare("SELECT tp.id, p.name, p.last_name, p.fide_rating, p.title FROM tournament_players tp JOIN players p ON tp.player_id = p.id WHERE tp.id = ?").get(p2);
+    const p1d = await db.prepare("SELECT tp.id, p.name, p.last_name, p.fide_rating, p.title FROM tournament_players tp JOIN players p ON tp.player_id = p.id WHERE tp.id = ?").get(p1);
+    const p2d = await db.prepare("SELECT tp.id, p.name, p.last_name, p.fide_rating, p.title FROM tournament_players tp JOIN players p ON tp.player_id = p.id WHERE tp.id = ?").get(p2);
 
     res.json({ player1: p1d, player2: p2d, encounters });
   } catch (err) {
@@ -538,7 +538,7 @@ router.get('/tournaments/:id/head-to-head', (req, res) => {
 // GET /public/tournaments/:id/registration-status — estado de inscripción
 router.get('/tournaments/:id/registration-status', (req, res) => {
   const db = getDb();
-  const t = db.prepare("SELECT registration_open, registration_opens_at, registration_closes_at, max_players, registered_count, registration_fee, registration_currency, status, auto_approve FROM tournaments WHERE id = ?").get(req.params.id);
+  const t = await db.prepare("SELECT registration_open, registration_opens_at, registration_closes_at, max_players, registered_count, registration_fee, registration_currency, status, auto_approve FROM tournaments WHERE id = ?").get(req.params.id);
   if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
 
   const now = new Date();
@@ -574,7 +574,7 @@ router.get('/tournaments/:id/registration-status', (req, res) => {
 // POST /public/tournaments/:id/register — auto-registro de jugador
 router.post('/tournaments/:id/register', async (req, res) => {
   const db = getDb();
-  const t = db.prepare("SELECT * FROM tournaments WHERE id = ? AND status != 'pending'").get(req.params.id);
+  const t = await db.prepare("SELECT * FROM tournaments WHERE id = ? AND status != 'pending'").get(req.params.id);
   if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
 
   // ── Registration open checks ──
@@ -598,7 +598,7 @@ router.post('/tournaments/:id/register', async (req, res) => {
 
   // ── Max players check ──
   if (t.max_players > 0) {
-    const currentCount = db.prepare(`
+    const currentCount = await db.prepare(`
       SELECT COUNT(*) as c FROM tournament_players WHERE tournament_id = ?
     `).get(req.params.id).c;
     if (currentCount >= t.max_players) {
@@ -611,7 +611,7 @@ router.post('/tournaments/:id/register', async (req, res) => {
 
   // ── Duplicate check ──
   if (email || fide_id) {
-    const dupes = db.prepare(`
+    const dupes = await db.prepare(`
       SELECT COUNT(*) as c FROM registration_requests
       WHERE tournament_id = ? AND status IN ('pending','pending_payment','approved')
       AND (? != '' AND email = ?) OR (? != '' AND fide_id = ?)
@@ -619,7 +619,7 @@ router.post('/tournaments/:id/register', async (req, res) => {
     if (dupes.c > 0) {
       return res.status(409).json({ error: 'Ya tienes una solicitud activa para este torneo.' });
     }
-    const enrolled = db.prepare(`
+    const enrolled = await db.prepare(`
       SELECT COUNT(*) as c FROM tournament_players tp
       JOIN players p ON tp.player_id = p.id
       WHERE tp.tournament_id = ? AND ((? != '' AND p.email = ?) OR (? != '' AND p.fide_id = ?))
@@ -649,7 +649,7 @@ router.post('/tournaments/:id/register', async (req, res) => {
   const needsPayment = fee > 0 && t.status !== 'finished';
   const status = needsPayment ? 'pending_payment' : 'pending';
 
-  const result = db.prepare(`
+  const result = await db.prepare(`
     INSERT INTO registration_requests (tournament_id, name, last_name, email, fide_id, fide_rating, federation, title, phone, notes, custom_data, status)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(req.params.id, name.trim(), last_name?.trim() ?? '', email?.trim() ?? '', fide_id?.trim() ?? '',
@@ -659,7 +659,7 @@ router.post('/tournaments/:id/register', async (req, res) => {
   const regId = result.lastInsertRowid;
 
   // Increment registered_count
-  db.prepare('UPDATE tournaments SET registered_count = registered_count + 1 WHERE id = ?').run(req.params.id);
+  await db.prepare('UPDATE tournaments SET registered_count = registered_count + 1 WHERE id = ?').run(req.params.id);
 
   // Notify
   notifyRegistrationReceived(req.params.id, email, name);
@@ -678,7 +678,7 @@ router.post('/tournaments/:id/register', async (req, res) => {
         cancelUrl: `${config.publicUrl}/public/tournament/${t.id}/register?reg_id=${regId}`,
       });
 
-      db.prepare('UPDATE registration_requests SET stripe_checkout_session_id = ? WHERE id = ?').run(checkout.sessionId, regId);
+      await db.prepare('UPDATE registration_requests SET stripe_checkout_session_id = ? WHERE id = ?').run(checkout.sessionId, regId);
 
       return res.status(201).json({
         ok: true, requires_payment: true,
@@ -688,7 +688,7 @@ router.post('/tournaments/:id/register', async (req, res) => {
       });
     } catch (err) {
       // Stripe not configured or error - create as pending without payment
-      db.prepare("UPDATE registration_requests SET status = 'pending' WHERE id = ?").run(regId);
+      await db.prepare("UPDATE registration_requests SET status = 'pending' WHERE id = ?").run(regId);
       return res.status(201).json({
         ok: true, requires_payment: false,
         message: 'Solicitud de inscripción enviada. El organizador la revisará.',

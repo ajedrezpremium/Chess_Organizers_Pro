@@ -6,7 +6,7 @@ import { getDb } from '../db/index.js';
  * Acepta Bearer token en Header o ?api_key= en query string.
  * Adjunta req.apiUser con { user_id, key_id, name }.
  */
-export function apiAuthenticate(req, res, next) {
+export async function apiAuthenticate(req, res, next) {
   let rawKey = '';
 
   // Check Authorization header
@@ -27,13 +27,13 @@ export function apiAuthenticate(req, res, next) {
   // Hash the key and look it up
   const hashedKey = crypto.createHash('sha256').update(rawKey).digest('hex');
   const db = getDb();
-  const keyRecord = db.prepare('SELECT id, user_id, name FROM api_keys WHERE key = ?').get(hashedKey);
+  const keyRecord = await db.prepare('SELECT id, user_id, name FROM api_keys WHERE key = ?').get(hashedKey);
   if (!keyRecord) {
     return res.status(401).json({ error: 'API key inválida' });
   }
 
   // Update last_used_at
-  db.prepare("UPDATE api_keys SET last_used_at = datetime('now') WHERE id = ?").run(keyRecord.id);
+  await db.prepare("UPDATE api_keys SET last_used_at = datetime('now') WHERE id = ?").run(keyRecord.id);
 
   req.apiUser = {
     userId: keyRecord.user_id,

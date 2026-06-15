@@ -1,7 +1,7 @@
 import { createPlayer } from '../../../src/engine/types.js';
 
-export function buildPlayerState(db, tournamentId) {
-  const rows = db.prepare(`
+export async function buildPlayerState(db, tournamentId) {
+  const rows = await db.prepare(`
     SELECT tp.*, p.name, p.last_name, p.fide_rating, p.title, p.federation, p.fide_id
     FROM tournament_players tp JOIN players p ON tp.player_id = p.id
     WHERE tp.tournament_id = ?
@@ -21,21 +21,22 @@ export function buildPlayerState(db, tournamentId) {
     colorDiff: row.color_diff,
     colorHistory: row.color_history ? JSON.parse(row.color_history) : [],
     opponents: row.opponents ? JSON.parse(row.opponents) : [],
+    penaltyPoints: row.penalty_points || 0,
     receivedBye: !!row.received_bye,
     withdrawn: !!row.withdrawn,
   }));
 }
 
-export function savePlayerState(db, tournamentId, players) {
-  const upsert = db.prepare(`
+export async function savePlayerState(db, tournamentId, players) {
+  const upsert = await db.prepare(`
     UPDATE tournament_players
-    SET current_points = ?, color_diff = ?, color_history = ?, opponents = ?, received_bye = ?, withdrawn = ?
+    SET current_points = ?, color_diff = ?, color_history = ?, opponents = ?, penalty_points = ?, received_bye = ?, withdrawn = ?
     WHERE id = ?
   `);
   for (const p of players) {
-    upsert.run(
+    await upsert.run(
       p.points, p.colorDiff, JSON.stringify(p.colorHistory),
-      JSON.stringify(p.opponents), p.receivedBye ? 1 : 0, p.withdrawn ? 1 : 0, parseInt(p.id)
+      JSON.stringify(p.opponents), p.penaltyPoints || 0, p.receivedBye ? 1 : 0, p.withdrawn ? 1 : 0, parseInt(p.id)
     );
   }
 }

@@ -120,11 +120,11 @@ export function suggestColumnMap(headers) {
  * Importa jugadores desde rows parseados
  * @returns {{ imported: number, skipped: number, errors: string[], players: object[] }}
  */
-export function importPlayers(db, tournamentId, userId, rows, columnMap) {
+export async function importPlayers(db, tournamentId, userId, rows, columnMap) {
   const results = { imported: 0, skipped: 0, errors: [], players: [] };
 
   // Validate tournament exists
-  const t = db.prepare('SELECT * FROM tournaments WHERE id = ?').get(tournamentId);
+  const t = await db.prepare('SELECT * FROM tournaments WHERE id = ?').get(tournamentId);
   if (!t) throw new Error('Torneo no encontrado');
 
   for (let i = 0; i < rows.length; i++) {
@@ -136,18 +136,18 @@ export function importPlayers(db, tournamentId, userId, rows, columnMap) {
       // Check for duplicate by fide_id
       let existing = null;
       if (playerData.fideId) {
-        existing = db.prepare('SELECT * FROM players WHERE fide_id = ?').get(playerData.fideId);
+        existing = await db.prepare('SELECT * FROM players WHERE fide_id = ?').get(playerData.fideId);
       }
       // Check by name + last name
       if (!existing) {
-        existing = db.prepare('SELECT * FROM players WHERE name = ? AND last_name = ?').get(playerData.name, playerData.lastName || '');
+        existing = await db.prepare('SELECT * FROM players WHERE name = ? AND last_name = ?').get(playerData.name, playerData.lastName || '');
       }
 
       let player;
       if (existing) {
         player = existing;
       } else {
-        const result = db.prepare(`
+        const result = await db.prepare(`
           INSERT INTO players (fide_id, name, last_name, fide_rating, national_rating, title, federation, birth_date, sex, email, phone, notes)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).run(
@@ -157,15 +157,15 @@ export function importPlayers(db, tournamentId, userId, rows, columnMap) {
           playerData.birthDate || '', playerData.sex || '',
           playerData.email || '', playerData.phone || '', playerData.notes || ''
         );
-        player = db.prepare('SELECT * FROM players WHERE id = ?').get(result.lastInsertRowid);
+        player = await db.prepare('SELECT * FROM players WHERE id = ?').get(result.lastInsertRowid);
       }
 
       // Enroll in tournament
-      const alreadyEnrolled = db.prepare('SELECT id FROM tournament_players WHERE tournament_id = ? AND player_id = ?').get(tournamentId, player.id);
+      const alreadyEnrolled = await db.prepare('SELECT id FROM tournament_players WHERE tournament_id = ? AND player_id = ?').get(tournamentId, player.id);
       if (!alreadyEnrolled) {
-        const maxSeed = db.prepare('SELECT MAX(seed_rank) as max FROM tournament_players WHERE tournament_id = ?').get(tournamentId);
+        const maxSeed = await db.prepare('SELECT MAX(seed_rank) as max FROM tournament_players WHERE tournament_id = ?').get(tournamentId);
         const nextSeed = (maxSeed?.max ?? 0) + 1;
-        db.prepare('INSERT INTO tournament_players (tournament_id, player_id, seed_rank) VALUES (?, ?, ?)').run(tournamentId, player.id, nextSeed);
+        await db.prepare('INSERT INTO tournament_players (tournament_id, player_id, seed_rank) VALUES (?, ?, ?)').run(tournamentId, player.id, nextSeed);
       }
 
       results.players.push(player);
@@ -224,10 +224,10 @@ function mapRowToPlayer(row, columnMap) {
 /**
  * Importa jugadores desde contenido TRF
  */
-export function importPlayersFromTRF(db, tournamentId, trfContent) {
+export async function importPlayersFromTRF(db, tournamentId, trfContent) {
   const results = { imported: 0, skipped: 0, errors: [], players: [] };
 
-  const t = db.prepare('SELECT * FROM tournaments WHERE id = ?').get(tournamentId);
+  const t = await db.prepare('SELECT * FROM tournaments WHERE id = ?').get(tournamentId);
   if (!t) throw new Error('Torneo no encontrado');
 
   const trfData = parseTRF(trfContent);
@@ -249,17 +249,17 @@ export function importPlayersFromTRF(db, tournamentId, trfContent) {
 
       let existing = null;
       if (trfPlayer.fideId) {
-        existing = db.prepare('SELECT * FROM players WHERE fide_id = ?').get(trfPlayer.fideId);
+        existing = await db.prepare('SELECT * FROM players WHERE fide_id = ?').get(trfPlayer.fideId);
       }
       if (!existing) {
-        existing = db.prepare('SELECT * FROM players WHERE name = ? AND last_name = ?').get(firstName, lastName);
+        existing = await db.prepare('SELECT * FROM players WHERE name = ? AND last_name = ?').get(firstName, lastName);
       }
 
       let player;
       if (existing) {
         player = existing;
       } else {
-        const result = db.prepare(`
+        const result = await db.prepare(`
           INSERT INTO players (fide_id, name, last_name, fide_rating, title, federation, birth_date, sex)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `).run(
@@ -268,14 +268,14 @@ export function importPlayersFromTRF(db, tournamentId, trfContent) {
           trfPlayer.federation || '', trfPlayer.birthDate || '',
           trfPlayer.sex || ''
         );
-        player = db.prepare('SELECT * FROM players WHERE id = ?').get(result.lastInsertRowid);
+        player = await db.prepare('SELECT * FROM players WHERE id = ?').get(result.lastInsertRowid);
       }
 
-      const alreadyEnrolled = db.prepare('SELECT id FROM tournament_players WHERE tournament_id = ? AND player_id = ?').get(tournamentId, player.id);
+      const alreadyEnrolled = await db.prepare('SELECT id FROM tournament_players WHERE tournament_id = ? AND player_id = ?').get(tournamentId, player.id);
       if (!alreadyEnrolled) {
-        const maxSeed = db.prepare('SELECT MAX(seed_rank) as max FROM tournament_players WHERE tournament_id = ?').get(tournamentId);
+        const maxSeed = await db.prepare('SELECT MAX(seed_rank) as max FROM tournament_players WHERE tournament_id = ?').get(tournamentId);
         const nextSeed = (maxSeed?.max ?? 0) + 1;
-        db.prepare('INSERT INTO tournament_players (tournament_id, player_id, seed_rank) VALUES (?, ?, ?)').run(tournamentId, player.id, nextSeed);
+        await db.prepare('INSERT INTO tournament_players (tournament_id, player_id, seed_rank) VALUES (?, ?, ?)').run(tournamentId, player.id, nextSeed);
       }
 
       results.players.push(player);

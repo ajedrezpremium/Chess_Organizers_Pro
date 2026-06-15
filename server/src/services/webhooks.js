@@ -16,7 +16,7 @@ export async function dispatchWebhooks(eventType, tournamentId, payload = {}) {
   const { getDb } = await import('../db/index.js');
   const db = getDb();
 
-  const hooks = db.prepare(`
+  const hooks = await db.prepare(`
     SELECT * FROM webhooks
     WHERE (tournament_id IS NULL OR tournament_id = ?)
     AND event_type = ? AND active = 1
@@ -49,7 +49,7 @@ export async function dispatchWebhooks(eventType, tournamentId, payload = {}) {
         clearTimeout(timeout);
 
         // Update last_triggered_at
-        db.prepare("UPDATE webhooks SET last_triggered_at = datetime('now') WHERE id = ?").run(hook.id);
+        await db.prepare("UPDATE webhooks SET last_triggered_at = datetime('now') WHERE id = ?").run(hook.id);
 
         return { hookId: hook.id, status: response.status, ok: response.ok };
       } catch (err) {

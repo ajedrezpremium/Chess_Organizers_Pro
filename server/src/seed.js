@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import { getDb } from './db/index.js';
+import { getDb } from './db/supabase.js';
 
 async function seed() {
   const db = getDb();
@@ -8,25 +8,27 @@ async function seed() {
 
   // Admin por defecto
   const adminHash = await bcrypt.hash('admin123', 12);
-  const admin = db.prepare(`
-    INSERT OR IGNORE INTO users (email, password_hash, name, role, federation)
+  const admin = await db.prepare(`
+    INSERT INTO users (email, password_hash, name, role, federation)
     VALUES (?, ?, ?, ?, ?)
   `).run('admin@chessorganizerspro.com', adminHash, 'Admin', 'admin', 'FIDE');
 
-  if (admin.changes > 0) {
-    console.log('  ✓ Admin creado: admin@chessorganizerspro.com / admin123');
-  } else {
-    console.log('  ~ Admin ya existente');
+  const existingAdmin = await db.prepare('SELECT id FROM users WHERE email = ?').get('admin@chessorganizerspro.com');
+  if (existingAdmin) {
+    console.log('  ✓ Admin: admin@chessorganizerspro.com / admin123');
   }
 
-  // Admin demo
+  // Demo user
   const demoHash = await bcrypt.hash('demo123', 12);
-  db.prepare(`
-    INSERT OR IGNORE INTO users (email, password_hash, name, role, federation)
+  await db.prepare(`
+    INSERT INTO users (email, password_hash, name, role, federation)
     VALUES (?, ?, ?, ?, ?)
   `).run('demo@chessorganizers.com', demoHash, 'Organizador Demo', 'organizer', 'ESP');
 
-  console.log('  ✓ Demo: demo@chessorganizers.com / demo123');
+  const existingDemo = await db.prepare('SELECT id FROM users WHERE email = ?').get('demo@chessorganizers.com');
+  if (existingDemo) {
+    console.log('  ✓ Demo: demo@chessorganizers.com / demo123');
+  }
 
   // Jugadores de muestra
   const demoPlayers = [
@@ -49,28 +51,28 @@ async function seed() {
   ];
 
   const insertPlayer = db.prepare(`
-    INSERT OR IGNORE INTO players (fide_id, name, last_name, title, federation, fide_rating)
+    INSERT INTO players (fide_id, name, last_name, title, federation, fide_rating)
     VALUES (?, ?, ?, ?, ?, ?)
   `);
 
   let count = 0;
   for (const p of demoPlayers) {
-    const r = insertPlayer.run(p.fide_id, p.name, p.last_name, p.title, p.federation, p.fide_rating);
+    const r = await insertPlayer.run(p.fide_id, p.name, p.last_name, p.title, p.federation, p.fide_rating);
     if (r.changes > 0) count++;
   }
   console.log(`  ✓ ${count} jugadores de muestra insertados`);
 
   // Torneo de muestra
-  const existingT = db.prepare('SELECT id FROM tournaments WHERE name = ?').get('Candidates Warm-up 2026');
+  const existingT = await db.prepare('SELECT id FROM tournaments WHERE name = ?').get('Candidates Warm-up 2026');
   if (!existingT) {
-    const tResult = db.prepare(`
+    const tResult = await db.prepare(`
       INSERT INTO tournaments (name, system, n_rounds, start_date, end_date, city, federation, time_control, rated, chief_arbiter, description, status, primary_color, secondary_color, logo_url, created_by)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run('Candidates Warm-up 2026', 'dutch', 9, '2026-06-01', '2026-06-10', 'Madrid', 'ESP', '90+30', 1, 'IA Fernando García', 'Torneo de preparación para el Candidates 2026', 'active', '#f59e0b', '#1f2937', '', 1);
 
-    const demoUserId = db.prepare('SELECT id FROM users WHERE email = ?').get('demo@chessorganizers.com')?.id;
+    const demoUserId = (await db.prepare('SELECT id FROM users WHERE email = ?').get('demo@chessorganizers.com'))?.id;
     if (demoUserId) {
-      db.prepare(`
+      await db.prepare(`
         UPDATE tournaments SET created_by = ? WHERE id = ?
       `).run(demoUserId, tResult.lastInsertRowid);
     }
@@ -81,9 +83,9 @@ async function seed() {
       VALUES (?, (SELECT id FROM players WHERE fide_id = ?), ?)
     `);
 
-    demoPlayers.forEach((p, i) => {
-      insertTP.run(tResult.lastInsertRowid, p.fide_id, i + 1);
-    });
+    for (let i = 0; i < demoPlayers.length; i++) {
+      await insertTP.run(tResult.lastInsertRowid, demoPlayers[i].fide_id, i + 1);
+    }
 
     console.log(`  ✓ Torneo "Candidates Warm-up 2026" creado con ${demoPlayers.length} jugadores`);
   } else {

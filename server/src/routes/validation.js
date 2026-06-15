@@ -8,17 +8,18 @@ import { generateSuggestions } from '../../../src/engine/suggestionEngine.js';
 const router = Router();
 
 // GET /validation/:tid — análisis de conflictos y sugerencias
-router.get('/:tid', authenticate, (req, res) => {
+router.get('/:tid', authenticate, async (req, res) => {
   try {
     const db = getDb();
-    const tournament = db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
+    const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
     if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
 
     const players = buildPlayerState(db, req.params.tid);
 
-    const rounds = db.prepare('SELECT * FROM rounds WHERE tournament_id = ? ORDER BY round_number ASC').all(req.params.tid);
-    const engineRounds = rounds.map((r) => {
-      const pairings = db.prepare(`
+    const rounds = await db.prepare('SELECT * FROM rounds WHERE tournament_id = ? ORDER BY round_number ASC').all(req.params.tid);
+    const engineRounds = [];
+    for (const r of rounds) {
+      const pairings = await db.prepare(`
         SELECT p.*, w.name as white_name, w.last_name as white_last, w.fide_rating as white_rating,
                b.name as black_name, b.last_name as black_last, b.fide_rating as black_rating
         FROM pairings p

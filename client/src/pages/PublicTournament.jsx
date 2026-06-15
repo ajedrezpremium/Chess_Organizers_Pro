@@ -69,6 +69,7 @@ export default function PublicTournament() {
   const pc = tournament.primary_color || '#f59e0b';
   const sc = tournament.secondary_color || '#1f2937';
   const logoUrl = tournament.logo_url || '';
+  const bannerUrl = tournament.banner_url || '';
 
   return (
     <div className="min-h-screen text-gray-100" style={{ background: sc }}>
@@ -110,6 +111,14 @@ export default function PublicTournament() {
           </div>
         </div>
       </header>
+
+      {bannerUrl && (
+        <div className="w-full max-w-6xl mx-auto px-4 mt-6">
+          <div className="w-full h-32 sm:h-48 md:h-64 rounded-2xl overflow-hidden shadow-lg border border-gray-800">
+            <img src={bannerUrl} alt="Banner" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
+          </div>
+        </div>
+      )}
 
       <div className="max-w-6xl mx-auto px-4 py-6">
         <div className="mb-6">

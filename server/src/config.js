@@ -1,6 +1,7 @@
 import { readFileSync, existsSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { FIDE_LAWS_SYSTEM_PROMPT } from './data/fide-system-prompt.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const envPath = resolve(__dirname, '..', '.env');
@@ -39,6 +40,12 @@ export default {
   host: get('HOST', '0.0.0.0'),
   nodeEnv,
 
+  ai: {
+    openrouterKey: get('OPENROUTER_API_KEY', ''),
+    model: get('AI_MODEL', 'google/gemini-2.0-flash-001'),
+    systemPrompt: FIDE_LAWS_SYSTEM_PROMPT,
+  },
+
   jwt: {
     secret: jwtSecret,
     expiresIn: get('JWT_EXPIRES', '7d'),
@@ -47,6 +54,11 @@ export default {
   db: {
     path: resolve(__dirname, '..', get('DB_PATH', nodeEnv === 'production'
       ? '/data/chessorganizers.db' : 'data/chessorganizers.db')),
+    url: get('DATABASE_URL', ''),
+  },
+  supabase: {
+    url: get('SUPABASE_URL', ''),
+    anonKey: get('SUPABASE_ANON_KEY', ''),
   },
 
   fide: {

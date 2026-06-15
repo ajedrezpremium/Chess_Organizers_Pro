@@ -31,7 +31,7 @@ export async function createCheckoutSession({ user, planSlug, successUrl, cancel
   }
 
   const db = getDb();
-  const plan = db.prepare('SELECT * FROM membership_plans WHERE slug = ?').get(planSlug);
+  const plan = await db.prepare('SELECT * FROM membership_plans WHERE slug = ?').get(planSlug);
   if (!plan) throw new Error('Plan no encontrado');
   if (plan.price_usd === 0) throw new Error('Plan gratuito no requiere Stripe');
 
@@ -40,7 +40,7 @@ export async function createCheckoutSession({ user, planSlug, successUrl, cancel
 
   // Buscar o crear customer
   let customerId = '';
-  const existing = db.prepare('SELECT stripe_customer_id FROM user_memberships WHERE user_id = ? AND stripe_customer_id != ? ORDER BY id DESC LIMIT 1').get(user.id, '');
+  const existing = await db.prepare('SELECT stripe_customer_id FROM user_memberships WHERE user_id = ? AND stripe_customer_id != ? ORDER BY id DESC LIMIT 1').get(user.id, '');
   if (existing?.stripe_customer_id) {
     customerId = existing.stripe_customer_id;
   } else {
@@ -75,7 +75,7 @@ export async function createPortalSession({ user, returnUrl }) {
   if (!stripe) throw new Error('Stripe no configurado');
 
   const db = getDb();
-  const membership = db.prepare(`
+  const membership = await db.prepare(`
     SELECT stripe_customer_id FROM user_memberships
     WHERE user_id = ? AND stripe_customer_id != '' AND status = 'active'
     ORDER BY id DESC LIMIT 1
@@ -119,34 +119,34 @@ export async function handleWebhook(rawBody, signature) {
         const regId = parseInt(session.metadata?.registration_id);
         const tournamentId = parseInt(session.metadata?.tournament_id);
         if (regId && tournamentId) {
-          db.prepare(`
+          await db.prepare(`
             UPDATE registration_requests SET paid = 1,
               stripe_payment_intent_id = ?,
               updated_at = datetime('now')
             WHERE id = ? AND tournament_id = ?
           `).run(session.payment_intent, regId, tournamentId);
 
-          const tournament = db.prepare('SELECT * FROM tournaments WHERE id = ?').get(tournamentId);
+          const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ?').get(tournamentId);
           if (tournament?.auto_approve) {
             // Auto-approve: set status approved, find or create player and enroll
-            db.prepare("UPDATE registration_requests SET status = 'approved' WHERE id = ?").run(regId);
-            const reg = db.prepare('SELECT * FROM registration_requests WHERE id = ?').get(regId);
+            await db.prepare("UPDATE registration_requests SET status = 'approved' WHERE id = ?").run(regId);
+            const reg = await db.prepare('SELECT * FROM registration_requests WHERE id = ?').get(regId);
             if (reg) {
               let player = null;
-              if (reg.fide_id) player = db.prepare('SELECT * FROM players WHERE fide_id = ?').get(reg.fide_id);
-              if (!player && reg.email) player = db.prepare('SELECT * FROM players WHERE email = ? AND email != ?').get(reg.email, '');
+              if (reg.fide_id) player = await db.prepare('SELECT * FROM players WHERE fide_id = ?').get(reg.fide_id);
+              if (!player && reg.email) player = await db.prepare('SELECT * FROM players WHERE email = ? AND email != ?').get(reg.email, '');
               if (!player) {
-                const pr = db.prepare(`
+                const pr = await db.prepare(`
                   INSERT INTO players (fide_id, name, last_name, fide_rating, federation, title, email, phone, notes)
                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `).run(reg.fide_id ?? '', reg.name, reg.last_name ?? '', reg.fide_rating ?? 0, reg.federation ?? '', reg.title ?? '', reg.email ?? '', reg.phone ?? '', reg.notes ?? '');
-                player = db.prepare('SELECT * FROM players WHERE id = ?').get(pr.lastInsertRowid);
+                player = await db.prepare('SELECT * FROM players WHERE id = ?').get(pr.lastInsertRowid);
               }
-              const maxSeed = db.prepare('SELECT MAX(seed_rank) as max FROM tournament_players WHERE tournament_id = ?').get(tournamentId);
+              const maxSeed = await db.prepare('SELECT MAX(seed_rank) as max FROM tournament_players WHERE tournament_id = ?').get(tournamentId);
               const nextSeed = (maxSeed?.max ?? 0) + 1;
-              const existing = db.prepare('SELECT id FROM tournament_players WHERE tournament_id = ? AND player_id = ?').get(tournamentId, player.id);
+              const existing = await db.prepare('SELECT id FROM tournament_players WHERE tournament_id = ? AND player_id = ?').get(tournamentId, player.id);
               if (!existing) {
-                db.prepare('INSERT INTO tournament_players (tournament_id, player_id, seed_rank) VALUES (?, ?, ?)').run(tournamentId, player.id, nextSeed);
+                await db.prepare('INSERT INTO tournament_players (tournament_id, player_id, seed_rank) VALUES (?, ?, ?)').run(tournamentId, player.id, nextSeed);
               }
             }
           }
@@ -159,14 +159,14 @@ export async function handleWebhook(rawBody, signature) {
       const planSlug = session.metadata?.plan_slug;
 
       if (userId && planSlug) {
-        const plan = db.prepare('SELECT * FROM membership_plans WHERE slug = ?').get(planSlug);
+        const plan = await db.prepare('SELECT * FROM membership_plans WHERE slug = ?').get(planSlug);
         if (plan) {
           // Cancelar membresías activas previas
-          db.prepare("UPDATE user_memberships SET status = 'cancelled' WHERE user_id = ? AND status = 'active'").run(userId);
+          await db.prepare("UPDATE user_memberships SET status = 'cancelled' WHERE user_id = ? AND status = 'active'").run(userId);
 
           // Insertar nueva membresía con datos Stripe
           const subscription = await stripe.subscriptions.retrieve(session.subscription);
-          db.prepare(`
+          await db.prepare(`
             INSERT INTO user_memberships (user_id, plan_id, status, stripe_customer_id, stripe_subscription_id, stripe_price_id, current_period_end)
             VALUES (?, ?, 'active', ?, ?, ?, ?)
           `).run(userId, plan.id, session.customer, session.subscription, session.metadata?.price_id || '', new Date(subscription.current_period_end * 1000).toISOString());
@@ -181,7 +181,7 @@ export async function handleWebhook(rawBody, signature) {
       const cancelAtPeriodEnd = sub.cancel_at_period_end ? 1 : 0;
       const periodEnd = new Date(sub.current_period_end * 1000).toISOString();
 
-      db.prepare(`
+      await db.prepare(`
         UPDATE user_memberships SET status = ?, cancel_at_period_end = ?, current_period_end = ?, updated_at = datetime('now')
         WHERE stripe_subscription_id = ?
       `).run(status, cancelAtPeriodEnd, periodEnd, sub.id);
@@ -191,17 +191,17 @@ export async function handleWebhook(rawBody, signature) {
     case 'customer.subscription.deleted': {
       const subDeleted = event.data.object;
       // Downgrade to Free
-      const freePlan = db.prepare("SELECT id FROM membership_plans WHERE slug = 'free'").get();
+      const freePlan = await db.prepare("SELECT id FROM membership_plans WHERE slug = 'free'").get();
       if (freePlan) {
-        db.prepare(`
+        await db.prepare(`
           UPDATE user_memberships SET status = 'cancelled' WHERE stripe_subscription_id = ?
         `).run(subDeleted.id);
 
         // Give free plan
-        const userIdRow = db.prepare('SELECT user_id FROM user_memberships WHERE stripe_subscription_id = ?').get(subDeleted.id);
+        const userIdRow = await db.prepare('SELECT user_id FROM user_memberships WHERE stripe_subscription_id = ?').get(subDeleted.id);
         if (userIdRow) {
-          db.prepare("UPDATE user_memberships SET status = 'cancelled' WHERE user_id = ? AND status = 'active'").run(userIdRow.user_id);
-          db.prepare("INSERT INTO user_memberships (user_id, plan_id, status) VALUES (?, ?, 'active')").run(userIdRow.user_id, freePlan.id);
+          await db.prepare("UPDATE user_memberships SET status = 'cancelled' WHERE user_id = ? AND status = 'active'").run(userIdRow.user_id);
+          await db.prepare("INSERT INTO user_memberships (user_id, plan_id, status) VALUES (?, ?, 'active')").run(userIdRow.user_id, freePlan.id);
         }
       }
       break;
@@ -211,7 +211,7 @@ export async function handleWebhook(rawBody, signature) {
       const invoice = event.data.object;
       const subId = invoice.subscription;
       if (subId) {
-        db.prepare("UPDATE user_memberships SET status = 'expired' WHERE stripe_subscription_id = ?").run(subId);
+        await db.prepare("UPDATE user_memberships SET status = 'expired' WHERE stripe_subscription_id = ?").run(subId);
       }
       break;
     }
@@ -263,7 +263,7 @@ export function isStripeConfigured() {
 export async function syncSubscriptions() {
   if (!stripe) return;
   const db = getDb();
-  const activeSubs = db.prepare("SELECT * FROM user_memberships WHERE stripe_subscription_id != '' AND status = 'active'").all();
+  const activeSubs = await db.prepare("SELECT * FROM user_memberships WHERE stripe_subscription_id != '' AND status = 'active'").all();
 
   for (const mem of activeSubs) {
     try {
@@ -272,13 +272,13 @@ export async function syncSubscriptions() {
       const cancelAtPeriodEnd = sub.cancel_at_period_end ? 1 : 0;
       const periodEnd = new Date(sub.current_period_end * 1000).toISOString();
 
-      db.prepare(`
+      await db.prepare(`
         UPDATE user_memberships SET status = ?, cancel_at_period_end = ?, current_period_end = ?
         WHERE id = ?
       `).run(status, cancelAtPeriodEnd, periodEnd, mem.id);
     } catch {
       // Subscription might have been deleted in Stripe
-      db.prepare("UPDATE user_memberships SET status = 'expired' WHERE id = ?").run(mem.id);
+      await db.prepare("UPDATE user_memberships SET status = 'expired' WHERE id = ?").run(mem.id);
     }
   }
 }

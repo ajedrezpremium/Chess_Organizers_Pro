@@ -41,7 +41,7 @@ router.post('/import', authenticate, async (req, res) => {
 
     // Check if player already exists by fide_id or external_id pattern
     const externalId = `${platform}:${username}`;
-    let existing = db.prepare("SELECT * FROM players WHERE notes = ?").get(externalId);
+    let existing = await db.prepare("SELECT * FROM players WHERE notes = ?").get(externalId);
     if (existing) return res.json({ player: existing, imported: false, message: 'Jugador ya importado' });
 
     // Create player
@@ -49,12 +49,12 @@ router.post('/import', authenticate, async (req, res) => {
     const lastName = '';
     const title = profile.title || '';
 
-    const result = db.prepare(`
+    const result = await db.prepare(`
       INSERT INTO players (name, last_name, fide_rating, title, federation, notes)
       VALUES (?, ?, ?, ?, ?, ?)
     `).run(name, lastName, rating, title, federation || '', externalId);
 
-    const player = db.prepare('SELECT * FROM players WHERE id = ?').get(result.lastInsertRowid);
+    const player = await db.prepare('SELECT * FROM players WHERE id = ?').get(result.lastInsertRowid);
     res.status(201).json({ player, imported: true, platform, username });
   } catch (err) {
     res.status(400).json({ error: err.message });

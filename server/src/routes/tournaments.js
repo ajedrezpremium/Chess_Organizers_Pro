@@ -18,15 +18,15 @@ router.get('/', authenticate, (req, res) => {
   sql += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
   params.push(parseInt(limit), (parseInt(page) - 1) * parseInt(limit));
 
-  const tournaments = db.prepare(sql).all(...params);
-  const total = db.prepare('SELECT COUNT(*) as count FROM tournaments WHERE created_by = ?').get(req.user.id);
+  const tournaments = await db.prepare(sql).all(...params);
+  const total = await db.prepare('SELECT COUNT(*) as count FROM tournaments WHERE created_by = ?').get(req.user.id);
   res.json({ tournaments, total: total.count, page: parseInt(page) });
 });
 
 // GET /tournaments/:id
 router.get('/:id', authenticate, (req, res) => {
   const db = getDb();
-  const t = db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.id, req.user.id);
+  const t = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.id, req.user.id);
   if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
 
   // Parse tiebreaks JSON
@@ -45,12 +45,12 @@ router.post('/', authenticate, validate({
   const db = getDb();
   const { name, system, n_rounds, start_date, end_date, city, federation, time_control, rated, chief_arbiter, description } = req.body;
 
-  const result = db.prepare(`
+  const result = await db.prepare(`
     INSERT INTO tournaments (name, system, n_rounds, start_date, end_date, city, federation, time_control, rated, chief_arbiter, description, created_by)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(name, system ?? 'dutch', n_rounds ?? 6, start_date ?? null, end_date ?? null, city ?? '', federation ?? '', time_control ?? '90+30', rated ?? 1, chief_arbiter ?? '', description ?? '', req.user.id);
 
-  const tournament = db.prepare('SELECT * FROM tournaments WHERE id = ?').get(result.lastInsertRowid);
+  const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ?').get(result.lastInsertRowid);
 
   // Webhook
   dispatchWebhooks('tournament.created', tournament.id, { name: tournament.name });
@@ -61,10 +61,10 @@ router.post('/', authenticate, validate({
 // PATCH /tournaments/:id
 router.patch('/:id', authenticate, (req, res) => {
   const db = getDb();
-  const t = db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.id, req.user.id);
+  const t = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.id, req.user.id);
   if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
 
-  const allowed = ['name','system','n_rounds','start_date','end_date','city','federation','time_control','rated','chief_arbiter','status','description','primary_color','secondary_color','logo_url','stream_url','stream_platform','registration_fee','registration_currency','auto_approve','custom_fields'];
+  const allowed = ['name','system','n_rounds','start_date','end_date','city','federation','time_control','rated','chief_arbiter','status','description','primary_color','secondary_color','logo_url','banner_url','stream_url','stream_platform','registration_fee','registration_currency','auto_approve','custom_fields'];
   const updates = [];
   const params = [];
 
@@ -80,8 +80,8 @@ router.patch('/:id', authenticate, (req, res) => {
   updates.push('updated_at = datetime(\'now\')');
   params.push(req.params.id);
 
-  db.prepare(`UPDATE tournaments SET ${updates.join(', ')} WHERE id = ?`).run(...params);
-  const tournament = db.prepare('SELECT * FROM tournaments WHERE id = ?').get(req.params.id);
+  await db.prepare(`UPDATE tournaments SET ${updates.join(', ')} WHERE id = ?`).run(...params);
+  const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ?').get(req.params.id);
 
   // Webhook + notifications for tournament finished
   if (req.body.status === 'finished') {
@@ -95,7 +95,7 @@ router.patch('/:id', authenticate, (req, res) => {
 // DELETE /tournaments/:id
 router.delete('/:id', authenticate, (req, res) => {
   const db = getDb();
-  const result = db.prepare('DELETE FROM tournaments WHERE id = ? AND created_by = ?').run(req.params.id, req.user.id);
+  const result = await db.prepare('DELETE FROM tournaments WHERE id = ? AND created_by = ?').run(req.params.id, req.user.id);
   if (result.changes === 0) return res.status(404).json({ error: 'Torneo no encontrado' });
   res.json({ ok: true });
 });
@@ -107,19 +107,19 @@ router.post('/:id/players', authenticate, (req, res) => {
   const db = getDb();
   const { player_id, seed_rank, category } = req.body;
 
-  const t = db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.id, req.user.id);
+  const t = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.id, req.user.id);
   if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
   if (t.status !== 'pending') return res.status(400).json({ error: 'El torneo ya comenzó' });
 
-  const existing = db.prepare('SELECT id FROM tournament_players WHERE tournament_id = ? AND player_id = ?').get(req.params.id, player_id);
+  const existing = await db.prepare('SELECT id FROM tournament_players WHERE tournament_id = ? AND player_id = ?').get(req.params.id, player_id);
   if (existing) return res.status(409).json({ error: 'Jugador ya inscrito' });
 
-  const result = db.prepare(`
+  const result = await db.prepare(`
     INSERT INTO tournament_players (tournament_id, player_id, seed_rank, category)
     VALUES (?, ?, ?, ?)
   `).run(req.params.id, player_id, seed_rank ?? 0, category ?? '');
 
-  const tp = db.prepare(`
+  const tp = await db.prepare(`
     SELECT tp.*, p.name, p.last_name, p.fide_rating, p.title, p.federation, p.fide_id
     FROM tournament_players tp JOIN players p ON tp.player_id = p.id
     WHERE tp.id = ?
@@ -131,7 +131,7 @@ router.post('/:id/players', authenticate, (req, res) => {
 // GET /tournaments/:id/players — lista inscritos
 router.get('/:id/players', authenticate, (req, res) => {
   const db = getDb();
-  const players = db.prepare(`
+  const players = await db.prepare(`
     SELECT tp.*, p.name, p.last_name, p.fide_rating, p.title, p.federation, p.fide_id
     FROM tournament_players tp JOIN players p ON tp.player_id = p.id
     WHERE tp.tournament_id = ?
@@ -145,9 +145,23 @@ router.get('/:id/players', authenticate, (req, res) => {
 router.patch('/:id/players/:pid/category', authenticate, (req, res) => {
   const db = getDb();
   const { category } = req.body;
-  const tp = db.prepare('SELECT id FROM tournament_players WHERE id = ? AND tournament_id = ?').get(req.params.pid, req.params.id);
+  const tp = await db.prepare('SELECT id FROM tournament_players WHERE id = ? AND tournament_id = ?').get(req.params.pid, req.params.id);
   if (!tp) return res.status(404).json({ error: 'Jugador no encontrado en este torneo' });
-  db.prepare('UPDATE tournament_players SET category = ? WHERE id = ?').run(category || '', req.params.pid);
+  await db.prepare('UPDATE tournament_players SET category = ? WHERE id = ?').run(category || '', req.params.pid);
+  res.json({ ok: true });
+});
+
+// PATCH /tournaments/:id/players/:pid/penalty — aplicar penalización
+router.patch('/:id/players/:pid/penalty', authenticate, (req, res) => {
+  const db = getDb();
+  const { points } = req.body; // Cantidad a penalizar (e.g. 0.5)
+  const tp = await db.prepare('SELECT id, current_points, penalty_points FROM tournament_players WHERE id = ? AND tournament_id = ?').get(req.params.pid, req.params.id);
+  if (!tp) return res.status(404).json({ error: 'Jugador no encontrado en este torneo' });
+  
+  const penalty = parseFloat(points) || 0;
+  if (penalty <= 0) return res.status(400).json({ error: 'La penalización debe ser mayor a 0' });
+  
+  await db.prepare('UPDATE tournament_players SET current_points = current_points - ?, penalty_points = penalty_points + ? WHERE id = ?').run(penalty, penalty, req.params.pid);
   res.json({ ok: true });
 });
 
@@ -156,7 +170,7 @@ router.patch('/:id/players/:pid/category', authenticate, (req, res) => {
 // GET /tournaments/:id/registrations — lista solicitudes pendientes
 router.get('/:id/registrations', authenticate, (req, res) => {
   const db = getDb();
-  const t = db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.id, req.user.id);
+  const t = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.id, req.user.id);
   if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
 
   const { status } = req.query;
@@ -169,50 +183,50 @@ router.get('/:id/registrations', authenticate, (req, res) => {
   }
   sql += ' ORDER BY created_at DESC';
 
-  const requests = db.prepare(sql).all(...params);
+  const requests = await db.prepare(sql).all(...params);
   res.json(requests);
 });
 
 // PATCH /tournaments/:id/registrations/:reqId — aprobar/rechazar
 router.patch('/:id/registrations/:reqId', authenticate, (req, res) => {
   const db = getDb();
-  const t = db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.id, req.user.id);
+  const t = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.id, req.user.id);
   if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
 
-  const reg = db.prepare('SELECT * FROM registration_requests WHERE id = ? AND tournament_id = ?').get(req.params.reqId, req.params.id);
+  const reg = await db.prepare('SELECT * FROM registration_requests WHERE id = ? AND tournament_id = ?').get(req.params.reqId, req.params.id);
   if (!reg) return res.status(404).json({ error: 'Solicitud no encontrada' });
   if (reg.status !== 'pending' && reg.status !== 'pending_payment') return res.status(400).json({ error: 'Solicitud ya procesada' });
 
   const { action } = req.body; // 'approved' | 'rejected'
   if (!['approved', 'rejected'].includes(action)) return res.status(400).json({ error: 'Acción inválida' });
 
-  db.prepare("UPDATE registration_requests SET status = ?, updated_at = datetime('now') WHERE id = ?").run(action, req.params.reqId);
+  await db.prepare("UPDATE registration_requests SET status = ?, updated_at = datetime('now') WHERE id = ?").run(action, req.params.reqId);
 
   if (action === 'approved') {
     // Buscar o crear jugador
     let player = null;
     if (reg.fide_id) {
-      player = db.prepare('SELECT * FROM players WHERE fide_id = ?').get(reg.fide_id);
+      player = await db.prepare('SELECT * FROM players WHERE fide_id = ?').get(reg.fide_id);
     }
     if (!player && reg.email) {
-      player = db.prepare('SELECT * FROM players WHERE email = ? AND email != ?').get(reg.email, '');
+      player = await db.prepare('SELECT * FROM players WHERE email = ? AND email != ?').get(reg.email, '');
     }
     if (!player) {
-      const result = db.prepare(`
+      const result = await db.prepare(`
         INSERT INTO players (fide_id, name, last_name, fide_rating, federation, title, email, phone, notes)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(reg.fide_id ?? '', reg.name, reg.last_name ?? '', reg.fide_rating ?? 0, reg.federation ?? '', reg.title ?? '', reg.email ?? '', reg.phone ?? '', reg.notes ?? '');
-      player = db.prepare('SELECT * FROM players WHERE id = ?').get(result.lastInsertRowid);
+      player = await db.prepare('SELECT * FROM players WHERE id = ?').get(result.lastInsertRowid);
     }
 
     // Obtener seed_rank
-    const maxSeed = db.prepare('SELECT MAX(seed_rank) as max FROM tournament_players WHERE tournament_id = ?').get(req.params.id);
+    const maxSeed = await db.prepare('SELECT MAX(seed_rank) as max FROM tournament_players WHERE tournament_id = ?').get(req.params.id);
     const nextSeed = (maxSeed?.max ?? 0) + 1;
 
     // Inscribir
-    const existing = db.prepare('SELECT id FROM tournament_players WHERE tournament_id = ? AND player_id = ?').get(req.params.id, player.id);
+    const existing = await db.prepare('SELECT id FROM tournament_players WHERE tournament_id = ? AND player_id = ?').get(req.params.id, player.id);
     if (!existing) {
-      db.prepare('INSERT INTO tournament_players (tournament_id, player_id, seed_rank) VALUES (?, ?, ?)').run(req.params.id, player.id, nextSeed);
+      await db.prepare('INSERT INTO tournament_players (tournament_id, player_id, seed_rank) VALUES (?, ?, ?)').run(req.params.id, player.id, nextSeed);
     }
 
     notifyRegistrationApproved(req.params.id, reg.email, reg.name);

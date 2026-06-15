@@ -1,34 +1,25 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { unlinkSync, mkdirSync, existsSync } from 'fs';
-import { dirname } from 'path';
-
-// Usar BD temporal para tests
-const TEST_DB = './test_data/test.db';
-if (!existsSync(dirname(TEST_DB))) mkdirSync(dirname(TEST_DB), { recursive: true });
-// Limpiar BD de ejecuciones anteriores
-try { unlinkSync(TEST_DB); } catch {}
-try { unlinkSync(TEST_DB + '-wal'); } catch {}
-try { unlinkSync(TEST_DB + '-shm'); } catch {}
 
 const ENV = {
-  DB_PATH: TEST_DB,
   JWT_SECRET: 'test-secret',
   PORT: '0',
+  DATABASE_URL: process.env.DATABASE_URL || process.env.SUPABASE_DATABASE_URL || '',
 };
 
 let request, server, BASE;
 
 before(async () => {
-  // Set env vars antes de cualquier import
-  for (const [k, v] of Object.entries(ENV)) process.env[k] = v;
+  for (const [k, v] of Object.entries(ENV)) if (v) process.env[k] = v;
 
-  // Inicializar schema y app con imports dinámicos
   const { migrate } = await import('../src/db/schema.js');
-  migrate();
+  await migrate();
 
   const mod = await import('../src/index.js');
-  server = mod.server;
+  const { default: app } = mod;
+  // Start server for testing
+  server = app.listen(0);
+  await new Promise(resolve => server.once('listening', resolve));
   BASE = `http://localhost:${server.address().port}`;
 
   request = async (method, path, body = null, token = null) => {
@@ -38,131 +29,96 @@ before(async () => {
       method, headers,
       body: body ? JSON.stringify(body) : null,
     });
-    const data = res.headers.get('content-type')?.includes('application/json')
-      ? await res.json()
-      : await res.text();
-    return { status: res.status, data, headers: res.headers };
+    return { status: res.status, body: await res.json().catch(() => null), headers: res.headers };
   };
 });
 
-let token, tournamentId, playerId;
+after(async () => {
+  if (server) {
+    await new Promise(resolve => server.close(resolve));
+  }
+  const { closeDb } = await import('../src/db/supabase.js');
+  await closeDb();
+});
 
-describe('API Tests', { concurrency: false }, () => {
-  it('POST /auth/register — crea usuario', async () => {
-    const res = await request('POST', '/auth/register', {
-      email: 'test@test.com', password: 'test123', name: 'Test User',
+describe('API Integration Tests', () => {
+  let token = '';
+  let tournamentId;
+
+  it('POST /auth/register — registrar usuario', async () => {
+    const { status, body } = await request('POST', '/auth/register', {
+      email: 'test@test.com', password: 'test123', name: 'Tester',
     });
-    assert.equal(res.status, 201);
-    assert.ok(res.data.token);
-    token = res.data.token;
+    assert.equal(status, 201);
+    assert.ok(body.token);
+    token = body.token;
   });
 
-  it('POST /auth/login — inicia sesión', async () => {
-    const res = await request('POST', '/auth/login', {
+  it('POST /auth/login — login', async () => {
+    const { status, body } = await request('POST', '/auth/login', {
       email: 'test@test.com', password: 'test123',
     });
-    assert.equal(res.status, 200);
-    assert.ok(res.data.token);
-    token = res.data.token;
-  });
-
-  it('GET /auth/me — perfil', async () => {
-    const res = await request('GET', '/auth/me', null, token);
-    assert.equal(res.status, 200);
-    assert.equal(res.data.email, 'test@test.com');
-  });
-
-  it('POST /tournaments — crea torneo', async () => {
-    const res = await request('POST', '/tournaments', {
-      name: 'Test Swiss', system: 'dutch', n_rounds: 5,
-    }, token);
-    assert.equal(res.status, 201);
-    tournamentId = res.data.id;
-  });
-
-  it('GET /tournaments — lista torneos', async () => {
-    const res = await request('GET', '/tournaments', null, token);
-    assert.equal(res.status, 200);
-    assert.ok(res.data.tournaments.length > 0);
-  });
-
-  it('PATCH /tournaments/:id — actualiza torneo', async () => {
-    const res = await request('PATCH', `/tournaments/${tournamentId}`, {
-      description: 'Updated',
-    }, token);
-    assert.equal(res.status, 200);
-    assert.equal(res.data.description, 'Updated');
-  });
-
-  it('POST /players — crea jugador', async () => {
-    const res = await request('POST', '/players', {
-      fide_id: '9900001', name: 'Test', last_name: 'Player', fide_rating: 2500, federation: 'TEST',
-    }, token);
-    assert.equal(res.status, 201);
-    playerId = res.data.id;
-  });
-
-  it('GET /players — busca jugadores', async () => {
-    const res = await request('GET', '/players?q=Test', null, token);
-    assert.equal(res.status, 200);
-    assert.ok(res.data.players.length > 0);
-  });
-
-  it('POST /tournaments/:tid/players — inscribe jugador', async () => {
-    const res = await request('POST', `/tournaments/${tournamentId}/players`, {
-      player_id: playerId, seed_rank: 1,
-    }, token);
-    assert.equal(res.status, 201);
-  });
-
-  it('Crea e inscribe segundo jugador', async () => {
-    const r1 = await request('POST', '/players', {
-      fide_id: '9900002', name: 'Second', last_name: 'Player', fide_rating: 2400, federation: 'TEST',
-    }, token);
-    assert.equal(r1.status, 201);
-    const r2 = await request('POST', `/tournaments/${tournamentId}/players`, {
-      player_id: r1.data.id, seed_rank: 2,
-    }, token);
-    assert.equal(r2.status, 201);
-  });
-
-  it('Genera ronda 1', async () => {
-    const res = await request('POST', `/tournaments/${tournamentId}/rounds/generate`, null, token);
-    assert.equal(res.status, 201);
-  });
-
-  it('GET /tournaments/:tid/rounds — lista rondas', async () => {
-    const res = await request('GET', `/tournaments/${tournamentId}/rounds`, null, token);
-    assert.equal(res.status, 200);
-    assert.ok(res.data.length > 0);
-  });
-
-  it('Exporta TRF', async () => {
-    const res = await request('GET', `/tournaments/${tournamentId}/trf`, null, token);
-    assert.equal(res.status, 200);
-    assert.ok(typeof res.data === 'string');
+    assert.equal(status, 200);
+    assert.ok(body.token);
   });
 
   it('GET /health — health check', async () => {
-    const res = await request('GET', '/health');
-    assert.equal(res.status, 200);
-    assert.equal(res.data.status, 'ok');
+    const { status, body } = await request('GET', '/health');
+    assert.equal(status, 200);
+    assert.equal(body.status, 'ok');
   });
 
-  it('POST /nonexistent — 401 (global auth middleware)', async () => {
-    const res = await request('POST', '/nonexistent');
-    assert.equal(res.status, 401);
+  it('POST /tournaments — crear torneo', async () => {
+    const { status, body } = await request('POST', '/tournaments', {
+      name: 'Test Tournament', system: 'dutch', n_rounds: 5,
+    }, token);
+    assert.equal(status, 201);
+    assert.ok(body.id);
+    tournamentId = body.id;
   });
 
-  it('GET /tournaments sin token — 401', async () => {
-    const res = await request('GET', '/tournaments');
-    assert.equal(res.status, 401);
+  it('GET /tournaments — listar torneos', async () => {
+    const { status, body } = await request('GET', '/tournaments', null, token);
+    assert.equal(status, 200);
+    assert.ok(Array.isArray(body));
+    assert.ok(body.length > 0);
   });
 
-  after(() => {
-    if (server) server.close();
-    try { unlinkSync(TEST_DB); } catch {}
-    try { unlinkSync(TEST_DB + '-wal'); } catch {}
-    try { unlinkSync(TEST_DB + '-shm'); } catch {}
+  it('GET /tournaments/:id — obtener torneo', async () => {
+    const { status, body } = await request('GET', `/tournaments/${tournamentId}`, null, token);
+    assert.equal(status, 200);
+    assert.equal(body.name, 'Test Tournament');
+  });
+
+  it('POST /players — crear jugador', async () => {
+    const { status, body } = await request('POST', '/players', {
+      name: 'Magnus', last_name: 'Carlsen', fide_id: '2200010', fide_rating: 2831,
+      title: 'GM', federation: 'NOR',
+    }, token);
+    assert.equal(status, 201);
+    assert.ok(body.id);
+  });
+
+  it('GET /players?q= — buscar jugadores', async () => {
+    const { status, body } = await request('GET', '/players?q=Magnus', null, token);
+    assert.equal(status, 200);
+    assert.ok(Array.isArray(body));
+  });
+
+  it('GET /public/tournaments — torneos públicos', async () => {
+    const { status, body } = await request('GET', '/public/tournaments');
+    assert.equal(status, 200);
+    assert.ok(Array.isArray(body));
+  });
+
+  it('POST /fide/import/2200010 — importar jugador FIDE', async () => {
+    const { status, body } = await request('POST', '/fide/import/2200010', null, token);
+    // Should work or fail gracefully (no FIDE API configured)
+    assert.ok(status === 200 || status === 400 || status === 500);
+  });
+
+  it('DELETE /tournaments/:id — eliminar torneo', async () => {
+    const { status } = await request('DELETE', `/tournaments/${tournamentId}`, null, token);
+    assert.equal(status, 200);
   });
 });

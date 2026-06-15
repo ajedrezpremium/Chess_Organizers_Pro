@@ -7,6 +7,7 @@ import ConfirmModal from '../components/ConfirmModal.jsx';
 import { useToast } from '../components/Toast.jsx';
 import QRCode from '../components/QRCode.jsx';
 import { exportStandingsPDF, exportPairingsPDF, exportCrosstablePDF, exportTournamentReportPDF, exportPGN, exportPlayersCSV, exportStandingsCSV, exportPairingsCSV } from '../utils/exportUtils.js';
+import RatingCalculator, { calculateChange, getKFactor } from '../components/RatingCalculator.jsx';
 
 const CrossTable = lazy(() => import('../components/CrossTable.jsx'));
 const BoardWall = lazy(() => import('../components/BoardWall.jsx'));
@@ -217,6 +218,7 @@ export default function TournamentDetail() {
           { key: 'schedule', label: t('stats.schedule') },
           { key: 'settings', label: t('settings.title') },
           { key: 'intel', label: t('stats.intel') },
+          { key: 'calculator', label: 'Calculadora ELO' },
           { key: 'heatmap', label: t('stats.heatmap') },
           { key: 'progression', label: t('stats.progression') },
           { key: 'h2h', label: t('stats.h2h') },
@@ -239,8 +241,9 @@ export default function TournamentDetail() {
         {tab === 'standings' && <StandingsTab standings={standings} onLoad={loadStandings} autoRefresh={tournament?.status !== 'finished'} />}
         {tab === 'schedule' && <ScheduleTab tournament={tournament} rounds={rounds} onUpdate={load} />}
         {tab === 'settings' && <SettingsTab tournament={tournament} onUpdate={load} />}
-        {tab === 'intel' && <LazyTab><PairingIntelligence tournamentId={id} /></LazyTab>}
-        {tab === 'progression' && <LazyTab><ProgressionTab onLoad={loadProgression} data={progression} /></LazyTab>}
+        { tab === 'intel' && <LazyTab><PairingIntelligence tournamentId={id} /></LazyTab>}
+        { tab === 'calculator' && <div className="py-4"><RatingCalculator /></div> }
+        { tab === 'progression' && <LazyTab><ProgressionTab onLoad={loadProgression} data={progression} /></LazyTab>}
         {tab === 'heatmap' && <LazyTab><HeatmapTab onLoad={loadProgression} data={heatmap} /></LazyTab>}
         {tab === 'h2h' && <LazyTab><HeadToHead tournamentId={id} players={players} /></LazyTab>}
         {tab === 'performance' && (
@@ -437,7 +440,7 @@ function PlayersTab({ tournamentId, players, onUpdate }) {
           <div className="table-wrap">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-fide-900 text-gray-600 dark:text-fide-300">
-                <tr><th className="text-left px-4 py-2 font-medium">{t('playersTab.seed')}</th><th className="text-left px-4 py-2 font-medium">{t('playersTab.name')}</th><th className="text-left px-4 py-2 font-medium">{t('playersTab.title')}</th><th className="text-left px-4 py-2 font-medium">{t('playersTab.rating')}</th><th className="text-left px-4 py-2 font-medium">{t('playersTab.fed')}</th><th className="text-left px-4 py-2 font-medium">{t('playersTab.category')}</th><th className="text-left px-4 py-2 font-medium">{t('playersTab.pts')}</th></tr>
+                <tr><th className="text-left px-4 py-2 font-medium">{t('playersTab.seed')}</th><th className="text-left px-4 py-2 font-medium">{t('playersTab.name')}</th><th className="text-left px-4 py-2 font-medium">{t('playersTab.title')}</th><th className="text-left px-4 py-2 font-medium">{t('playersTab.rating')}</th><th className="text-left px-4 py-2 font-medium">{t('playersTab.fed')}</th><th className="text-left px-4 py-2 font-medium">{t('playersTab.category')}</th><th className="text-left px-4 py-2 font-medium">{t('playersTab.pts')}</th><th className="text-center px-4 py-2 font-medium">Acciones</th></tr>
               </thead>
               <tbody className="divide-y dark:divide-fide-700">
                 {localPlayers.map((p) => {
@@ -459,7 +462,23 @@ function PlayersTab({ tournamentId, players, onUpdate }) {
                           {cats.map((c) => <option key={c} value={c} selected={currentCat === c}>{c}</option>)}
                         </select>
                       </td>
-                      <td className="px-4 py-2 font-mono">{p.current_points}</td>
+                      <td className="px-4 py-2 font-mono">
+                        {p.current_points}
+                        {p.penalty_points > 0 && <span className="text-[10px] text-red-500 ml-1">(-{p.penalty_points})</span>}
+                      </td>
+                      <td className="px-4 py-2 text-center">
+                        <button onClick={async () => {
+                          const pts = window.prompt(`Penalizar a ${p.name} ${p.last_name} (puntos a deducir, ej: 0.5):`, "0.5");
+                          if (!pts || isNaN(pts)) return;
+                          try {
+                            await api.penalty(tournamentId, p.id, pts);
+                            toast.success(`Penalización de ${pts} pts aplicada`);
+                            onUpdate();
+                          } catch (ex) { toast.error(ex.message); }
+                        }} className="text-xs text-red-600 dark:text-red-400 hover:underline">
+                          Penalizar
+                        </button>
+                      </td>
                     </tr>
                   );
                 })}
@@ -585,10 +604,22 @@ function RoundCard({ round, tournamentId, players, onResult, onClose, onPublish,
               </tr>
             </thead>
             <tbody className="divide-y dark:divide-fide-700">
-              {round.pairings.map((p) => (
+              {round.pairings.map((p) => {
+                const wr = p.white_rating || 0;
+                const br = p.black_rating || 0;
+                const kWhite = getKFactor(wr, 100);
+                const kBlack = getKFactor(br, 100);
+                const exWhiteWin = wr && br ? calculateChange(wr, br, 1, kWhite) : 0;
+                const exBlackWin = wr && br ? calculateChange(br, wr, 1, kBlack) : 0;
+                const showProj = isOpen && p.result === '-' && wr > 0 && br > 0;
+                
+                return (
                 <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-fide-700 dark:text-fide-200">
                   <td className="px-2 py-2 text-gray-500 dark:text-fide-400">{p.board}</td>
-                  <td className="px-2 py-2 font-medium whitespace-nowrap">{p.white_name}{p.white_last ? ` ${p.white_last}` : ''}{p.white_rating ? ` (${p.white_rating})` : ''}</td>
+                  <td className="px-2 py-2 font-medium whitespace-nowrap">
+                    <div>{p.white_name}{p.white_last ? ` ${p.white_last}` : ''}{p.white_rating ? ` (${p.white_rating})` : ''}</div>
+                    {showProj && <div className="text-[10px] text-green-600 dark:text-green-400 font-mono">Win: +{exWhiteWin}</div>}
+                  </td>
                   <td className="px-2 py-2 text-center">
                     {isOpen ? (
                       <select value={p.result} onChange={(e) => handleResultChange(p.id, e.target.value)} className="border dark:border-fide-600 rounded px-2 py-1 text-xs font-mono text-center bg-white dark:bg-fide-700 dark:text-white">
@@ -599,7 +630,12 @@ function RoundCard({ round, tournamentId, players, onResult, onClose, onPublish,
                     )}
                   </td>
                   <td className="px-2 py-2 whitespace-nowrap">
-                    {p.is_bye ? <span className="text-gray-400 italic">{t('arbiter.bye')}</span> : <span className="font-medium">{p.black_name}{p.black_last ? ` ${p.black_last}` : ''}{p.black_rating ? ` (${p.black_rating})` : ''}</span>}
+                    {p.is_bye ? <span className="text-gray-400 italic">{t('arbiter.bye')}</span> : (
+                      <div>
+                        <span className="font-medium">{p.black_name}{p.black_last ? ` ${p.black_last}` : ''}{p.black_rating ? ` (${p.black_rating})` : ''}</span>
+                        {showProj && <div className="text-[10px] text-green-600 dark:text-green-400 font-mono">Win: +{exBlackWin}</div>}
+                      </div>
+                    )}
                   </td>
                   {editing && (
                     <td className="px-2 py-2 text-center">
@@ -612,7 +648,8 @@ function RoundCard({ round, tournamentId, players, onResult, onClose, onPublish,
                     </td>
                   )}
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -684,6 +721,7 @@ function SettingsTab({ tournament, onUpdate }) {
   const [primary, setPrimary] = useState(tournament.primary_color || '#f59e0b');
   const [secondary, setSecondary] = useState(tournament.secondary_color || '#1f2937');
   const [logo, setLogo] = useState(tournament.logo_url || '');
+  const [bannerUrl, setBannerUrl] = useState(tournament.banner_url || '');
   const [streamUrl, setStreamUrl] = useState(tournament.stream_url || '');
   const [streamPlatform, setStreamPlatform] = useState(tournament.stream_platform || '');
   const [categoriesStr, setCategoriesStr] = useState((tournament.categories || []).join(', '));
@@ -725,7 +763,7 @@ function SettingsTab({ tournament, onUpdate }) {
     try {
       const cats = categoriesStr.split(',').map((c) => c.trim()).filter(Boolean).join(',');
       await api.updateTournament(tournament.id, {
-        primary_color: primary, secondary_color: secondary, logo_url: logo,
+        primary_color: primary, secondary_color: secondary, logo_url: logo, banner_url: bannerUrl,
         stream_url: streamUrl, stream_platform: streamPlatform, categories: cats,
         registration_fee: parseInt(regFee) || 0, registration_currency: regCurrency,
         auto_approve: autoApprove ? 1 : 0, custom_fields: JSON.stringify(customFields),
@@ -736,9 +774,9 @@ function SettingsTab({ tournament, onUpdate }) {
   };
 
   const handleReset = async () => {
-    setPrimary('#f59e0b'); setSecondary('#1f2937'); setLogo(''); setStreamUrl(''); setStreamPlatform(''); setCategoriesStr(''); setRegFee(0); setRegCurrency('usd'); setAutoApprove(false); setCustomFields([]);
+    setPrimary('#f59e0b'); setSecondary('#1f2937'); setLogo(''); setBannerUrl(''); setStreamUrl(''); setStreamPlatform(''); setCategoriesStr(''); setRegFee(0); setRegCurrency('usd'); setAutoApprove(false); setCustomFields([]);
     try {
-      await api.updateTournament(tournament.id, { primary_color: '#f59e0b', secondary_color: '#1f2937', logo_url: '', stream_url: '', stream_platform: '', categories: '', registration_fee: 0, registration_currency: 'usd', auto_approve: 0, custom_fields: '[]' });
+      await api.updateTournament(tournament.id, { primary_color: '#f59e0b', secondary_color: '#1f2937', logo_url: '', banner_url: '', stream_url: '', stream_platform: '', categories: '', registration_fee: 0, registration_currency: 'usd', auto_approve: 0, custom_fields: '[]' });
       toast.success(t('settings.resetSuccess'));
       onUpdate();
     } catch (e) { toast.error(e.message); }
@@ -761,6 +799,23 @@ function SettingsTab({ tournament, onUpdate }) {
             <input value={logo} onChange={(e) => setLogo(e.target.value)}
               placeholder={t('settings.logoPlaceholder')}
               className="w-full border dark:border-fide-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none focus:ring-2 focus:ring-fide-500" />
+          </div>
+        </div>
+
+        <div className="mt-6 flex items-start gap-4">
+          <div className="w-40 h-20 rounded-xl border-2 border-dashed dark:border-fide-600 flex items-center justify-center overflow-hidden shrink-0 bg-gray-50 dark:bg-fide-900">
+            {bannerUrl ? (
+              <img src={bannerUrl} alt="Banner" className="w-full h-full object-cover" onError={(e) => { e.target.src = ''; }} />
+            ) : (
+              <span className="text-sm text-gray-400">Banner</span>
+            )}
+          </div>
+          <div className="flex-1">
+            <label className="text-xs text-gray-500 dark:text-fide-400 mb-1 block">URL del Banner (Opcional)</label>
+            <input value={bannerUrl} onChange={(e) => setBannerUrl(e.target.value)}
+              placeholder="https://ejemplo.com/banner.jpg"
+              className="w-full border dark:border-fide-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none focus:ring-2 focus:ring-fide-500" />
+            <p className="text-[10px] text-gray-500 mt-1">Recomendado: 1200x300px. Aparecerá en la página pública del torneo.</p>
           </div>
         </div>
       </div>
