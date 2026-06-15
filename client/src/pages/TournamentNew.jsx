@@ -31,7 +31,7 @@ export default function TournamentNew() {
     try {
       const tourn = await api.createTournament(form);
       toast.success('Torneo creado correctamente');
-      navigate(`/tournament/${tourn.id}`);
+      navigate(`/app/tournament/${tourn.id}`);
     } catch (err) { toast.error(err.message); setSaving(false); }
   };
 
@@ -45,7 +45,7 @@ export default function TournamentNew() {
   return (
     <div className="max-w-2xl mx-auto animate-fadeIn">
       <div className="mb-8">
-        <button onClick={() => navigate('/')} className="text-sm text-fide-500 hover:text-fide-600 dark:text-fide-400 dark:hover:text-fide-300 inline-flex items-center gap-1 mb-2 transition-colors">
+        <button onClick={() => navigate('/app/dashboard')} className="text-sm text-fide-500 hover:text-fide-600 dark:text-fide-400 dark:hover:text-fide-300 inline-flex items-center gap-1 mb-2 transition-colors">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           {t('common.back')}
         </button>
@@ -107,7 +107,7 @@ export default function TournamentNew() {
               </span>
             ) : t('newTournament.create')}
           </button>
-          <button type="button" onClick={() => navigate('/')}
+          <button type="button" onClick={() => navigate('/app/dashboard')}
             className="px-6 py-2.5 rounded-xl text-sm font-medium border border-gray-300 dark:border-fide-600 text-gray-600 dark:text-fide-300 hover:bg-gray-50 dark:hover:bg-fide-700 transition-all duration-200">
             {t('common.cancel')}
           </button>

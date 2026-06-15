@@ -124,7 +124,7 @@ export default function Dashboard() {
             {pendingCount > 0 && <span className="text-amber-600 dark:text-amber-400 ml-1">{pendingCount} {t('dashboard.pending')}</span>}
           </p>
         </div>
-        <Link to="/new"
+        <Link to="/app/new"
           className="inline-flex items-center gap-2 bg-fide-700 hover:bg-fide-800 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.97]">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
           {t('dashboard.newTournament')}
@@ -136,7 +136,7 @@ export default function Dashboard() {
           <div className="text-7xl mb-6 opacity-30">♛</div>
           <p className="text-xl text-gray-400 dark:text-fide-400 mb-2">{t('dashboard.noTournaments')}</p>
           <p className="text-sm text-gray-400 dark:text-fide-500 mb-6">{t('dashboard.startPrompt')}</p>
-          <Link to="/new"
+          <Link to="/app/new"
             className="inline-flex items-center gap-2 bg-fide-700 hover:bg-fide-800 text-white px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.97]">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
             {t('dashboard.createFirst')}
@@ -149,7 +149,7 @@ export default function Dashboard() {
               className="group bg-white dark:bg-fide-800 border border-gray-200 dark:border-fide-700/50 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between shadow-sm hover:shadow-md transition-all duration-200 gap-4 hover:border-fide-300 dark:hover:border-fide-600">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3">
-                  <Link to={`/tournament/${tournament.id}`} className="font-semibold text-lg text-gray-900 dark:text-white hover:text-fide-600 dark:hover:text-fide-300 transition-colors truncate">
+                  <Link to={`/app/tournament/${tournament.id}`} className="font-semibold text-lg text-gray-900 dark:text-white hover:text-fide-600 dark:hover:text-fide-300 transition-colors truncate">
                     {tournament.name}
                   </Link>
                   <span className={`shrink-0 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${STATUS_STYLES[tournament.status] || 'bg-gray-100 text-gray-600'}`}>
@@ -167,7 +167,7 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="flex gap-2 shrink-0">
-                <Link to={`/tournament/${tournament.id}`}
+                <Link to={`/app/tournament/${tournament.id}`}
                   className="px-4 py-2 rounded-lg text-sm font-medium bg-fide-50 text-fide-700 hover:bg-fide-100 dark:bg-fide-700 dark:text-fide-200 dark:hover:bg-fide-600 transition-all duration-200">
                   {t('common.open')}
                 </Link>

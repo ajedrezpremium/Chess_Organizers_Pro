@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useTheme } from '../context/ThemeContext.jsx';
@@ -16,15 +16,22 @@ export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
+
+  useEffect(() => {
+    function handleClick(e) { if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setUserMenuOpen(false); }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
 
   const handleLogout = () => { logout(); navigate('/login'); };
 
   const navLinks = [
-    { to: '/', label: t('nav.tournaments'), icon: '◈' },
-    { to: '/new', label: t('nav.newTournament'), icon: '+' },
-    { to: '/player', label: t('nav.myProfile'), icon: '♟' },
+    { to: '/app/dashboard', label: t('nav.tournaments'), icon: '◈' },
+    { to: '/app/new', label: t('nav.newTournament'), icon: '+' },
     { to: '/arbiter', label: t('nav.arbiter'), icon: '⚖️' },
-    { to: '/leagues', label: 'Ligas', icon: '🏆' },
+    { to: '/app/leagues', label: 'Ligas', icon: '🏆' },
   ];
 
   return (
@@ -32,7 +39,7 @@ export default function Layout() {
       <nav className="bg-fide-800 dark:bg-fide-950 text-white shadow-lg border-b border-fide-700/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
           <div className="flex items-center gap-8">
-            <Link to="/" className="flex items-center gap-2 group">
+            <Link to="/app/dashboard" className="flex items-center gap-2 group">
               <span className="text-amber-400 text-xl transition-transform duration-200 group-hover:scale-110">♛</span>
               <div className="leading-tight">
                 <span className="font-bold text-base tracking-tight block">CHESS</span>
@@ -65,17 +72,43 @@ export default function Layout() {
                 <svg className="w-4 h-5 text-fide-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
               )}
             </button>
-            <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-fide-700">
-              <div className="w-7 h-7 rounded-full bg-fide-600 flex items-center justify-center text-xs font-bold text-amber-400">
-                {user?.name?.charAt(0).toUpperCase() || 'U'}
-              </div>
-              <span className="text-sm text-fide-200 max-w-[120px] truncate">{user?.name}</span>
+            <div className="hidden sm:relative sm:flex items-center" ref={userMenuRef}>
+              <button onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="flex items-center gap-2 pl-2 border-l border-fide-700 hover:bg-fide-700/50 pr-2 py-1.5 rounded-lg transition">
+                <div className="w-7 h-7 rounded-full bg-fide-600 flex items-center justify-center text-xs font-bold text-amber-400">
+                  {user?.name?.charAt(0).toUpperCase() || 'U'}
+                </div>
+                <span className="text-sm text-fide-200 max-w-[120px] truncate">{user?.name}</span>
+                <svg className={`w-3 h-3 text-fide-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+              </button>
+              {userMenuOpen && (
+                <div className="absolute top-full right-0 mt-1 w-56 bg-white dark:bg-fide-800 border dark:border-fide-700 rounded-xl shadow-xl py-1.5 z-50">
+                  <div className="px-4 py-2 border-b dark:border-fide-700">
+                    <p className="text-sm font-medium dark:text-white truncate">{user?.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-fide-400 truncate">{user?.email}</p>
+                  </div>
+                  <Link to="/app/player" onClick={() => setUserMenuOpen(false)}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-fide-200 hover:bg-gray-50 dark:hover:bg-fide-700 transition">
+                    <span className="text-base">♟</span> {t('nav.myProfile')}
+                  </Link>
+                  <Link to="/pricing" onClick={() => setUserMenuOpen(false)}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-fide-200 hover:bg-gray-50 dark:hover:bg-fide-700 transition">
+                    <span className="text-base">💎</span> Plan y membresía
+                  </Link>
+                  <Link to="/app/inbox" onClick={() => setUserMenuOpen(false)}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-fide-200 hover:bg-gray-50 dark:hover:bg-fide-700 transition">
+                    <span className="text-base">📬</span> Buzón de entrada
+                  </Link>
+                  <div className="border-t dark:border-fide-700 mt-1 pt-1">
+                    <button onClick={() => { setUserMenuOpen(false); handleLogout(); }}
+                      className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                      {t('nav.logout')}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-            <button onClick={handleLogout}
-              className="bg-fide-700 hover:bg-red-600 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1.5">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-              <span className="hidden sm:inline">{t('nav.logout')}</span>
-            </button>
             <button onClick={() => setMenuOpen(!menuOpen)} className="sm:hidden p-2 rounded-lg hover:bg-fide-700 transition-all duration-200">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={menuOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'} /></svg>
             </button>
@@ -108,7 +141,7 @@ export default function Layout() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
             {/* Column 1: Brand */}
             <div>
-              <Link to="/" className="flex items-center gap-2 mb-3">
+              <Link to="/app/dashboard" className="flex items-center gap-2 mb-3">
                 <span className="text-amber-400 text-xl">♛</span>
                 <div className="leading-tight">
                   <span className="font-bold text-base tracking-tight text-white block">CHESS</span>
@@ -138,11 +171,11 @@ export default function Layout() {
             <div>
               <h4 className="text-xs font-semibold text-white uppercase tracking-wider mb-3">{t('nav.sitemap') || 'Mapa del sitio'}</h4>
               <ul className="space-y-2">
-                <li><Link to="/" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('nav.tournaments')}</Link></li>
-                <li><Link to="/new" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('nav.newTournament')}</Link></li>
-                <li><Link to="/player" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('nav.myProfile')}</Link></li>
+                <li><Link to="/app/dashboard" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('nav.tournaments')}</Link></li>
+                <li><Link to="/app/new" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('nav.newTournament')}</Link></li>
+                <li><Link to="/app/player" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('nav.myProfile')}</Link></li>
                 <li><Link to="/arbiter" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('nav.arbiter')}</Link></li>
-                <li><Link to="/leagues" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">Ligas</Link></li>
+                <li><Link to="/app/leagues" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">Ligas</Link></li>
                 <li><a href="/public" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('register.viewTournaments')}</a></li>
                 <li><a href="/pricing" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('nav.pricing') || 'Planes'}</a></li>
               </ul>

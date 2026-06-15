@@ -71,7 +71,7 @@ export default function LeaguesPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {leagues.map((l) => (
             <div key={l.id} className="bg-fide-800 border border-fide-700/50 rounded-xl p-5 hover:border-fide-600 transition cursor-pointer"
-              onClick={() => navigate(`/leagues/${l.id}`)}>
+              onClick={() => navigate(`/app/leagues/${l.id}`)}>
               <div className="flex items-start justify-between mb-3">
                 <h3 className="font-semibold text-white text-lg">{l.name}</h3>
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${l.status === 'active' ? 'bg-green-900 text-green-300' : 'bg-gray-700 text-gray-400'}`}>{l.status}</span>

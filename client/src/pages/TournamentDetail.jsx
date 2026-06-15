@@ -173,7 +173,7 @@ export default function TournamentDetail() {
     <div className="animate-fadeIn">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-6 gap-3">
         <div>
-          <button onClick={() => navigate('/')} className="text-sm text-fide-500 hover:underline mb-1 inline-block">&larr; {t('nav.tournaments')}</button>
+          <button onClick={() => navigate('/app/dashboard')} className="text-sm text-fide-500 hover:underline mb-1 inline-block">&larr; {t('nav.tournaments')}</button>
           <h1 className="text-2xl font-bold dark:text-white">{tournament.name}</h1>
           <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-sm text-gray-500 dark:text-fide-300">
             <span>{tournament.system}</span><span>{t('tournament.roundsCount', { n: tournament.n_rounds })}</span>

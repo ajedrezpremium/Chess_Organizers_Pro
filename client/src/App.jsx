@@ -5,6 +5,7 @@ import { ToastProvider } from './components/Toast.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import Layout from './components/Layout.jsx';
 
+const Landing = lazy(() => import('./pages/Landing.jsx'));
 const Login = lazy(() => import('./pages/Login.jsx'));
 const Register = lazy(() => import('./pages/Register.jsx'));
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
@@ -21,6 +22,7 @@ const PublicOrganizerProfile = lazy(() => import('./pages/PublicOrganizerProfile
 const PricingPage = lazy(() => import('./pages/PricingPage.jsx'));
 const PlayerDashboard = lazy(() => import('./pages/PlayerDashboard.jsx'));
 const LeaguesPage = lazy(() => import('./pages/LeaguesPage.jsx'));
+const InboxPage = lazy(() => import('./pages/InboxPage.jsx'));
 const LeagueDetailPage = lazy(() => import('./pages/LeagueDetailPage.jsx'));
 const ArbiterTournamentsList = lazy(() => import('./pages/ArbiterTournamentsList.jsx'));
 const ArbiterPanel = lazy(() => import('./pages/ArbiterPanel.jsx'));
@@ -33,6 +35,12 @@ function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <Spinner />;
   return user ? children : <Navigate to="/login" />;
+}
+
+function PublicRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  return user ? <Navigate to="/app/dashboard" /> : children;
 }
 
 function GuestRoute({ children }) {
@@ -48,6 +56,7 @@ function App() {
         <ToastProvider>
           <Suspense fallback={<Spinner />}>
             <Routes>
+              <Route path="/" element={<PublicRoute><Landing /></PublicRoute>} />
               <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
               <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
               <Route path="/public" element={<PublicTournamentsList />} />
@@ -61,13 +70,15 @@ function App() {
               <Route path="/pricing" element={<PricingPage />} />
               <Route path="/arbiter" element={<ProtectedRoute><ArbiterTournamentsList /></ProtectedRoute>} />
               <Route path="/arbiter/tournament/:id" element={<ProtectedRoute><ArbiterPanel /></ProtectedRoute>} />
-              <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-                <Route index element={<Dashboard />} />
+              <Route path="/app" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                <Route index element={<Navigate to="/app" replace />} />
+                <Route path="dashboard" element={<Dashboard />} />
                 <Route path="new" element={<TournamentNew />} />
                 <Route path="tournament/:id" element={<TournamentDetail />} />
                 <Route path="player" element={<PlayerDashboard />} />
                 <Route path="leagues" element={<LeaguesPage />} />
                 <Route path="leagues/:id" element={<LeagueDetailPage />} />
+                <Route path="inbox" element={<InboxPage />} />
               </Route>
             </Routes>
           </Suspense>
