@@ -82,7 +82,7 @@ app.use('/public', publicRoutes);
 app.use(express.static(config.clientDist, { index: 'index.html' }));
 
 // ── SPA fallback (antes de teamRoutes que tiene auth global) ──────
-const API_PREFIXES = ['/auth/', '/tournaments/', '/players/', '/fide/', '/stats/', '/health', '/pairings/', '/rounds/', '/membership/', '/validation/', '/stripe/', '/api/v1/', '/external/', '/webhooks/', '/api-keys/', '/import/', '/notifications/', '/leagues/', '/matches/', '/teams/', '/team_members/'];
+const API_PREFIXES = ['/auth/', '/public/', '/tournaments/', '/players/', '/fide/', '/stats/', '/health', '/pairings/', '/rounds/', '/membership/', '/validation/', '/stripe/', '/api/v1/', '/external/', '/webhooks/', '/api-keys/', '/import/', '/notifications/', '/leagues/', '/matches/', '/teams/', '/team_members/'];
 app.use((req, res, next) => {
   if (req.method === 'GET' && !API_PREFIXES.some((p) => req.path.startsWith(p))) {
     return res.sendFile('index.html', { root: config.clientDist });
