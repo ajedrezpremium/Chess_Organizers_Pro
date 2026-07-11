@@ -69,7 +69,7 @@ router.patch('/settings', authenticate, async (req, res) => {
 });
 
 // Test Telegram
-router.post('/test-telegram', authenticate, (req, res) => {
+router.post('/test-telegram', authenticate, async (req, res) => {
   const { token, chatId } = req.body;
   if (!token || !chatId) return res.status(400).json({ ok: false, error: 'Token y chat ID requeridos' });
   sendTelegramMessage(token, chatId, '✅ <b>Chess Organizers Pro</b>\nConexión exitosa. Recibirás notificaciones de tus torneos aquí.')
@@ -78,7 +78,7 @@ router.post('/test-telegram', authenticate, (req, res) => {
 });
 
 // Verify Telegram bot token
-router.post('/verify-telegram', authenticate, (req, res) => {
+router.post('/verify-telegram', authenticate, async (req, res) => {
   const { token } = req.body;
   if (!token) return res.status(400).json({ ok: false, error: 'Token requerido' });
   verifyBotToken(token)

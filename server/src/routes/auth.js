@@ -70,7 +70,7 @@ router.post('/login', validate({
 });
 
 // GET /auth/me
-router.get('/me', authenticate, (req, res) => {
+router.get('/me', authenticate, async (req, res) => {
   const db = getDb();
   const user = db.prepare('SELECT id, email, name, role, federation, fide_id, verified, created_at FROM users WHERE id = ?').get(req.user.id);
   if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
@@ -78,7 +78,7 @@ router.get('/me', authenticate, (req, res) => {
 });
 
 // POST /auth/push-token — guarda token de push notification (Expo/APNS/FCM)
-router.post('/push-token', authenticate, (req, res) => {
+router.post('/push-token', authenticate, async (req, res) => {
   try {
     const db = getDb();
     const { token, platform } = req.body;

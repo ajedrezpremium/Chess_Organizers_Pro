@@ -13,7 +13,7 @@ function isArbiterOf(db, tournamentId, userId) {
 }
 
 // ── GET /arbiters/search-users?q=email ────────────────────────────
-router.get('/search-users', authenticate, (req, res) => {
+router.get('/search-users', authenticate, async (req, res) => {
   const db = getDb();
   const { q } = req.query;
   if (!q) return res.json([]);
@@ -22,7 +22,7 @@ router.get('/search-users', authenticate, (req, res) => {
 });
 
 // ── GET /arbiters/tournaments — torneos donde soy árbitro ────────
-router.get('/tournaments', authenticate, (req, res) => {
+router.get('/tournaments', authenticate, async (req, res) => {
   const db = getDb();
   const owned = await db.prepare("SELECT * FROM tournaments WHERE created_by = ? AND status != 'pending'").all(req.user.id);
   const assigned = await db.prepare(`
@@ -36,7 +36,7 @@ router.get('/tournaments', authenticate, (req, res) => {
 });
 
 // ── GET /arbiters/tournaments/:id — datos para el panel ─────────
-router.get('/tournaments/:id', authenticate, (req, res) => {
+router.get('/tournaments/:id', authenticate, async (req, res) => {
   const db = getDb();
   if (!isArbiterOf(db, req.params.id, req.user.id)) return res.status(403).json({ error: 'No eres árbitro de este torneo' });
 
@@ -80,7 +80,7 @@ router.get('/tournaments/:id', authenticate, (req, res) => {
 });
 
 // ── PATCH /arbiters/rounds/:rid/result — ingresar resultado ──────
-router.patch('/rounds/:rid/result', authenticate, (req, res) => {
+router.patch('/rounds/:rid/result', authenticate, async (req, res) => {
   const db = getDb();
   const round = await db.prepare(`
     SELECT r.*, t.id as tid, t.created_by FROM rounds r
@@ -99,7 +99,7 @@ router.patch('/rounds/:rid/result', authenticate, (req, res) => {
 });
 
 // ── POST /arbiters/players/:tpId/check-in ─────────────────────────
-router.post('/players/:tpId/check-in', authenticate, (req, res) => {
+router.post('/players/:tpId/check-in', authenticate, async (req, res) => {
   const db = getDb();
   const tp = await db.prepare(`
     SELECT tp.*, t.created_by, t.id as tid FROM tournament_players tp
@@ -113,7 +113,7 @@ router.post('/players/:tpId/check-in', authenticate, (req, res) => {
 });
 
 // ── GET /arbiters/tournaments/:id/arbiters — lista árbitros ──────
-router.get('/tournaments/:id/arbiters', authenticate, (req, res) => {
+router.get('/tournaments/:id/arbiters', authenticate, async (req, res) => {
   const db = getDb();
   const t = await db.prepare('SELECT created_by FROM tournaments WHERE id = ?').get(req.params.id);
   if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
@@ -128,7 +128,7 @@ router.get('/tournaments/:id/arbiters', authenticate, (req, res) => {
 });
 
 // ── POST /arbiters/tournaments/:id/arbiters — añadir árbitro ─────
-router.post('/tournaments/:id/arbiters', authenticate, (req, res) => {
+router.post('/tournaments/:id/arbiters', authenticate, async (req, res) => {
   const db = getDb();
   const t = await db.prepare('SELECT created_by FROM tournaments WHERE id = ?').get(req.params.id);
   if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
@@ -149,7 +149,7 @@ router.post('/tournaments/:id/arbiters', authenticate, (req, res) => {
 });
 
 // ── DELETE /arbiters/tournaments/:id/arbiters/:userId ────────────
-router.delete('/tournaments/:id/arbiters/:userId', authenticate, (req, res) => {
+router.delete('/tournaments/:id/arbiters/:userId', authenticate, async (req, res) => {
   const db = getDb();
   const t = await db.prepare('SELECT created_by FROM tournaments WHERE id = ?').get(req.params.id);
   if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });

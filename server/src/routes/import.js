@@ -6,7 +6,7 @@ import { parseCSV, detectColumnMap, suggestColumnMap, importPlayers, importPlaye
 const router = Router();
 
 // POST /import/preview-csv — previsualizar CSV sin importar
-router.post('/preview-csv', authenticate, (req, res) => {
+router.post('/preview-csv', authenticate, async (req, res) => {
   try {
     const { csv, format } = req.body;
     if (!csv) return res.status(400).json({ error: 'Contenido CSV requerido' });

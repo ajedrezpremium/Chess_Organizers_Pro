@@ -193,7 +193,7 @@ router.post('/submit/:tournamentId', authenticate, async (req, res) => {
 });
 
 // GET /fide/report/:tournamentId — Reporte FIDE homologado (HTML)
-router.get('/report/:tournamentId', authenticate, (req, res) => {
+router.get('/report/:tournamentId', authenticate, async (req, res) => {
   const db = getDb();
   const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ?').get(req.params.tournamentId);
   if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });

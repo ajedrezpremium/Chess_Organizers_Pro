@@ -19,7 +19,7 @@ const engine = new PairingEngine({ forceBackend: 'js', verbose: false });
 // ── Routes ─────────────────────────────────────────────────────────
 
 // GET /tournaments/:tid/rounds
-router.get('/tournaments/:tid/rounds', authenticate, (req, res) => {
+router.get('/tournaments/:tid/rounds', authenticate, async (req, res) => {
   const db = getDb();
   const rounds = await db.prepare('SELECT * FROM rounds WHERE tournament_id = ? ORDER BY round_number ASC').all(req.params.tid);
   for (const r of rounds) {
@@ -109,7 +109,7 @@ router.post('/tournaments/:tid/rounds/generate', authenticate, async (req, res) 
 });
 
 // POST /tournaments/:tid/rounds/:rid/pairings — añadir pairing manual
-router.post('/tournaments/:tid/rounds/:rid/pairings', authenticate, (req, res) => {
+router.post('/tournaments/:tid/rounds/:rid/pairings', authenticate, async (req, res) => {
   const db = getDb();
   const t = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
   if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
@@ -140,7 +140,7 @@ router.post('/tournaments/:tid/rounds/:rid/pairings', authenticate, (req, res) =
 });
 
 // DELETE /pairings/:id — eliminar pairing manual
-router.delete('/pairings/:id', authenticate, (req, res) => {
+router.delete('/pairings/:id', authenticate, async (req, res) => {
   const db = getDb();
   const pairing = await db.prepare(`
     SELECT p.* FROM pairings p
@@ -154,7 +154,7 @@ router.delete('/pairings/:id', authenticate, (req, res) => {
 });
 
 // PATCH /pairings/:id/swap — intercambiar colores de un pairing
-router.patch('/pairings/:id/swap', authenticate, (req, res) => {
+router.patch('/pairings/:id/swap', authenticate, async (req, res) => {
   const db = getDb();
   const pairing = await db.prepare(`
     SELECT p.* FROM pairings p
@@ -170,7 +170,7 @@ router.patch('/pairings/:id/swap', authenticate, (req, res) => {
 });
 
 // POST /rounds/:rid/publish — publicar ronda
-router.post('/rounds/:rid/publish', authenticate, (req, res) => {
+router.post('/rounds/:rid/publish', authenticate, async (req, res) => {
   const db = getDb();
   const round = await db.prepare(`
     SELECT r.*, t.created_by FROM rounds r JOIN tournaments t ON r.tournament_id = t.id
@@ -184,7 +184,7 @@ router.post('/rounds/:rid/publish', authenticate, (req, res) => {
 });
 
 // PATCH /rounds/:rid/schedule — establecer horario de una ronda
-router.patch('/rounds/:rid/schedule', authenticate, (req, res) => {
+router.patch('/rounds/:rid/schedule', authenticate, async (req, res) => {
   const db = getDb();
   const round = await db.prepare(`
     SELECT r.*, t.created_by FROM rounds r JOIN tournaments t ON r.tournament_id = t.id
@@ -201,7 +201,7 @@ router.patch('/rounds/:rid/schedule', authenticate, (req, res) => {
 });
 
 // PATCH /rounds/:rid/result — guardar resultado de una partida
-router.patch('/rounds/:rid/result', authenticate, (req, res) => {
+router.patch('/rounds/:rid/result', authenticate, async (req, res) => {
   const db = getDb();
   const { pairing_id, result } = req.body;
 
@@ -278,7 +278,7 @@ router.post('/rounds/:rid/close', authenticate, async (req, res) => {
 });
 
 // GET /tournaments/:tid/standings
-router.get('/tournaments/:tid/standings', authenticate, (req, res) => {
+router.get('/tournaments/:tid/standings', authenticate, async (req, res) => {
   const db = getDb();
   const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
   if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
@@ -321,7 +321,7 @@ router.get('/tournaments/:tid/standings', authenticate, (req, res) => {
 });
 
 // GET /tournaments/:tid/bulletin — boletín HTML del torneo
-router.get('/tournaments/:tid/bulletin', authenticate, (req, res) => {
+router.get('/tournaments/:tid/bulletin', authenticate, async (req, res) => {
   const db = getDb();
   const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ?').get(req.params.tid);
   if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
@@ -498,7 +498,7 @@ router.get('/tournaments/:tid/bulletin', authenticate, (req, res) => {
 });
 
 // GET /tournaments/:tid/trf — exportar TRF
-router.get('/tournaments/:tid/trf', authenticate, (req, res) => {
+router.get('/tournaments/:tid/trf', authenticate, async (req, res) => {
   const db = getDb();
   const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
   if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });

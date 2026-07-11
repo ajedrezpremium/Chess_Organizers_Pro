@@ -14,7 +14,7 @@ import { createCheckoutSession, createPortalSession, handleWebhook } from '../se
 const router = Router();
 
 // GET /stripe/config — devuelve estado de stripe al frontend
-router.get('/config', (req, res) => {
+router.get('/config', async (req, res) => {
   res.json({
     enabled: !!config.stripe.secretKey,
     publicKey: '', // Publishable key devuelta desde frontend via VITE_STRIPE_KEY

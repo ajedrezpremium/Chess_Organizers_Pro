@@ -17,7 +17,7 @@ function resultPoints(r) {
 
 // ── GET /stats/:tid/crosstab ──────────────────────────────────────
 // Matriz jugador × ronda: { playerId, name, ... , rounds: [{ opponent, result, color }] }
-router.get('/:tid/crosstab', authenticate, (req, res) => {
+router.get('/:tid/crosstab', authenticate, async (req, res) => {
   try {
     const db = getDb();
     const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
@@ -84,7 +84,7 @@ router.get('/:tid/crosstab', authenticate, (req, res) => {
 
 // ── GET /stats/:tid/performance ──────────────────────────────────
 // TPR (Tournament Performance Rating) + ΔR (Elo change estimate) + per-round delta
-router.get('/:tid/performance', authenticate, (req, res) => {
+router.get('/:tid/performance', authenticate, async (req, res) => {
   try {
     const db = getDb();
     const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
@@ -160,7 +160,7 @@ router.get('/:tid/performance', authenticate, (req, res) => {
 
 // ── GET /stats/:tid/progression ──────────────────────────────────
 // Progresión de puntos por ronda para cada jugador + heat map data
-router.get('/:tid/progression', authenticate, (req, res) => {
+router.get('/:tid/progression', authenticate, async (req, res) => {
   try {
     const db = getDb();
     const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
@@ -216,7 +216,7 @@ router.get('/:tid/progression', authenticate, (req, res) => {
 });
 
 // ── GET /stats/:tid/head-to-head ─────────────────────────────────
-router.get('/:tid/head-to-head', authenticate, (req, res) => {
+router.get('/:tid/head-to-head', authenticate, async (req, res) => {
   try {
     const db = getDb();
     const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
@@ -263,7 +263,7 @@ router.get('/:tid/head-to-head', authenticate, (req, res) => {
 
 // ── GET /stats/:tid/overview ──────────────────────────────────────
 // Estadísticas generales del torneo
-router.get('/:tid/overview', authenticate, (req, res) => {
+router.get('/:tid/overview', authenticate, async (req, res) => {
   try {
     const db = getDb();
     const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);

@@ -6,7 +6,7 @@ import { validate } from '../middleware/validate.js';
 const router = Router();
 
 // GET /players — buscar jugadores
-router.get('/', authenticate, (req, res) => {
+router.get('/', authenticate, async (req, res) => {
   const db = getDb();
   const { q, federation, page = 1, limit = 50 } = req.query;
   let sql = 'SELECT * FROM players WHERE 1=1';
@@ -23,7 +23,7 @@ router.get('/', authenticate, (req, res) => {
 });
 
 // GET /players/:id
-router.get('/:id', authenticate, (req, res) => {
+router.get('/:id', authenticate, async (req, res) => {
   const db = getDb();
   const player = await db.prepare('SELECT * FROM players WHERE id = ?').get(req.params.id);
   if (!player) return res.status(404).json({ error: 'Jugador no encontrado' });
@@ -35,7 +35,7 @@ router.post('/', authenticate, validate({
   name: { type: 'string', required: true },
   fide_id: { type: 'string' },
   fide_rating: { type: 'integer' },
-}), (req, res) => {
+}), async (req, res) => {
   const db = getDb();
   const { fide_id, name, last_name, title, federation, fide_rating, national_rating, birth_date, sex, email, phone, notes } = req.body;
 
@@ -55,7 +55,7 @@ router.post('/', authenticate, validate({
 });
 
 // PATCH /players/:id
-router.patch('/:id', authenticate, (req, res) => {
+router.patch('/:id', authenticate, async (req, res) => {
   const db = getDb();
   const p = await db.prepare('SELECT * FROM players WHERE id = ?').get(req.params.id);
   if (!p) return res.status(404).json({ error: 'Jugador no encontrado' });
@@ -78,7 +78,7 @@ router.patch('/:id', authenticate, (req, res) => {
 });
 
 // GET /players/my-tournaments — historial y estadísticas del jugador autenticado
-router.get('/my-tournaments', authenticate, (req, res) => {
+router.get('/my-tournaments', authenticate, async (req, res) => {
   try {
     const db = getDb();
     const user = req.user;
