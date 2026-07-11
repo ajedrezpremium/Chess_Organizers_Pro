@@ -78,19 +78,7 @@ app.use('/ai', aiRoutes);
 app.use('/scan', scanRoutes);
 app.use('/public', publicRoutes);
 
-// ── Static files (client build) ────────────────────────────────────
-app.use(express.static(config.clientDist, { index: 'index.html' }));
-
-// ── SPA fallback (antes de teamRoutes que tiene auth global) ──────
-const API_PREFIXES = ['/auth/', '/public/', '/tournaments/', '/players/', '/fide/', '/stats/', '/health', '/pairings/', '/rounds/', '/membership/', '/validation/', '/stripe/', '/api/v1/', '/external/', '/webhooks/', '/api-keys/', '/import/', '/notifications/', '/leagues/', '/matches/', '/teams/', '/team_members/'];
-app.use((req, res, next) => {
-  if (req.method === 'GET' && !API_PREFIXES.some((p) => req.path.startsWith(p))) {
-    return res.sendFile('index.html', { root: config.clientDist });
-  }
-  next();
-});
-
-// ── Health check ───────────────────────────────────────────────────
+// ── Health check (ANTES de static/SPA) ────────────────────────────
 app.get('/health', async (req, res) => {
   const db = getDb();
   let dbOk = false;
@@ -113,6 +101,15 @@ app.get('/health/readiness', async (req, res) => {
     console.error('Readiness check error:', e);
     res.status(503).json({ status: 'not ready', database: 'disconnected' });
   }
+});
+
+// ── SPA fallback + static (Vercel sirve assets, nosotros solo SPA) ──
+const API_PREFIXES = ['/auth/', '/public/', '/tournaments/', '/players/', '/fide/', '/stats/', '/health', '/pairings/', '/rounds/', '/membership/', '/validation/', '/stripe/', '/api/v1/', '/external/', '/webhooks/', '/api-keys/', '/import/', '/notifications/', '/leagues/', '/matches/', '/teams/', '/team_members/'];
+app.use((req, res, next) => {
+  if (req.method === 'GET' && !API_PREFIXES.some((p) => req.path.startsWith(p))) {
+    return res.sendFile('index.html', { root: config.clientDist });
+  }
+  next();
 });
 
 app.use('/', teamRoutes);
