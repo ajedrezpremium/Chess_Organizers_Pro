@@ -47,7 +47,7 @@ export default function Landing() {
 
   useEffect(() => {
     api.public.listTournaments({ status: 'active', limit: 6, sort: 'created_at' })
-      .then(setTournaments).catch(() => {});
+      .then((resp) => setTournaments(resp?.tournaments || resp || [])).catch(() => {});
   }, []);
 
   return (

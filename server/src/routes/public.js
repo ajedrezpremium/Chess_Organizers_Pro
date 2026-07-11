@@ -12,7 +12,7 @@ import { notifyRegistrationReceived } from '../services/notifications.js';
 const router = Router();
 
 // GET /public/tournaments — listar torneos públicos con filtros
-router.get('/tournaments', (req, res) => {
+router.get('/tournaments', async (req, res) => {
   const db = getDb();
   const { page = 1, limit = 20, federation, status, system, search, from, to } = req.query;
   let sql = "SELECT id, name, system, n_rounds, federation, status, city, start_date, end_date, time_control, description, created_at FROM tournaments WHERE status != 'pending'";
@@ -37,7 +37,7 @@ router.get('/tournaments', (req, res) => {
 });
 
 // GET /public/tournaments/:id
-router.get('/tournaments/:id', (req, res) => {
+router.get('/tournaments/:id', async (req, res) => {
   const db = getDb();
   const t = await db.prepare("SELECT * FROM tournaments WHERE id = ?").get(req.params.id);
   if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
@@ -52,7 +52,7 @@ router.get('/tournaments/:id', (req, res) => {
 });
 
 // GET /public/tournaments/:id/players
-router.get('/tournaments/:id/players', (req, res) => {
+router.get('/tournaments/:id/players', async (req, res) => {
   const db = getDb();
   const players = await db.prepare(`
     SELECT tp.seed_rank, tp.current_points, tp.category, p.name, p.last_name, p.fide_rating, p.title, p.federation, p.fide_id
@@ -65,7 +65,7 @@ router.get('/tournaments/:id/players', (req, res) => {
 });
 
 // GET /public/tournaments/:id/rounds
-router.get('/tournaments/:id/rounds', (req, res) => {
+router.get('/tournaments/:id/rounds', async (req, res) => {
   const db = getDb();
   const rounds = await db.prepare('SELECT * FROM rounds WHERE tournament_id = ? ORDER BY round_number ASC').all(req.params.id);
   for (const r of rounds) {
@@ -85,7 +85,7 @@ router.get('/tournaments/:id/rounds', (req, res) => {
 });
 
 // GET /public/tournaments/:id/standings
-router.get('/tournaments/:id/standings', (req, res) => {
+router.get('/tournaments/:id/standings', async (req, res) => {
   const db = getDb();
   const tournament = await db.prepare("SELECT * FROM tournaments WHERE id = ?").get(req.params.id);
   if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
@@ -134,7 +134,7 @@ router.get('/tournaments/:id/standings', (req, res) => {
 });
 
 // GET /public/tournaments/:id/performance — TPR + per-round ΔR
-router.get('/tournaments/:id/performance', (req, res) => {
+router.get('/tournaments/:id/performance', async (req, res) => {
   try {
     const db = getDb();
     const tournament = await db.prepare("SELECT * FROM tournaments WHERE id = ?").get(req.params.id);
@@ -204,7 +204,7 @@ router.get('/tournaments/:id/performance', (req, res) => {
 });
 
 // GET /public/tournaments/:id/sse — Server-Sent Events
-router.get('/tournaments/:id/sse', (req, res) => {
+router.get('/tournaments/:id/sse', async (req, res) => {
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
@@ -223,7 +223,7 @@ router.get('/tournaments/:id/sse', (req, res) => {
 });
 
 // GET /public/players/search — búsqueda global de jugadores
-router.get('/players/search', (req, res) => {
+router.get('/players/search', async (req, res) => {
   const db = getDb();
   const { q, page = 1, limit = 30 } = req.query;
   if (!q || q.trim().length < 2) return res.json({ players: [], total: 0, page: 1 });
@@ -238,7 +238,7 @@ router.get('/players/search', (req, res) => {
 });
 
 // GET /public/players/:id/tournaments — historial de torneos de un jugador
-router.get('/players/:id/tournaments', (req, res) => {
+router.get('/players/:id/tournaments', async (req, res) => {
   const db = getDb();
   const player = await db.prepare('SELECT id, fide_id, name, last_name, title, federation, fide_rating FROM players WHERE id = ?').get(req.params.id);
   if (!player) return res.status(404).json({ error: 'Jugador no encontrado' });
@@ -258,7 +258,7 @@ router.get('/players/:id/tournaments', (req, res) => {
 // ── 6.4 Catálogo Global ────────────────────────────────────────────
 
 // GET /public/federations — lista de federaciones con torneos
-router.get('/federations', (req, res) => {
+router.get('/federations', async (req, res) => {
   const db = getDb();
   const fromTours = await db.prepare("SELECT DISTINCT federation FROM tournaments WHERE federation != '' AND status != 'pending' ORDER BY federation").all();
   const fromSettings = await db.prepare("SELECT federation, name, logo_url FROM federation_settings ORDER BY name").all();
@@ -269,7 +269,7 @@ router.get('/federations', (req, res) => {
 });
 
 // GET /public/stats — estadísticas globales del catálogo
-router.get('/stats', (req, res) => {
+router.get('/stats', async (req, res) => {
   const db = getDb();
   const total = await db.prepare("SELECT COUNT(*) as c FROM tournaments WHERE status != 'pending'").get().c;
   const active = await db.prepare("SELECT COUNT(*) as c FROM tournaments WHERE status = 'active'").get().c;
@@ -288,7 +288,7 @@ router.get('/stats', (req, res) => {
 });
 
 // GET /public/organizers — lista de organizadores
-router.get('/organizers', (req, res) => {
+router.get('/organizers', async (req, res) => {
   const db = getDb();
   const organizers = await db.prepare(`
     SELECT u.id, u.name, u.email, u.federation,
@@ -303,7 +303,7 @@ router.get('/organizers', (req, res) => {
 });
 
 // GET /public/organizers/:id — detalle de organizador + sus torneos
-router.get('/organizers/:id', (req, res) => {
+router.get('/organizers/:id', async (req, res) => {
   const db = getDb();
   const org = await db.prepare("SELECT id, name, email, federation FROM users WHERE id = ?").get(req.params.id);
   if (!org) return res.status(404).json({ error: 'Organizador no encontrado' });
@@ -319,7 +319,7 @@ router.get('/organizers/:id', (req, res) => {
 
 // ── Widgets embeddables ────────────────────────────────────────────
 
-router.get('/widget/tournaments/:id/standings', (req, res) => {
+router.get('/widget/tournaments/:id/standings', async (req, res) => {
   const db = getDb();
   const tournament = await db.prepare("SELECT id, name, federation, system, n_rounds, tiebreaks, primary_color, secondary_color, logo_url FROM tournaments WHERE id = ? AND status != 'pending'").get(req.params.id);
   if (!tournament) return res.status(404).send('Torneo no encontrado');
@@ -377,7 +377,7 @@ router.get('/widget/tournaments/:id/standings', (req, res) => {
   res.send(html);
 });
 
-router.get('/widget/tournaments/:id/wall', (req, res) => {
+router.get('/widget/tournaments/:id/wall', async (req, res) => {
   const db = getDb();
   const tournament = await db.prepare("SELECT id, name, primary_color, secondary_color, logo_url, system, n_rounds FROM tournaments WHERE id = ? AND status != 'pending'").get(req.params.id);
   if (!tournament) return res.status(404).send('Torneo no encontrado');
@@ -445,7 +445,7 @@ function resultPoints(r) {
 }
 
 // GET /public/tournaments/:id/crosstab — tabla cruzada pública
-router.get('/tournaments/:id/crosstab', (req, res) => {
+router.get('/tournaments/:id/crosstab', async (req, res) => {
   try {
     const db = getDb();
     const tournament = await db.prepare("SELECT * FROM tournaments WHERE id = ? AND status != 'pending'").get(req.params.id);
@@ -498,7 +498,7 @@ router.get('/tournaments/:id/crosstab', (req, res) => {
 });
 
 // GET /public/tournaments/:id/head-to-head — enfrentamientos directos entre dos jugadores
-router.get('/tournaments/:id/head-to-head', (req, res) => {
+router.get('/tournaments/:id/head-to-head', async (req, res) => {
   try {
     const db = getDb();
     const { p1, p2 } = req.query;
@@ -536,7 +536,7 @@ router.get('/tournaments/:id/head-to-head', (req, res) => {
 });
 
 // GET /public/tournaments/:id/registration-status — estado de inscripción
-router.get('/tournaments/:id/registration-status', (req, res) => {
+router.get('/tournaments/:id/registration-status', async (req, res) => {
   const db = getDb();
   const t = await db.prepare("SELECT registration_open, registration_opens_at, registration_closes_at, max_players, registered_count, registration_fee, registration_currency, status, auto_approve FROM tournaments WHERE id = ?").get(req.params.id);
   if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
