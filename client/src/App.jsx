@@ -1,9 +1,11 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import { ToastProvider } from './components/Toast.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import Layout from './components/Layout.jsx';
+import ChatBot from './components/ChatBot.jsx';
 
 const Landing = lazy(() => import('./pages/Landing.jsx'));
 const Login = lazy(() => import('./pages/Login.jsx'));
@@ -26,6 +28,8 @@ const InboxPage = lazy(() => import('./pages/InboxPage.jsx'));
 const LeagueDetailPage = lazy(() => import('./pages/LeagueDetailPage.jsx'));
 const ArbiterTournamentsList = lazy(() => import('./pages/ArbiterTournamentsList.jsx'));
 const ArbiterPanel = lazy(() => import('./pages/ArbiterPanel.jsx'));
+const TournamentCatalog = lazy(() => import('./pages/TournamentCatalog.jsx'));
+const ScannerPage = lazy(() => import('./pages/ScannerPage.jsx'));
 
 function Spinner() {
   return <div className="flex items-center justify-center h-64"><div className="animate-spin h-8 w-8 border-4 border-fide-500 border-t-transparent rounded-full" /></div>;
@@ -33,8 +37,10 @@ function Spinner() {
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
+  const location = useLocation();
   if (loading) return <Spinner />;
-  return user ? children : <Navigate to="/login" />;
+  const redirectTo = location.pathname && location.pathname.startsWith('/app/new') ? '/register' : '/login';
+  return user ? children : <Navigate to={redirectTo} />;
 }
 
 function PublicRoute({ children }) {
@@ -51,6 +57,7 @@ function GuestRoute({ children }) {
 
 function App() {
   return (
+    <HelmetProvider>
     <ErrorBoundary>
       <AuthProvider>
         <ToastProvider>
@@ -67,6 +74,7 @@ function App() {
               <Route path="/public/players/:id" element={<PublicPlayerProfile />} />
               <Route path="/public/organizers" element={<PublicOrganizersList />} />
               <Route path="/public/organizers/:id" element={<PublicOrganizerProfile />} />
+              <Route path="/catalog" element={<TournamentCatalog />} />
               <Route path="/pricing" element={<PricingPage />} />
               <Route path="/arbiter" element={<ProtectedRoute><ArbiterTournamentsList /></ProtectedRoute>} />
               <Route path="/arbiter/tournament/:id" element={<ProtectedRoute><ArbiterPanel /></ProtectedRoute>} />
@@ -79,12 +87,17 @@ function App() {
                 <Route path="leagues" element={<LeaguesPage />} />
                 <Route path="leagues/:id" element={<LeagueDetailPage />} />
                 <Route path="inbox" element={<InboxPage />} />
+                <Route path="catalog" element={<TournamentCatalog />} />
+                <Route path="scan" element={<ScannerPage />} />
+                <Route path="tournament/:id/scan" element={<ScannerPage />} />
               </Route>
             </Routes>
           </Suspense>
+          <ChatBot />
         </ToastProvider>
       </AuthProvider>
     </ErrorBoundary>
+    </HelmetProvider>
   );
 }
 

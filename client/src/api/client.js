@@ -56,6 +56,18 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+async function requestBlob(method, path) {
+  const headers = {};
+  if (TOKEN) headers['Authorization'] = `Bearer ${TOKEN}`;
+  const res = await fetch(`${BASE}${path}`, { method, headers });
+  if (!res.ok) {
+    let msg;
+    try { const j = await res.json(); msg = j.error; } catch { msg = `Error ${res.status}`; }
+    throw { status: res.status, message: msg };
+  }
+  return res.blob();
+}
+
 export const api = {
   arbiter: {
     listTournaments: () => request('GET', '/arbiters/tournaments'),
@@ -167,6 +179,23 @@ export const api = {
   removeMatchPairing: (mid, pid) => request('DELETE', `/matches/${mid}/pairings/${pid}`),
 
   askFide: (question, history) => request('POST', '/ai/fide', { question, history }),
+
+  // ── External / Catalog ───────────────────────────────────────────
+  external: {
+    listTournaments: (params = {}) => request('GET', `/external/tournaments?${new URLSearchParams(params)}`),
+    getSources: () => request('GET', '/external/sources'),
+    importTournament: (source, externalId) => request('POST', '/external/import', { source, external_id: externalId }),
+  },
+
+  // ── Scanner / PGN Import ──────────────────────────────────────────
+  scan: {
+    upload: (formData) => request('POST', '/scan/upload', formData, true),
+    status: (jobId) => request('GET', `/scan/${jobId}/status`),
+    result: (jobId) => request('GET', `/scan/${jobId}/result`),
+    importToTournament: (jobId, tournamentId, gameIds) => request('POST', `/scan/${jobId}/import`, { tournament_id: tournamentId, game_ids: gameIds }),
+    listJobs: () => request('GET', '/scan/jobs'),
+    export: (jobId, format) => requestBlob('GET', `/scan/${jobId}/export?format=${format}`),
+  },
 
   public: {
       getTournament: (id) => request('GET', `/public/tournaments/${id}`),

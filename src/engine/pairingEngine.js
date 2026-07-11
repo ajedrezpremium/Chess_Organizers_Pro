@@ -1,12 +1,12 @@
 /**
  * pairingEngine.js — Motor unificado de emparejamientos
  *
- * Soporta 4 sistemas: dutch, roundrobin, burstein, dubov
+ * Soporta 5 sistemas: dutch, roundrobin, burstein, dubov, knockout
  * + aceleración Baku (configurable).
  *
  * Backends:
  *   1. bbpPairings (C++) — FIDE-endorsed, weighted matching O(n³ log n)
- *   2. JS propio         — dutch.js, roundrobin.js, burstein.js, dubov.js
+ *   2. JS propio         — dutch.js, roundrobin.js, burstein.js, dubov.js, knockout.js
  */
 
 import { existsSync } from 'fs';
@@ -16,6 +16,7 @@ import { pairRound as dutchPairRound, applyRoundResults } from './dutch.js';
 import { pairRound as rrPairRound } from './roundrobin.js';
 import { pairRound as bursteinPairRound } from './burstein.js';
 import { pairRound as dubovPairRound } from './dubov.js';
+import { generateBracket as koGenerate, advanceBracket as koAdvance, calculateStandings as koStandings } from './knockout.js';
 import { serializeTRF, parseTRF } from '../trf/trf.js';
 
 export const Backend = {
@@ -28,6 +29,7 @@ export const System = {
   ROUNDROBIN:'roundrobin',
   BURSTEIN:  'burstein',
   DUBOV:     'dubov',
+  KNOCKOUT:  'knockout',
 };
 
 export class PairingEngine {
@@ -77,6 +79,7 @@ export class PairingEngine {
     if (system === System.ROUNDROBIN) return this._pairRRWithJS(players, round);
     if (system === System.BURSTEIN)   return this._pairBurstein(players, round, bandA ?? this._bandA);
     if (system === System.DUBOV)      return this._pairDubov(players, round);
+    if (system === System.KNOCKOUT)   return this._pairKO(players, round);
     return this._pairWithJS(players, round);
   }
 

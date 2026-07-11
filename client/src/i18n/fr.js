@@ -1,6 +1,6 @@
 export default {
   app: { title: 'CHESS ORGANIZERS PRO', tagline: 'Résultats en direct', footer: 'Chess Organizers Pro · Résultats en direct', allRights: 'Tous droits réservés.' },
-  nav: { tournaments: 'Tournois', players: 'Joueurs', searchPlayer: 'Chercher un joueur', live: 'En direct', finished: 'Terminé', newTournament: 'Nouveau Tournoi', myProfile: 'Mon Profil', arbiter: 'Arbitre', logout: 'Déconnexion', backToHome: "Retour à l'accueil", sitemap: 'Plan du site', pricing: 'Forfaits' },
+  nav: { tournaments: 'Tournois', players: 'Joueurs', searchPlayer: 'Chercher un joueur', live: 'En direct', finished: 'Terminé', newTournament: 'Nouveau Tournoi', myProfile: 'Mon Profil', arbiter: 'Arbitre', scanner: 'Scanner', logout: 'Déconnexion', backToHome: "Retour à l'accueil", sitemap: 'Plan du site', pricing: 'Forfaits' },
   tournament: {
     title: 'Tournois en direct', subtitle: 'Suivez les résultats en temps réel',
     noResults: 'Aucun tournoi ne correspond', noActive: 'Aucun tournoi public actif',
@@ -79,6 +79,12 @@ export default {
     tournamentDeleted: 'Tournoi supprimé',
     billingError: 'Erreur douverture de la facturation',
     statusActive: 'En direct', statusFinished: 'Terminé', statusPending: 'Brouillon',
+    activeFeedTitle: 'Tournois Actifs — En attente',
+    activeFeedSubtitle: '10 tournois en cours — effet d\'appel',
+    pastFeedTitle: 'Tournois Terminés — Historique',
+    pastFeedSubtitle: '10 tournois récents avec résultats disponibles',
+    viewAllActive: 'Voir tous les actifs →',
+    viewAllPast: 'Voir tous les terminés →',
   },
   newTournament: {
     title: 'Nouveau Tournoi', subtitle: 'Configurez les détails du tournoi',

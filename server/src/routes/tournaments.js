@@ -8,7 +8,7 @@ import { validate } from '../middleware/validate.js';
 const router = Router();
 
 // GET /tournaments
-router.get('/', authenticate, (req, res) => {
+router.get('/', authenticate, async (req, res) => {
   const db = getDb();
   const { status, page = 1, limit = 20 } = req.query;
   let sql = 'SELECT * FROM tournaments WHERE created_by = ?';
@@ -24,7 +24,7 @@ router.get('/', authenticate, (req, res) => {
 });
 
 // GET /tournaments/:id
-router.get('/:id', authenticate, (req, res) => {
+router.get('/:id', authenticate, async (req, res) => {
   const db = getDb();
   const t = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.id, req.user.id);
   if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
@@ -41,7 +41,7 @@ router.post('/', authenticate, validate({
   n_rounds: { type: 'integer' },
   start_date: { type: 'date' },
   time_control: { type: 'string' },
-}), (req, res) => {
+}), async (req, res) => {
   const db = getDb();
   const { name, system, n_rounds, start_date, end_date, city, federation, time_control, rated, chief_arbiter, description } = req.body;
 
@@ -59,7 +59,7 @@ router.post('/', authenticate, validate({
 });
 
 // PATCH /tournaments/:id
-router.patch('/:id', authenticate, (req, res) => {
+router.patch('/:id', authenticate, async (req, res) => {
   const db = getDb();
   const t = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.id, req.user.id);
   if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
@@ -77,7 +77,7 @@ router.patch('/:id', authenticate, (req, res) => {
 
   if (updates.length === 0) return res.status(400).json({ error: 'Sin campos para actualizar' });
 
-  updates.push('updated_at = datetime(\'now\')');
+  updates.push("updated_at = datetime('now')");
   params.push(req.params.id);
 
   await db.prepare(`UPDATE tournaments SET ${updates.join(', ')} WHERE id = ?`).run(...params);
@@ -93,7 +93,7 @@ router.patch('/:id', authenticate, (req, res) => {
 });
 
 // DELETE /tournaments/:id
-router.delete('/:id', authenticate, (req, res) => {
+router.delete('/:id', authenticate, async (req, res) => {
   const db = getDb();
   const result = await db.prepare('DELETE FROM tournaments WHERE id = ? AND created_by = ?').run(req.params.id, req.user.id);
   if (result.changes === 0) return res.status(404).json({ error: 'Torneo no encontrado' });
@@ -103,7 +103,7 @@ router.delete('/:id', authenticate, (req, res) => {
 // ── Inscripción de jugadores ───────────────────────────────────────
 
 // POST /tournaments/:id/players — inscribir jugador
-router.post('/:id/players', authenticate, (req, res) => {
+router.post('/:id/players', authenticate, async (req, res) => {
   const db = getDb();
   const { player_id, seed_rank, category } = req.body;
 
@@ -129,7 +129,7 @@ router.post('/:id/players', authenticate, (req, res) => {
 });
 
 // GET /tournaments/:id/players — lista inscritos
-router.get('/:id/players', authenticate, (req, res) => {
+router.get('/:id/players', authenticate, async (req, res) => {
   const db = getDb();
   const players = await db.prepare(`
     SELECT tp.*, p.name, p.last_name, p.fide_rating, p.title, p.federation, p.fide_id
@@ -142,7 +142,7 @@ router.get('/:id/players', authenticate, (req, res) => {
 });
 
 // PATCH /tournaments/:id/players/:pid/category — actualizar categoría
-router.patch('/:id/players/:pid/category', authenticate, (req, res) => {
+router.patch('/:id/players/:pid/category', authenticate, async (req, res) => {
   const db = getDb();
   const { category } = req.body;
   const tp = await db.prepare('SELECT id FROM tournament_players WHERE id = ? AND tournament_id = ?').get(req.params.pid, req.params.id);
@@ -152,7 +152,7 @@ router.patch('/:id/players/:pid/category', authenticate, (req, res) => {
 });
 
 // PATCH /tournaments/:id/players/:pid/penalty — aplicar penalización
-router.patch('/:id/players/:pid/penalty', authenticate, (req, res) => {
+router.patch('/:id/players/:pid/penalty', authenticate, async (req, res) => {
   const db = getDb();
   const { points } = req.body; // Cantidad a penalizar (e.g. 0.5)
   const tp = await db.prepare('SELECT id, current_points, penalty_points FROM tournament_players WHERE id = ? AND tournament_id = ?').get(req.params.pid, req.params.id);
@@ -168,7 +168,7 @@ router.patch('/:id/players/:pid/penalty', authenticate, (req, res) => {
 // ── Solicitudes de registro ─────────────────────────────────────────
 
 // GET /tournaments/:id/registrations — lista solicitudes pendientes
-router.get('/:id/registrations', authenticate, (req, res) => {
+router.get('/:id/registrations', authenticate, async (req, res) => {
   const db = getDb();
   const t = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.id, req.user.id);
   if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
@@ -188,7 +188,7 @@ router.get('/:id/registrations', authenticate, (req, res) => {
 });
 
 // PATCH /tournaments/:id/registrations/:reqId — aprobar/rechazar
-router.patch('/:id/registrations/:reqId', authenticate, (req, res) => {
+router.patch('/:id/registrations/:reqId', authenticate, async (req, res) => {
   const db = getDb();
   const t = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.id, req.user.id);
   if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });

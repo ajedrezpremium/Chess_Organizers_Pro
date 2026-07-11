@@ -7,7 +7,6 @@ import NotificationDropdown from './NotificationDropdown.jsx';
 import LangSwitcher from './LangSwitcher.jsx';
 import SyncStatus from './SyncStatus.jsx';
 import SWUpdatePrompt from './SWUpdatePrompt.jsx';
-import ChatBot from './ChatBot.jsx';
 
 export default function Layout() {
   const { user, logout } = useAuth();
@@ -30,6 +29,7 @@ export default function Layout() {
   const navLinks = [
     { to: '/app/dashboard', label: t('nav.tournaments'), icon: '◈' },
     { to: '/app/new', label: t('nav.newTournament'), icon: '+' },
+    { to: '/app/scan', label: t('nav.scanner'), icon: '📸' },
     { to: '/arbiter', label: t('nav.arbiter'), icon: '⚖️' },
     { to: '/app/leagues', label: 'Ligas', icon: '🏆' },
   ];
@@ -190,7 +190,6 @@ export default function Layout() {
         </div>
       </footer>
 
-      <ChatBot />
     </div>
   );
 }

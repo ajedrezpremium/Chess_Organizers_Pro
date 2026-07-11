@@ -29,6 +29,7 @@ import externalRoutes from './routes/external.js';
 import importRoutes from './routes/import.js';
 import notificationRoutes from './routes/notifications.js';
 import aiRoutes from './routes/ai.js';
+import scanRoutes from './routes/scan.js';
 
 const app = express();
 
@@ -74,6 +75,7 @@ app.use('/external', externalRoutes);
 app.use('/import', importRoutes);
 app.use('/notifications', notificationRoutes);
 app.use('/ai', aiRoutes);
+app.use('/scan', scanRoutes);
 app.use('/public', publicRoutes);
 
 // ── Static files (client build) ────────────────────────────────────

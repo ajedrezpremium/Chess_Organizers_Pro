@@ -69,7 +69,9 @@ CREATE TABLE IF NOT EXISTS tournaments (
   deputy_arbiter_2 TEXT   DEFAULT '',
   tournament_director TEXT DEFAULT '',
   location_address TEXT   DEFAULT '',
-  round_time      TEXT    DEFAULT ''
+  round_time      TEXT    DEFAULT '',
+  -- NEW: demo tournaments
+  is_demo         INTEGER DEFAULT 0
 );
 
 -- Players
@@ -393,3 +395,77 @@ VALUES
   ('Básico',   'basico', 'Para clubes y torneos locales',  199, 9.99, 10, 100, '["Hasta 10 torneos activos","100 jugadores por torneo","Todo lo de Free","Múltiples árbitros","Check-in de jugadores","Widgets embeddables","Sin anuncios"]', 1),
   ('Pro',      'pro',    'Para federaciones y eventos grandes', 499, 24.99, -1, -1, '["Torneos ilimitados","Jugadores ilimitados","Todo lo de Básico","Subida FIDE automática","Boletines PDF automáticos","API pública","Soporte prioritario","Múltiples organizadores"]', 0)
 ON CONFLICT (slug) DO NOTHING;
+
+-- ============================================================
+-- SCANNER / PGN IMPORT TABLES
+-- ============================================================
+
+-- Scan Jobs - tracking de escaneos
+CREATE TABLE IF NOT EXISTS scan_jobs (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  tournament_id   INTEGER REFERENCES tournaments(id) ON DELETE SET NULL,
+  file_path       TEXT    NOT NULL,
+  file_name       TEXT    NOT NULL,
+  file_size       INTEGER NOT NULL,
+  mime_type       TEXT    NOT NULL,
+  status          TEXT    NOT NULL DEFAULT 'queued'
+                          CHECK(status IN ('queued','processing','completed','failed')),
+  progress        INTEGER DEFAULT 0,
+  current_step    TEXT    DEFAULT 'uploaded',
+  ocr_text        TEXT    DEFAULT '',
+  parsed_data     JSONB   DEFAULT '{}',
+  result_metadata JSONB   DEFAULT '{}',
+  error_message   TEXT    DEFAULT '',
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_scan_jobs_user ON scan_jobs(user_id);
+CREATE INDEX IF NOT EXISTS idx_scan_jobs_tournament ON scan_jobs(tournament_id);
+CREATE INDEX IF NOT EXISTS idx_scan_jobs_status ON scan_jobs(status);
+
+-- Scan Games - partidas extraídas
+CREATE TABLE IF NOT EXISTS scan_games (
+  id              SERIAL PRIMARY KEY,
+  job_id          UUID NOT NULL REFERENCES scan_jobs(id) ON DELETE CASCADE,
+  round_number    INTEGER DEFAULT 1,
+  board_number    INTEGER DEFAULT 1,
+  white_name      TEXT    DEFAULT '',
+  white_last_name TEXT    DEFAULT '',
+  white_fide_id   TEXT    DEFAULT '',
+  white_rating    INTEGER DEFAULT 0,
+  white_title     TEXT    DEFAULT '',
+  white_federation TEXT   DEFAULT '',
+  black_name      TEXT    DEFAULT '',
+  black_last_name TEXT    DEFAULT '',
+  black_fide_id   TEXT    DEFAULT '',
+  black_rating    INTEGER DEFAULT 0,
+  black_title     TEXT    DEFAULT '',
+  black_federation TEXT   DEFAULT '',
+  result          TEXT    DEFAULT '-'
+                          CHECK(result IN ('1-0','0-1','1/2-1/2','*','-')),
+  moves           TEXT    DEFAULT '',
+  confidence      REAL    DEFAULT 0,
+  metadata        JSONB   DEFAULT '{}',
+  imported        INTEGER DEFAULT 0,
+  imported_at     TIMESTAMPTZ,
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_scan_games_job ON scan_games(job_id);
+CREATE INDEX IF NOT EXISTS idx_scan_games_imported ON scan_games(imported);
+
+-- Trigger para updated_at en scan_jobs
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+DROP TRIGGER IF EXISTS update_scan_jobs_updated_at ON scan_jobs;
+CREATE TRIGGER update_scan_jobs_updated_at
+  BEFORE UPDATE ON scan_jobs
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
