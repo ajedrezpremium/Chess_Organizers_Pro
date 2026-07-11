@@ -1,8 +1,8 @@
 const CACHE = 'chessorg-v3';
 const API_CACHE = 'chessorg-api-v2';
 const SHELL = ['/', '/index.html', '/manifest.json', '/icon.svg'];
-const AUTH_API_PREFIXES = ['/auth/', '/tournaments/', '/players/', '/rounds/', '/pairings/', '/arbiters/', '/stats/', '/membership/', '/notifications/', '/fide/', '/validation/', '/teams/', '/stripe/', '/import/', '/api-keys/', '/webhooks/', '/api/'];
-const PUBLIC_API_PREFIXES = ['/public/', '/health'];
+const AUTH_API_PREFIXES = ['/auth/', '/tournaments/', '/players/', '/rounds/', '/pairings/', '/arbiters/', '/stats/', '/membership/', '/notifications/', '/fide/', '/validation/', '/teams/', '/stripe/', '/import/', '/api-keys/', '/webhooks/', '/api/', '/external/'];
+const PUBLIC_API_PREFIXES = ['/public/', '/health', '/scan/'];
 
 function isApiRequest(url) {
   const path = url.pathname;
@@ -121,7 +121,7 @@ self.addEventListener('fetch', (e) => {
   }
 
   // Default: network only
-  e.respondWith(fetch(e.request));
+  e.respondWith(fetch(e.request).catch(() => new Response(null, { status: 503 })));
 });
 
 // ===== STRATEGIES =====

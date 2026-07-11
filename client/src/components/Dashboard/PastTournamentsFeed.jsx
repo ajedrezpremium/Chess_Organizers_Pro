@@ -73,7 +73,7 @@ export default function PastTournamentsFeed({ title, subtitle, linkTo, linkText,
         {tournaments.length === 0 && (
           <div className="col-span-full text-center py-12">
             <div className="text-4xl mb-2 opacity-30">🏁</div>
-            <p className="text-gray-400 dark:text-fide-400">No hay torneos finalizados recientemente</p>
+            <p className="text-gray-500 dark:text-fide-400">No hay torneos finalizados recientemente</p>
           </div>
         )}
       </div>

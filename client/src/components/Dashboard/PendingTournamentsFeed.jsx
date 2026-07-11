@@ -94,7 +94,7 @@ export default function PendingTournamentsFeed({ limit = 10, onOpen }) {
         {tournaments.length === 0 && (
           <div className="col-span-full text-center py-12">
             <div className="text-4xl mb-2 opacity-30">📋</div>
-            <p className="text-gray-400 dark:text-fide-400">No hay torneos pendientes próximamente</p>
+            <p className="text-gray-500 dark:text-fide-400">No hay torneos pendientes próximamente</p>
           </div>
         )}
       </div>

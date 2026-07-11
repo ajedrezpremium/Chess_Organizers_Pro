@@ -123,27 +123,27 @@ export default function Dashboard() {
       {membership && (
         <div className="mb-6 bg-gradient-to-r from-amber-900/30 to-fide-900/30 border border-amber-800/40 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-amber-500">♛</span>
-            <span className="text-gray-400">{t('dashboard.plan')}:</span>
-            <span className="font-semibold text-amber-400">{membership.plan_name}</span>
+            <span className="text-amber-400">♛</span>
+            <span className="text-fide-300">{t('dashboard.plan')}:</span>
+            <span className="font-semibold text-amber-300">{membership.plan_name}</span>
             {membership.max_tournaments > 0 && (
-              <span className="text-gray-600 ml-2">
+              <span className="text-fide-400 ml-2">
                 {membership.active_tournaments}/{membership.max_tournaments} {t('nav.tournaments').toLowerCase()}
               </span>
             )}
             {membership.current_period_end && (
-              <span className="text-gray-600 text-xs ml-2">
+              <span className="text-fide-400 text-xs ml-2">
                 {membership.cancel_at_period_end ? 'Termina' : 'Renueva'} {new Date(membership.current_period_end).toLocaleDateString()}
               </span>
             )}
           </div>
           <div className="flex items-center gap-2">
             {membership.stripe_subscription_id && (
-              <button onClick={handleManageBilling} className="text-xs text-amber-500 hover:text-amber-400 underline shrink-0">
+              <button onClick={handleManageBilling} className="text-xs text-amber-400 hover:text-amber-300 underline shrink-0">
                 {t('dashboard.billing')}
               </button>
             )}
-            <Link to="/pricing" className="text-xs text-amber-500 hover:text-amber-400 underline shrink-0">{t('dashboard.changePlan')}</Link>
+            <Link to="/pricing" className="text-xs text-amber-400 hover:text-amber-300 underline shrink-0">{t('dashboard.changePlan')}</Link>
           </div>
         </div>
       )}
@@ -179,11 +179,11 @@ export default function Dashboard() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">{t('dashboard.myTournaments')}</h1>
-              <p className="text-sm text-gray-500 dark:text-fide-400 mt-1">
+              <p className="text-sm text-gray-600 dark:text-fide-400 mt-1">
                 {t('dashboard.tournamentsCount', { n: myTournaments.length })} &middot;
-                {activeCount > 0 && <span className="text-emerald-600 dark:text-emerald-400 ml-1">{activeCount} {t('dashboard.active')}</span>}
-                {pendingCount > 0 && <span className="text-amber-600 dark:text-amber-400 ml-1">{pendingCount} {t('dashboard.pending')}</span>}
-                {finishedCount > 0 && <span className="text-blue-600 dark:text-blue-400 ml-1">{finishedCount} {t('dashboard.finished')}</span>}
+                {activeCount > 0 && <span className="text-emerald-700 dark:text-emerald-400 ml-1">{activeCount} {t('dashboard.active')}</span>}
+                {pendingCount > 0 && <span className="text-amber-700 dark:text-amber-400 ml-1">{pendingCount} {t('dashboard.pending')}</span>}
+                {finishedCount > 0 && <span className="text-blue-700 dark:text-blue-400 ml-1">{finishedCount} {t('dashboard.finished')}</span>}
               </p>
             </div>
             <Link to="/app/new"

@@ -17,7 +17,7 @@ export default function SectionHeader({
         {icon && <span className="text-2xl">{icon}</span>}
         <div>
           <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">{title}</h2>
-          {subtitle && <p className="text-sm text-gray-500 dark:text-fide-400">{subtitle}</p>}
+          {subtitle && <p className="text-sm text-gray-600 dark:text-fide-400">{subtitle}</p>}
         </div>
         {count !== undefined && count !== null && (
           <span className="ml-2 px-2 py-0.5 text-xs font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-full">

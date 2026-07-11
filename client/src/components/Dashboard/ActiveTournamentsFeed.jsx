@@ -74,7 +74,7 @@ export default function ActiveTournamentsFeed({ title, subtitle, linkTo, linkTex
         {tournaments.length === 0 && (
           <div className="col-span-full text-center py-12">
             <div className="text-4xl mb-2 opacity-30">🔥</div>
-            <p className="text-gray-400 dark:text-fide-400">No hay torneos activos en este momento</p>
+            <p className="text-gray-500 dark:text-fide-400">No hay torneos activos en este momento</p>
           </div>
         )}
       </div>

@@ -64,8 +64,8 @@ export default function MyTournamentsList({ tournaments: initialTournaments, onO
         />
         <div className="text-center py-12">
           <div className="text-6xl mb-4 opacity-30">📋</div>
-          <p className="text-xl text-gray-400 dark:text-fide-400 mb-2">{t('dashboard.noTournaments')}</p>
-          <p className="text-sm text-gray-400 dark:text-fide-500 mb-6">{t('dashboard.startPrompt')}</p>
+          <p className="text-xl text-gray-500 dark:text-fide-400 mb-2">{t('dashboard.noTournaments')}</p>
+          <p className="text-sm text-gray-500 dark:text-fide-500 mb-6">{t('dashboard.startPrompt')}</p>
           <Link to="/app/new" className="inline-flex items-center gap-2 bg-fide-700 hover:bg-fide-800 text-white px-6 py-3 rounded-xl text-sm font-medium transition">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
             {t('dashboard.createFirst')}

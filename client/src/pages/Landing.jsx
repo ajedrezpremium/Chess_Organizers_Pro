@@ -53,10 +53,10 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-white dark:bg-fide-900 text-gray-900 dark:text-fide-100">
       <Helmet>
-        <title>Chess Organizers Pro — Organiza Torneos de Ajedrez como un Profesional</title>
-        <meta name="description" content="Plataforma profesional para organizar torneos de ajedrez. Pairings FIDE automáticos, clasificación en vivo, exportación TRF/PDF, ligas, notificaciones y escáner de actas IA." />
+        <title>Chess Organizers Pro — Gestor Pro de Torneos de Ajedrez</title>
+        <meta name="description" content="Plataforma completa para arbitraje profesional: pairings automáticos FIDE, clasificación en vivo, exportación TRF/PDF, escáner de actas IA, ligas, notificaciones y ¡mucho más!" />
         <meta name="keywords" content="ajedrez, torneos, organizador, FIDE, pairings, suizo, round-robin, chess organizer" />
-        <meta property="og:title" content="Chess Organizers Pro — Organiza Torneos de Ajedrez" />
+        <meta property="og:title" content="Chess Organizers Pro — Gestor Pro de Torneos de Ajedrez" />
         <meta property="og:description" content="Plataforma profesional para organizadores de ajedrez. Automatiza pairings, clasificación y exportación FIDE." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://chess-organizers-pro.vercel.app" />
@@ -116,12 +116,11 @@ export default function Landing() {
             Nueva herramienta: Escáner de Actas con IA
           </div>
           <h1 className="text-4xl md:text-7xl font-extrabold text-white mb-4 leading-tight">
-            Organiza Torneos de Ajedrez<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-yellow-300">Como un Profesional</span>
+            Gestor Pro de Torneos de Ajedrez
           </h1>
           <p className="text-lg md:text-xl text-fide-200 max-w-2xl mx-auto mb-8 leading-relaxed">
-            Plataforma completa para organizadores: pairings automáticos FIDE, clasificación en vivo,
-            exportación TRF/PDF, escáner de actas IA, ligas, notificaciones y más. Gratis para empezar.
+            Plataforma completa para arbitraje profesional: pairings automáticos FIDE, clasificación en vivo,
+            exportación TRF/PDF, escáner de actas IA, ligas, notificaciones y ¡mucho más!
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link to="/register" className="relative group bg-amber-500 hover:bg-amber-600 text-fide-900 font-bold px-10 py-3.5 rounded-xl text-lg transition-all duration-300 shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:scale-105">

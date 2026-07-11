@@ -106,7 +106,7 @@ export default function TournamentCard({
               </span>
               {tournament.federation && <span>{tournament.federation}</span>}
               {tournament.city && <span>{tournament.city}</span>}
-              {tournament.start_date && <span className="text-xs text-gray-400">{formatDate(tournament.start_date)}</span>}
+              {tournament.start_date && <span className="text-xs text-gray-500 dark:text-fide-400">{formatDate(tournament.start_date)}</span>}
             </div>
             {tournament.description && !isFeed && (
               <p className="mt-2 text-sm text-gray-500 dark:text-fide-400 line-clamp-2">{tournament.description}</p>

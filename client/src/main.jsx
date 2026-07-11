@@ -10,20 +10,20 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
       const reg = await navigator.serviceWorker.register('/sw.js');
-      // Check for updates
+
+      // Auto-update cuando se detecta un nuevo SW
       reg.addEventListener('updatefound', () => {
         const newSW = reg.installing;
-        let reloadDialogShown = false;
         newSW.addEventListener('statechange', () => {
           if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
-            // New version available
-            if (!reloadDialogShown) {
-              reloadDialogShown = true;
-              // Dispatch event for UI to show update prompt
-              window.dispatchEvent(new CustomEvent('sw-update', { detail: { registration: reg } }));
-            }
+            reg.waiting?.postMessage({ type: 'SKIP_WAITING' });
           }
         });
+      });
+
+      // Recargar cuando el nuevo SW toma el control
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.location.reload();
       });
     } catch (err) {
       console.warn('SW registration failed:', err);
