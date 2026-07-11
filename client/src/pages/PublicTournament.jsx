@@ -72,6 +72,16 @@ export default function PublicTournament() {
   const bannerUrl = tournament.banner_url || '';
 
   return (
+    <>
+    <Helmet>
+      <title>{tournament.name} — Chess Organizers Pro</title>
+      <meta name="description" content={`${tournament.name} — ${tournament.city || ''} ${tournament.federation || ''} | Sistema: ${tournament.system} | ${tournament.n_rounds} rondas`} />
+      <meta property="og:title" content={`${tournament.name} — Chess Organizers Pro`} />
+      <meta property="og:description" content={`Torneo de ajedrez: ${tournament.city || ''} ${tournament.federation || ''} | ${tournament.system} | ${tournament.n_rounds} rondas`} />
+      <meta property="og:type" content="website" />
+      <meta property="og:url" content={`https://chess-organizers-pro.vercel.app/public/tournament/${tournament.id}`} />
+      {logoUrl && <meta property="og:image" content={logoUrl} />}
+    </Helmet>
     <div className="min-h-screen text-gray-100" style={{ background: sc }}>
       <style>{`
         .pub-btn { background: ${pc}; color: #000; }
@@ -188,6 +198,7 @@ export default function PublicTournament() {
       </footer>
       <OfflineIndicator />
     </div>
+    </>
   );
 }
 

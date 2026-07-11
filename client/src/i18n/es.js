@@ -1,6 +1,6 @@
 export default {
   app: { title: 'CHESS ORGANIZERS PRO', tagline: 'Resultados en vivo', footer: 'Chess Organizers Pro · Resultados en vivo', allRights: 'Todos los derechos reservados.' },
-  nav: { tournaments: 'Torneos', players: 'Jugadores', searchPlayer: 'Buscar jugador', live: 'En vivo', finished: 'Finalizado', newTournament: 'Nuevo Torneo', myProfile: 'Mi Perfil', arbiter: 'Árbitro', scanner: 'Escanear', logout: 'Salir', backToHome: 'Volver al inicio', sitemap: 'Mapa del sitio', pricing: 'Planes' },
+  nav: { tournaments: 'Torneos', players: 'Jugadores', searchPlayer: 'Buscar jugador', live: 'En vivo', finished: 'Finalizado', newTournament: 'Nuevo Torneo', myProfile: 'Mi Perfil', arbiter: 'Árbitro', scanner: 'Escanear', elo: 'Dashboard Elo', logout: 'Salir', backToHome: 'Volver al inicio', sitemap: 'Mapa del sitio', pricing: 'Planes' },
   tournament: {
     title: 'Torneos en vivo', subtitle: 'Sigue los resultados de torneos en tiempo real',
     noResults: 'No hay torneos con esos filtros', noActive: 'No hay torneos públicos activos',

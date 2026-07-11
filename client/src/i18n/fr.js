@@ -1,6 +1,6 @@
 export default {
   app: { title: 'CHESS ORGANIZERS PRO', tagline: 'Résultats en direct', footer: 'Chess Organizers Pro · Résultats en direct', allRights: 'Tous droits réservés.' },
-  nav: { tournaments: 'Tournois', players: 'Joueurs', searchPlayer: 'Chercher un joueur', live: 'En direct', finished: 'Terminé', newTournament: 'Nouveau Tournoi', myProfile: 'Mon Profil', arbiter: 'Arbitre', scanner: 'Scanner', logout: 'Déconnexion', backToHome: "Retour à l'accueil", sitemap: 'Plan du site', pricing: 'Forfaits' },
+  nav: { tournaments: 'Tournois', players: 'Joueurs', searchPlayer: 'Chercher un joueur', live: 'En direct', finished: 'Terminé', newTournament: 'Nouveau Tournoi', myProfile: 'Mon Profil', arbiter: 'Arbitre', scanner: 'Scanner', elo: 'Tableau Elo', logout: 'Déconnexion', backToHome: "Retour à l'accueil", sitemap: 'Plan du site', pricing: 'Forfaits' },
   tournament: {
     title: 'Tournois en direct', subtitle: 'Suivez les résultats en temps réel',
     noResults: 'Aucun tournoi ne correspond', noActive: 'Aucun tournoi public actif',

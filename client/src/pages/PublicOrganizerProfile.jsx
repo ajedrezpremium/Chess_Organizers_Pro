@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { api } from '../api/client.js';
 import { useI18n } from '../i18n/context.jsx';
 
@@ -34,6 +35,15 @@ export default function PublicOrganizerProfile() {
   const totalPlayers = tournaments.reduce((sum, t) => sum + (t.player_count || 0), 0);
 
   return (
+    <>
+    <Helmet>
+      <title>{organizer.name || 'Organizador'} — Chess Organizers Pro</title>
+      <meta name="description" content={`Perfil de ${organizer.name || 'organizador'} — ${active} torneos activos, ${finished} finalizados, ${totalPlayers} jugadores.`} />
+      <meta property="og:title" content={`${organizer.name || 'Organizador'} — Chess Organizers Pro`} />
+      <meta property="og:description" content={`Organizador de torneos de ajedrez. ${tournaments.length} torneos organizados.`} />
+      <meta property="og:type" content="profile" />
+      <meta property="og:url" content={`https://chess-organizers-pro.vercel.app/public/organizers/${organizer.id}`} />
+    </Helmet>
     <div className="min-h-screen bg-gray-950 text-gray-100">
       <header className="border-b border-gray-800 bg-gray-900/80">
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-4 text-xs">
@@ -97,5 +107,6 @@ export default function PublicOrganizerProfile() {
         )}
       </div>
     </div>
+    </>
   );
 }

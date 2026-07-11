@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { api } from '../api/client.js';
 import { useI18n } from '../i18n/context.jsx';
 import LangSwitcher from '../components/LangSwitcher.jsx';
@@ -26,7 +27,18 @@ export default function PublicPlayerProfile() {
 
   const { player, tournaments } = data;
 
+  const fullName = `${player.title ? player.title + ' ' : ''}${player.name || ''} ${player.last_name || ''}`.trim();
+
   return (
+    <>
+    <Helmet>
+      <title>{fullName || 'Jugador'} — Chess Organizers Pro</title>
+      <meta name="description" content={`Perfil de ${fullName} — Rating FIDE: ${player.fide_rating || '—'} | Federación: ${player.federation || '—'} | ${tournaments?.length || 0} torneos jugados`} />
+      <meta property="og:title" content={`${fullName} — Chess Organizers Pro`} />
+      <meta property="og:description" content={`Jugador de ajedrez ${player.federation ? 'de ' + player.federation : ''} | Rating: ${player.fide_rating || '—'} | Título: ${player.title || '—'}`} />
+      <meta property="og:type" content="profile" />
+      <meta property="og:url" content={`https://chess-organizers-pro.vercel.app/public/players/${player.id}`} />
+    </Helmet>
     <div className="min-h-screen bg-gray-950 text-gray-100">
       <header className="border-b border-gray-800 bg-gray-900/80 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
@@ -102,5 +114,6 @@ export default function PublicPlayerProfile() {
         <div className="max-w-6xl mx-auto px-4 text-center text-xs text-gray-600">{t('app.footer')}</div>
       </footer>
     </div>
+    </>
   );
 }

@@ -30,6 +30,7 @@ const ArbiterTournamentsList = lazy(() => import('./pages/ArbiterTournamentsList
 const ArbiterPanel = lazy(() => import('./pages/ArbiterPanel.jsx'));
 const TournamentCatalog = lazy(() => import('./pages/TournamentCatalog.jsx'));
 const ScannerPage = lazy(() => import('./pages/ScannerPage.jsx'));
+const EloDashboard = lazy(() => import('./pages/EloDashboard.jsx'));
 
 function Spinner() {
   return <div className="flex items-center justify-center h-64"><div className="animate-spin h-8 w-8 border-4 border-fide-500 border-t-transparent rounded-full" /></div>;
@@ -90,6 +91,7 @@ function App() {
                 <Route path="catalog" element={<TournamentCatalog />} />
                 <Route path="scan" element={<ScannerPage />} />
                 <Route path="tournament/:id/scan" element={<ScannerPage />} />
+                <Route path="elo" element={<EloDashboard />} />
               </Route>
             </Routes>
           </Suspense>

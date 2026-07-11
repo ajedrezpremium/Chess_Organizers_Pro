@@ -30,6 +30,7 @@ export default function Layout() {
     { to: '/app/dashboard', label: t('nav.tournaments'), icon: '◈' },
     { to: '/app/new', label: t('nav.newTournament'), icon: '+' },
     { to: '/app/scan', label: t('nav.scanner'), icon: '📸' },
+    { to: '/app/elo', label: t('nav.elo'), icon: '📊' },
     { to: '/arbiter', label: t('nav.arbiter'), icon: '⚖️' },
     { to: '/app/leagues', label: 'Ligas', icon: '🏆' },
   ];
