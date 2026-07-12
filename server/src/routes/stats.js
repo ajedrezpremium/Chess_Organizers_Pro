@@ -23,7 +23,7 @@ router.get('/:tid/crosstab', authenticate, async (req, res) => {
     const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
     if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
 
-    const players = buildPlayerState(db, req.params.tid);
+    const players = await buildPlayerState(db, req.params.tid);
     const rounds = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? ORDER BY round_number ASC").all(req.params.tid);
 
     const pairingsByRound = {};
@@ -90,7 +90,7 @@ router.get('/:tid/performance', authenticate, async (req, res) => {
     const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
     if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
 
-    const players = buildPlayerState(db, req.params.tid);
+    const players = await buildPlayerState(db, req.params.tid);
     const rounds = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status = 'closed' ORDER BY round_number ASC").all(req.params.tid);
     const playerMap = Object.fromEntries(players.map((p) => [p.id, p]));
 
@@ -166,7 +166,7 @@ router.get('/:tid/progression', authenticate, async (req, res) => {
     const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
     if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
 
-    const players = buildPlayerState(db, req.params.tid);
+    const players = await buildPlayerState(db, req.params.tid);
     const rounds = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? ORDER BY round_number ASC").all(req.params.tid);
     const pairingsByRound = {};
     for (const r of rounds) {
@@ -225,7 +225,7 @@ router.get('/:tid/head-to-head', authenticate, async (req, res) => {
     const { p1, p2 } = req.query;
     if (!p1 || !p2) return res.status(400).json({ error: 'Se requieren p1 y p2 (player IDs)' });
 
-    const players = buildPlayerState(db, req.params.tid);
+    const players = await buildPlayerState(db, req.params.tid);
     const rounds = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? ORDER BY round_number ASC").all(req.params.tid);
 
     const encounters = [];
@@ -269,7 +269,7 @@ router.get('/:tid/overview', authenticate, async (req, res) => {
     const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
     if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
 
-    const players = buildPlayerState(db, req.params.tid);
+    const players = await buildPlayerState(db, req.params.tid);
     const closedRounds = await db.prepare("SELECT COUNT(*) as c FROM rounds WHERE tournament_id = ? AND status = 'closed'").get(req.params.tid).c;
     const totalRounds = tournament.n_rounds;
 
@@ -327,7 +327,7 @@ router.get('/:tid/overview', authenticate, async (req, res) => {
     }
 
     // Performance por color
-    const colorPerf = players.map((player) => {
+    const colorPerfData = await Promise.all(players.map(async (player) => {
       let wGames = 0, wPts = 0, bGames = 0, bPts = 0;
       for (let rn = 1; rn <= totalRounds; rn++) {
         const round = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND round_number = ?").get(req.params.tid, rn);
@@ -345,7 +345,8 @@ router.get('/:tid/overview', authenticate, async (req, res) => {
         white: { games: wGames, points: wPts, pct: wGames > 0 ? Math.round(wPts / wGames * 100) : 0 },
         black: { games: bGames, points: bPts, pct: bGames > 0 ? Math.round(bPts / bGames * 100) : 0 },
       };
-    }).filter((p) => p.white.games > 0 || p.black.games > 0);
+    }));
+    const colorPerf = colorPerfData.filter((p) => p.white.games > 0 || p.black.games > 0);
     colorPerf.sort((a, b) => (b.white.pct + b.black.pct) - (a.white.pct + a.black.pct));
 
     // Totals acumulados

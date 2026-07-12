@@ -96,10 +96,7 @@ router.get('/my-tournaments', authenticate, async (req, res) => {
       ORDER BY t.created_at DESC
     `).all(player.id);
 
-    let totalGames = 0, totalWins = 0, totalPoints = 0;
-
-    const tournaments = participations.map((p) => {
-      // Obtener rondas y resultados para este jugador en este torneo
+    const tournamentResults = await Promise.all(participations.map(async (p) => {
       const rounds = await db.prepare(`
         SELECT r.round_number, pa.*, pw.name as white_name, pw.fide_rating as white_rating,
                pb.name as black_name, pb.fide_rating as black_rating
@@ -115,12 +112,13 @@ router.get('/my-tournaments', authenticate, async (req, res) => {
 
       const playerTpId = await db.prepare(`SELECT id FROM tournament_players WHERE tournament_id = ? AND player_id = ?`).get(p.tournament_id, player.id)?.id;
 
+      let tGames = 0, tWins = 0, tPoints = 0;
       const roundData = rounds.map((r) => {
         const isWhite = String(r.white_id) === String(playerTpId);
         const score = isWhite
           ? (r.result === '1' ? 1 : r.result === '0' ? 0 : r.result === '=' ? 0.5 : null)
           : (r.result === '0' ? 1 : r.result === '1' ? 0 : r.result === '=' ? 0.5 : null);
-        if (score !== null) { totalGames++; totalPoints += score; if (score === 1) totalWins++; }
+        if (score !== null) { tGames++; tPoints += score; if (score === 1) tWins++; }
         return {
           round_number: r.round_number,
           white_name: r.white_name, white_rating: r.white_rating,
@@ -135,15 +133,17 @@ router.get('/my-tournaments', authenticate, async (req, res) => {
         federation: p.federation, status: p.status, finished_date: p.finished_date,
         player_score: p.current_points,
         rounds: roundData,
+        _games: tGames, _wins: tWins, _points: tPoints,
       };
-    });
+    }));
 
     const stats = {
-      tournaments: tournaments.length,
-      games: totalGames,
-      wins: totalWins,
-      points: totalPoints,
+      tournaments: tournamentResults.length,
+      games: tournamentResults.reduce((s, t) => s + t._games, 0),
+      wins: tournamentResults.reduce((s, t) => s + t._wins, 0),
+      points: tournamentResults.reduce((s, t) => s + t._points, 0),
     };
+    const tournaments = tournamentResults.map(({ _games, _wins, _points, ...rest }) => rest);
 
     res.json({ player, tournaments, stats });
   } catch (err) {

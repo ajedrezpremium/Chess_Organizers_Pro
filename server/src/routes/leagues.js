@@ -116,7 +116,7 @@ router.post('/:id/calculate-standings', async (req, res) => {
   const playerPoints = {};
 
   for (const lt of tournaments) {
-    const players = buildPlayerState(db, lt.tournament_id);
+    const players = await buildPlayerState(db, lt.tournament_id);
     const tOrder = (lt.tiebreaks || league.tiebreaks || DEFAULT_TIEBREAK_ORDER).split(',').filter(Boolean);
     const standings = calculateTiebreak(players, null, tOrder);
 

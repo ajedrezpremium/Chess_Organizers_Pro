@@ -103,8 +103,9 @@ app.get('/health/readiness', async (req, res) => {
   }
 });
 
-// ── SPA fallback + static (Vercel sirve assets, nosotros solo SPA) ──
+// ── Static assets + SPA fallback ────────────────────────────────────
 const API_PREFIXES = ['/auth/', '/public/', '/tournaments/', '/players/', '/fide/', '/stats/', '/health', '/pairings/', '/rounds/', '/membership/', '/validation/', '/stripe/', '/api/v1/', '/external/', '/webhooks/', '/api-keys/', '/import/', '/notifications/', '/leagues/', '/matches/', '/teams/', '/team_members/'];
+app.use(express.static(config.clientDist));
 app.use((req, res, next) => {
   if (req.method === 'GET' && !API_PREFIXES.some((p) => req.path.startsWith(p))) {
     return res.sendFile('index.html', { root: config.clientDist });

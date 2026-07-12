@@ -52,7 +52,7 @@ router.post('/tournaments/:tid/rounds/generate', authenticate, async (req, res) 
       return res.status(400).json({ error: 'Todas las rondas ya fueron generadas' });
     }
 
-    const players = buildPlayerState(db, req.params.tid);
+    const players = await buildPlayerState(db, req.params.tid);
     if (players.length < 2) return res.status(400).json({ error: 'Se necesitan al menos 2 jugadores' });
 
     const result = await engine.pairNextRound({
@@ -245,7 +245,7 @@ router.post('/rounds/:rid/close', authenticate, async (req, res) => {
     if (!allResultsIn) return res.status(400).json({ error: 'Faltan resultados por ingresar' });
 
     // Reconstruir estado y aplicar resultados
-    let players = buildPlayerState(db, round.tournament_id);
+    let players = await buildPlayerState(db, round.tournament_id);
 
     const enginePairings = pairings.map((p) => ({
       board: p.board,
@@ -283,7 +283,7 @@ router.get('/tournaments/:tid/standings', authenticate, async (req, res) => {
   const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
   if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
 
-  const players = buildPlayerState(db, req.params.tid);
+  const players = await buildPlayerState(db, req.params.tid);
   const totalRounds = await db.prepare("SELECT MAX(round_number) as max FROM rounds WHERE tournament_id = ? AND status = 'closed'").get(req.params.tid)?.max ?? 0;
   const tiebreaks = tournament.tiebreaks ? tournament.tiebreaks.split(',') : DEFAULT_TIEBREAK_ORDER;
 
@@ -297,10 +297,10 @@ router.get('/tournaments/:tid/standings', authenticate, async (req, res) => {
 
   // Calcular variación de rating FIDE
   const closedRounds = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status = 'closed' ORDER BY round_number ASC").all(req.params.tid);
-  const roundPairings = closedRounds.map((r) => {
+  const roundPairings = await Promise.all(closedRounds.map(async (r) => {
     const pairings = await db.prepare('SELECT * FROM pairings WHERE round_id = ? ORDER BY board ASC').all(r.id);
     return { number: r.round_number, pairings };
-  });
+  }));
   const ratingChanges = calculateRatingChanges(players, roundPairings);
 
   res.json({
@@ -360,8 +360,8 @@ router.get('/tournaments/:tid/bulletin', authenticate, async (req, res) => {
   `).all(req.params.tid);
 
   // ── Performance data ──
-  const bpPlayers = buildPlayerState(db, req.params.tid);
-  const bpRounds = rounds.filter((r) => r.status === 'closed').map((r) => {
+  const bpPlayers = await buildPlayerState(db, req.params.tid);
+  const bpRounds = await Promise.all(rounds.filter((r) => r.status === 'closed').map(async (r) => {
     const pairings = await db.prepare(`
       SELECT p.*, w.fide_rating as white_rating, w2.fide_rating as black_rating
       FROM pairings p
@@ -372,7 +372,7 @@ router.get('/tournaments/:tid/bulletin', authenticate, async (req, res) => {
       WHERE p.round_id = ? ORDER BY p.board ASC
     `).all(r.id);
     return { ...r, pairings };
-  });
+  }));
   const perRound = perRoundChanges(bpPlayers, bpRounds);
 
   const playerTpr = {};
@@ -503,10 +503,10 @@ router.get('/tournaments/:tid/trf', authenticate, async (req, res) => {
   const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
   if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
 
-  const players = buildPlayerState(db, req.params.tid);
+  const players = await buildPlayerState(db, req.params.tid);
   const closedRounds = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status = 'closed' ORDER BY round_number ASC").all(req.params.tid);
 
-  const rounds = closedRounds.map((r) => {
+  const rounds = await Promise.all(closedRounds.map(async (r) => {
     const pairings = await db.prepare('SELECT * FROM pairings WHERE round_id = ? ORDER BY board ASC').all(r.id);
     return {
       number: r.round_number,
@@ -517,7 +517,7 @@ router.get('/tournaments/:tid/trf', authenticate, async (req, res) => {
         result: p.result, isBye: !!p.is_bye,
       })),
     };
-  });
+  }));
 
   const config = {
     name: tournament.name, city: tournament.city, federation: tournament.federation,

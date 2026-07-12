@@ -90,7 +90,7 @@ router.get('/tournaments/:id/standings', async (req, res) => {
   const tournament = await db.prepare("SELECT * FROM tournaments WHERE id = ?").get(req.params.id);
   if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
 
-  let players = buildPlayerState(db, req.params.id);
+  let players = await buildPlayerState(db, req.params.id);
   const totalRounds = await db.prepare("SELECT MAX(round_number) as max FROM rounds WHERE tournament_id = ? AND status = 'closed'").get(req.params.id)?.max ?? 0;
   const tiebreaks = tournament.tiebreaks ? tournament.tiebreaks.split(',') : DEFAULT_TIEBREAK_ORDER;
 
@@ -109,10 +109,10 @@ router.get('/tournaments/:id/standings', async (req, res) => {
   const standings = buildStandings(withTb);
 
   const closedRounds = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status = 'closed' ORDER BY round_number ASC").all(req.params.id);
-  const roundPairings = closedRounds.map((r) => {
+  const roundPairings = await Promise.all(closedRounds.map(async (r) => {
     const pairings = await db.prepare('SELECT * FROM pairings WHERE round_id = ? ORDER BY board ASC').all(r.id);
     return { number: r.round_number, pairings };
-  });
+  }));
   const ratingChanges = calculateRatingChanges(players, roundPairings);
 
   res.json({
@@ -140,7 +140,7 @@ router.get('/tournaments/:id/performance', async (req, res) => {
     const tournament = await db.prepare("SELECT * FROM tournaments WHERE id = ?").get(req.params.id);
     if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
 
-    const players = buildPlayerState(db, req.params.id);
+    const players = await buildPlayerState(db, req.params.id);
     const rounds = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status = 'closed' ORDER BY round_number ASC").all(req.params.id);
     const playerMap = Object.fromEntries(players.map((p) => [p.id, p]));
 
@@ -324,7 +324,7 @@ router.get('/widget/tournaments/:id/standings', async (req, res) => {
   const tournament = await db.prepare("SELECT id, name, federation, system, n_rounds, tiebreaks, primary_color, secondary_color, logo_url FROM tournaments WHERE id = ? AND status != 'pending'").get(req.params.id);
   if (!tournament) return res.status(404).send('Torneo no encontrado');
 
-  const players = buildPlayerState(db, req.params.id);
+  const players = await buildPlayerState(db, req.params.id);
   const totalRounds = await db.prepare("SELECT MAX(round_number) as max FROM rounds WHERE tournament_id = ? AND status = 'closed'").get(req.params.id)?.max ?? 0;
   const tiebreaks = tournament.tiebreaks ? tournament.tiebreaks.split(',') : DEFAULT_TIEBREAK_ORDER;
   const playersById = Object.fromEntries(players.map((p) => [p.id, p]));
@@ -332,10 +332,10 @@ router.get('/widget/tournaments/:id/standings', async (req, res) => {
   const standings = buildStandings(withTb);
 
   const closedRounds = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status = 'closed' ORDER BY round_number ASC").all(req.params.id);
-  const roundPairings = closedRounds.map((r) => {
+  const roundPairings = await Promise.all(closedRounds.map(async (r) => {
     const pairings = await db.prepare('SELECT * FROM pairings WHERE round_id = ? ORDER BY board ASC').all(r.id);
     return { number: r.round_number, pairings };
-  });
+  }));
   const ratingChanges = calculateRatingChanges(players, roundPairings);
 
   const pc = tournament.primary_color || '#f59e0b';
@@ -451,7 +451,7 @@ router.get('/tournaments/:id/crosstab', async (req, res) => {
     const tournament = await db.prepare("SELECT * FROM tournaments WHERE id = ? AND status != 'pending'").get(req.params.id);
     if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
 
-    const players = buildPlayerState(db, req.params.id);
+    const players = await buildPlayerState(db, req.params.id);
     const rounds = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? ORDER BY round_number ASC").all(req.params.id);
 
     const pairingsByRound = {};

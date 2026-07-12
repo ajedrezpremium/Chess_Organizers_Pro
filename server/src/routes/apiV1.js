@@ -61,7 +61,7 @@ router.get('/tournaments/:id/standings', async (req, res) => {
   const t = await db.prepare('SELECT * FROM tournaments WHERE id = ?').get(req.params.id);
   if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
 
-  const players = buildPlayerState(db, req.params.id);
+  const players = await buildPlayerState(db, req.params.id);
   const totalRounds = (await db.prepare("SELECT MAX(round_number) as max FROM rounds WHERE tournament_id = ? AND status = 'closed'").get(req.params.id))?.max ?? 0;
   const tiebreaks = t.tiebreaks ? t.tiebreaks.split(',') : DEFAULT_TIEBREAK_ORDER;
 
@@ -115,7 +115,7 @@ router.get('/tournaments/:id/crosstab', async (req, res) => {
   const t = await db.prepare('SELECT * FROM tournaments WHERE id = ?').get(req.params.id);
   if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
 
-  const players = buildPlayerState(db, req.params.id);
+  const players = await buildPlayerState(db, req.params.id);
   const closedRounds = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status = 'closed' ORDER BY round_number ASC").all(req.params.id);
 
   const crosstab = players.map((p) => ({

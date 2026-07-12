@@ -152,10 +152,10 @@ router.post('/submit/:tournamentId', authenticate, async (req, res) => {
     const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tournamentId, req.user.id);
     if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
 
-    const players = buildPlayerState(db, req.params.tournamentId);
+    const players = await buildPlayerState(db, req.params.tournamentId);
     const closedRounds = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status = 'closed' ORDER BY round_number ASC").all(req.params.tournamentId);
 
-    const rounds = closedRounds.map((r) => {
+    const rounds = await Promise.all(closedRounds.map(async (r) => {
       const pairings = await db.prepare('SELECT * FROM pairings WHERE round_id = ? ORDER BY board ASC').all(r.id);
       return {
         number: r.round_number,
@@ -167,7 +167,7 @@ router.post('/submit/:tournamentId', authenticate, async (req, res) => {
           result: p.result, isBye: !!p.is_bye,
         })),
       };
-    });
+    }));
 
     const trfContent = serializeTRF({
       name: tournament.name, city: tournament.city, federation: tournament.federation,
@@ -198,7 +198,7 @@ router.get('/report/:tournamentId', authenticate, async (req, res) => {
   const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ?').get(req.params.tournamentId);
   if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
 
-  const players = buildPlayerState(db, req.params.tournamentId);
+  const players = await buildPlayerState(db, req.params.tournamentId);
   const tOrder = (tournament.tiebreaks || DEFAULT_TIEBREAK_ORDER).split(',').filter(Boolean);
   const standings = calculateTiebreak(players, null, tOrder);
 

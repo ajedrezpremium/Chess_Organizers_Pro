@@ -14,7 +14,7 @@ router.get('/:tid', authenticate, async (req, res) => {
     const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
     if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
 
-    const players = buildPlayerState(db, req.params.tid);
+    const players = await buildPlayerState(db, req.params.tid);
 
     const rounds = await db.prepare('SELECT * FROM rounds WHERE tournament_id = ? ORDER BY round_number ASC').all(req.params.tid);
     const engineRounds = [];
@@ -31,7 +31,7 @@ router.get('/:tid', authenticate, async (req, res) => {
         ORDER BY p.board ASC
       `).all(r.id);
 
-      return {
+      engineRounds.push({
         number: r.round_number,
         pairings: pairings.map((p) => ({
           board: p.board,
@@ -40,8 +40,8 @@ router.get('/:tid', authenticate, async (req, res) => {
           result: p.result,
           isBye: !!p.is_bye,
         })),
-      };
-    });
+      });
+    }
 
     const config = {
       nRounds: tournament.n_rounds,

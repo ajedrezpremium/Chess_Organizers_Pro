@@ -6,7 +6,7 @@ const router = Router();
 
 // ── Helpers ────────────────────────────────────────────────────────
 
-function isArbiterOf(db, tournamentId, userId) {
+async function isArbiterOf(db, tournamentId, userId) {
   const t = await db.prepare('SELECT created_by FROM tournaments WHERE id = ?').get(tournamentId);
   if (t && t.created_by === userId) return true;
   return !!await db.prepare('SELECT id FROM tournament_arbiters WHERE tournament_id = ? AND user_id = ?').get(tournamentId, userId);
