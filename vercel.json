@@ -1,5 +1,4 @@
 {
-  "rootDirectory": ".",
   "buildCommand": "cd client && npm run build",
   "outputDirectory": "client/dist",
   "functions": {
@@ -31,5 +30,13 @@
     { "source": "/ai/(.*)", "destination": "/api/index.js" },
     { "source": "/scan/(.*)", "destination": "/api/index.js" },
     { "source": "/(.*)", "destination": "/api/index.js" }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    }
   ]
 }
