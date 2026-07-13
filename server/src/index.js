@@ -33,6 +33,10 @@ import scanRoutes from './routes/scan.js';
 
 const app = express();
 
+// ── Health check (PRIMERO de todo) ─────────────────────────────────
+app.get('/health', (req, res) => res.json({ status: 'ok', msg: 'no-db' }));
+app.get('/health/readiness', (req, res) => res.json({ status: 'ready', msg: 'no-db' }));
+
 // ── Production security ────────────────────────────────────────────
 app.set('trust proxy', 1);
 
@@ -77,36 +81,6 @@ app.use('/notifications', notificationRoutes);
 app.use('/ai', aiRoutes);
 app.use('/scan', scanRoutes);
 app.use('/public', publicRoutes);
-
-// ── Health check (ANTES de static/SPA) ────────────────────────────
-app.get('/health', async (req, res) => {
-  try {
-    const db = getDb();
-    let dbOk = false;
-    try { await db.prepare('SELECT 1').get(); dbOk = true; } catch (e) { console.error('Health check DB error:', e); }
-    res.json({
-      status: 'ok',
-      version: '1.0.0',
-      uptime: process.uptime(),
-      database: dbOk ? 'connected' : 'error',
-      timestamp: new Date().toISOString(),
-    });
-  } catch (err) {
-    console.error('Health check fatal error:', err);
-    res.status(500).json({ error: 'Health check failed', details: err.message });
-  }
-});
-
-app.get('/health/readiness', async (req, res) => {
-  try {
-    const db = getDb();
-    await db.prepare('SELECT 1').get();
-    res.json({ status: 'ready', database: 'connected' });
-  } catch (e) {
-    console.error('Readiness check error:', e);
-    res.status(503).json({ status: 'not ready', database: 'disconnected' });
-  }
-});
 
 // ── Static assets + SPA fallback ────────────────────────────────────
 const API_PREFIXES = ['/auth/', '/public/', '/tournaments/', '/players/', '/fide/', '/stats/', '/health', '/pairings/', '/rounds/', '/membership/', '/validation/', '/stripe/', '/api/v1/', '/external/', '/webhooks/', '/api-keys/', '/import/', '/notifications/', '/leagues/', '/matches/', '/teams/', '/team_members/'];
