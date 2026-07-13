@@ -1,0 +1,174 @@
+import { getDb } from '../db/index.js';
+import { sendMail } from './email.js';
+import { sendTelegramMessage } from './telegram.js';
+import { sendTwilioMessage } from './twilio.js';
+import config from '../config.js';
+
+async function getPlayersByTournament(db, tid) {
+  return await db.prepare(`
+    SELECT p.name, p.last_name, p.email
+    FROM tournament_players tp
+    JOIN players p ON tp.player_id = p.id
+    WHERE tp.tournament_id = ? AND p.email != ''
+  `).all(tid);
+}
+
+async function getTournament(db, tid) {
+  return await db.prepare('SELECT name, status FROM tournaments WHERE id = ?').get(tid);
+}
+
+async function getRound(db, rid) {
+  return await db.prepare('SELECT round_number, tournament_id FROM rounds WHERE id = ?').get(rid);
+}
+
+async function getTournamentOwner(db, tid) {
+  return await db.prepare(`SELECT u.id, u.email FROM users u JOIN tournaments t ON t.user_id = u.id WHERE t.id = ?`).get(tid);
+}
+
+async function getUserNotifySettings(db, userId) {
+  return await db.prepare(`SELECT * FROM user_notification_settings WHERE user_id = ?`).get(userId);
+}
+
+async function sendTelegramToOwner(db, tid, message) {
+  const owner = await getTournamentOwner(db, tid);
+  if (!owner) return;
+  const ns = await getUserNotifySettings(db, owner.id);
+  if (!ns || !ns.telegram_token || !ns.telegram_chat_id) return;
+  await sendTelegramMessage(ns.telegram_token, ns.telegram_chat_id, message);
+}
+
+async function sendWhatsAppToPlayers(db, tid) {
+  const owner = await getTournamentOwner(db, tid);
+  if (!owner) return;
+  const ns = await getUserNotifySettings(db, owner.id);
+  if (!ns || !ns.twilio_phone) return;
+  const players = await getPlayersByTournament(db, tid);
+  const t = await getTournament(db, tid);
+  for (const p of players) {
+    if (p.phone) {
+      await sendTwilioMessage(p.phone, `[${t.name}] Notificación del torneo. Más info: ${config.publicUrl}/public/tournament/${tid}`, 'whatsapp');
+    }
+  }
+}
+
+async function createInAppNotification(db, userId, tournamentId, type, title, body = '') {
+  await db.prepare(`INSERT INTO notifications (user_id, tournament_id, type, title, body) VALUES (?, ?, ?, ?, ?)`)
+    .run(userId, tournamentId, type, title, body);
+}
+
+// Notificar a jugadores que una nueva ronda está disponible
+export async function notifyRoundGenerated(roundId) {
+  const db = getDb();
+  const round = await getRound(db, roundId);
+  if (!round) return;
+  const t = await getTournament(db, round.tournament_id);
+  if (!t) return;
+
+  const owner = await getTournamentOwner(db, round.tournament_id);
+  if (owner) {
+    await createInAppNotification(db, owner.id, round.tournament_id, 'round_generated',
+      `Ronda ${round.round_number} generada`, `La ronda ${round.round_number} de ${t.name} ya está lista`);
+  }
+
+  const link = `${config.publicUrl}/public/tournament/${round.tournament_id}`;
+  const subject = `[Chess Organizers] Ronda ${round.round_number} — ${t.name}`;
+  const html = `<h2>${t.name}</h2><p>La ronda ${round.round_number} ya está disponible.</p><p><a href="${link}">Ver emparejamientos</a></p>`;
+
+  const players = await getPlayersByTournament(db, round.tournament_id);
+  for (const p of players) {
+    await sendMail({ to: p.email, subject, html });
+  }
+
+  await sendTelegramToOwner(db, round.tournament_id,
+    `<b>${t.name}</b>\nRonda ${round.round_number} generada.\n<a href="${link}">Ver emparejamientos</a>`);
+}
+
+// Notificar cambio de resultado
+export async function notifyResultUpdated(tournamentId) {
+  const db = getDb();
+  const t = await getTournament(db, tournamentId);
+  if (!t) return;
+
+  const owner = await getTournamentOwner(db, tournamentId);
+  if (owner) {
+    await createInAppNotification(db, owner.id, tournamentId, 'result_updated',
+      `Resultado actualizado`, `Se actualizó un resultado en ${t.name}`);
+  }
+
+  const link = `${config.publicUrl}/public/tournament/${tournamentId}`;
+  const subject = `[Chess Organizers] Resultado actualizado — ${t.name}`;
+  const html = `<h2>${t.name}</h2><p>Se ha actualizado un resultado.</p><p><a href="${link}">Ver clasificación</a></p>`;
+
+  const players = await getPlayersByTournament(db, tournamentId);
+  for (const p of players) {
+    await sendMail({ to: p.email, subject, html });
+  }
+
+  await sendTelegramToOwner(db, tournamentId,
+    `<b>${t.name}</b>\nResultado actualizado.\n<a href="${link}">Ver clasificación</a>`);
+}
+
+// Notificar recepción de inscripción
+export async function notifyRegistrationReceived(tournamentId, playerEmail, playerName) {
+  if (!playerEmail) return;
+  const db = getDb();
+  const t = await getTournament(db, tournamentId);
+  if (!t) return;
+
+  const owner = await getTournamentOwner(db, tournamentId);
+  if (owner) {
+    await createInAppNotification(db, owner.id, tournamentId, 'registration_received',
+      `Nueva inscripción`, `${playerName} solicitó inscribirse a ${t.name}`);
+  }
+
+  const link = `${config.publicUrl}/public/tournament/${tournamentId}`;
+  const subject = `[Chess Organizers] Solicitud recibida — ${t.name}`;
+  const html = `<h2>${t.name}</h2><p>Hola ${playerName}, hemos recibido tu solicitud de inscripción.</p><p>El organizador revisará tu solicitud y te notificaremos cuando sea aprobada.</p><p><a href="${link}">Ver torneo</a></p>`;
+
+  await sendMail({ to: playerEmail, subject, html });
+}
+
+// Notificar inscripción aprobada
+export async function notifyRegistrationApproved(tournamentId, playerEmail, playerName) {
+  if (!playerEmail) return;
+  const db = getDb();
+  const t = await getTournament(db, tournamentId);
+  if (!t) return;
+
+  const owner = await getTournamentOwner(db, tournamentId);
+  if (owner) {
+    await createInAppNotification(db, owner.id, tournamentId, 'registration_approved',
+      `Inscripción aprobada`, `${playerName} se inscribió a ${t.name}`);
+  }
+
+  const link = `${config.publicUrl}/public/tournament/${tournamentId}`;
+  const subject = `[Chess Organizers] Inscripción aprobada — ${t.name}`;
+  const html = `<h2>${t.name}</h2><p>Hola ${playerName}, tu inscripción ha sido aprobada.</p><p><a href="${link}">Ver torneo</a></p>`;
+
+  await sendMail({ to: playerEmail, subject, html });
+}
+
+// Notificar torneo finalizado
+export async function notifyTournamentFinished(tournamentId) {
+  const db = getDb();
+  const t = await getTournament(db, tournamentId);
+  if (!t) return;
+
+  const owner = await getTournamentOwner(db, tournamentId);
+  if (owner) {
+    await createInAppNotification(db, owner.id, tournamentId, 'tournament_finished',
+      `Torneo finalizado`, `El torneo ${t.name} ha finalizado`);
+  }
+
+  const link = `${config.publicUrl}/public/tournament/${tournamentId}`;
+  const subject = `[Chess Organizers] Torneo finalizado — ${t.name}`;
+  const html = `<h2>${t.name}</h2><p>El torneo ha finalizado. Puedes consultar los resultados y descargar tu certificado en la página del torneo.</p><p><a href="${link}">Ver resultados</a></p>`;
+
+  const players = await getPlayersByTournament(db, tournamentId);
+  for (const p of players) {
+    await sendMail({ to: p.email, subject, html });
+  }
+
+  await sendTelegramToOwner(db, tournamentId,
+    `<b>${t.name}</b> — Torneo finalizado.\n<a href="${link}">Ver resultados</a>`);
+}
