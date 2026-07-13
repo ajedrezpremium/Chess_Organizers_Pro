@@ -1,11 +1,4 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "client/dist",
-  "functions": {
-    "api/index.js": {
-      "maxDuration": 30
-    }
-  },
   "rewrites": [
     { "source": "/auth/(.*)", "destination": "/api/index.js" },
     { "source": "/public/(.*)", "destination": "/api/index.js" },
