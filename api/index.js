@@ -1,15 +1,15 @@
-// Phase 1: only test config import
-import express from 'express';
-const app = express();
-
-app.get('/health', async (req, res) => {
-  try {
-    const config = await import('./src/config.js');
-    res.json({ status: 'ok', nodeEnv: config.default.nodeEnv, hasJwt: !!config.default.jwt.secret });
-  } catch (e) {
-    res.json({ status: 'error', phase: 'config', msg: e.message });
-  }
-});
-
-app.get('*', (req, res) => res.json({ path: req.path }));
-export default app;
+export default function handler(req, res) {
+  const body = JSON.stringify({
+    status: 'ok',
+    phase: '3-raw-handler',
+    env: {
+      NODE_ENV: process.env.NODE_ENV || 'not-set',
+      hasJwtSecret: !!process.env.JWT_SECRET,
+      jwtPreview: process.env.JWT_SECRET ? process.env.JWT_SECRET.substring(0, 8) + '...' : 'missing',
+      hasDbUrl: !!process.env.DATABASE_URL,
+      nodeVersion: process.version,
+    },
+  });
+  res.writeHead(200, { 'content-type': 'application/json' });
+  res.end(body);
+}
