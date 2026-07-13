@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd client && npm install && npm run build",
+  "buildCommand": "ls client && cd client && npm install && npm run build",
   "outputDirectory": "client/dist",
   "rewrites": [
     { "source": "/auth/(.*)", "destination": "/api/index.js" },
