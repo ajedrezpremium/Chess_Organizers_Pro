@@ -3,7 +3,18 @@
  * Chess-Results, Info64, FIDE Calendar, Ajedrez Madrid
  */
 
-import * as cheerio from 'cheerio';
+let cheerio = null;
+async function getCheerio() {
+  if (!cheerio) {
+    try {
+      const mod = await import('cheerio');
+      cheerio = mod.default || mod;
+    } catch {
+      return null;
+    }
+  }
+  return cheerio;
+}
 
 // Cache en memoria simple (en producción usar Redis)
 const cache = new Map();
@@ -68,7 +79,9 @@ async function scrapeChessResults(filters = {}) {
     });
     
     const html = await response.text();
-    const $ = cheerio.load(html);
+    const cheerioMod = await getCheerio();
+if (!cheerioMod) throw new Error('cheerio not available');
+const $ = cheerioMod.load(html);
     const tournaments = [];
 
     // Chess-Results calendar page structure (selectors basados en observación)
@@ -129,7 +142,9 @@ async function scrapeInfo64(filters = {}) {
     });
     
     const html = await response.text();
-    const $ = cheerio.load(html);
+    const cheerioMod = await getCheerio();
+if (!cheerioMod) throw new Error('cheerio not available');
+const $ = cheerioMod.load(html);
     const tournaments = [];
 
     // Selectores para Info64 (estructura observada)
@@ -190,7 +205,9 @@ async function scrapeFideCalendar(filters = {}) {
     });
     
     const html = await response.text();
-    const $ = cheerio.load(html);
+    const cheerioMod = await getCheerio();
+if (!cheerioMod) throw new Error('cheerio not available');
+const $ = cheerioMod.load(html);
     const tournaments = [];
 
     // FIDE Calendar table structure
@@ -255,7 +272,9 @@ async function scrapeAjedrezMadrid(filters = {}) {
     });
     
     const html = await response.text();
-    const $ = cheerio.load(html);
+    const cheerioMod = await getCheerio();
+if (!cheerioMod) throw new Error('cheerio not available');
+const $ = cheerioMod.load(html);
     const tournaments = [];
 
     // Ajedrez Madrid structure
