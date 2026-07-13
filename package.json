@@ -1,18 +1,19 @@
 {
-  "name": "chess-organizers-pro",
-  "version": "1.0.0",
-  "private": true,
-  "scripts": {
-    "server": "cd server && npm run dev",
-    "client": "cd client && npm run dev",
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "prebuild": "cd client && npm install",
-    "build": "cd client && npm run build",
-    "seed": "cd server && npm run seed",
-    "migrate": "cd server && npm run migrate",
-    "deploy": "git push origin master"
-  },
-  "devDependencies": {
-    "concurrently": "^9.1.0"
-  }
+    "name":  "chess-organizers-pro",
+    "version":  "1.0.0",
+    "private":  true,
+    "scripts":  {
+                    "server":  "cd server \u0026\u0026 npm run dev",
+                    "client":  "cd client \u0026\u0026 npm run dev",
+                    "dev":  "concurrently \"npm run server\" \"npm run client\"",
+                    "prebuild":  "cd client \u0026\u0026 npm install",
+                    "build":  "cd client \u0026\u0026 npm run build",
+                    "seed":  "cd server \u0026\u0026 npm run seed",
+                    "migrate":  "cd server \u0026\u0026 npm run migrate",
+                    "deploy":  "git push origin master"
+                },
+    "devDependencies":  {
+                            "concurrently":  "^9.1.0"
+                        },
+    "_build":  "20260713114259"
 }
