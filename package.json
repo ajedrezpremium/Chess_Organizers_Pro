@@ -6,8 +6,7 @@
                     "server":  "cd server \u0026\u0026 npm run dev",
                     "client":  "cd client \u0026\u0026 npm run dev",
                     "dev":  "concurrently \"npm run server\" \"npm run client\"",
-                    "prebuild":  "npm --prefix client install",
-                    "build":  "npm --prefix client run build",
+                    "build":  "cd client && npm run build",
                     "seed":  "cd server \u0026\u0026 npm run seed",
                     "migrate":  "cd server \u0026\u0026 npm run migrate",
                     "deploy":  "git push origin master"
