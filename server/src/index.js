@@ -34,8 +34,8 @@ import scanRoutes from './routes/scan.js';
 const app = express();
 
 // ── Health check (PRIMERO de todo) ─────────────────────────────────
-app.get('/health', (req, res) => res.json({ status: 'ok', msg: 'no-db' }));
-app.get('/health/readiness', (req, res) => res.json({ status: 'ready', msg: 'no-db' }));
+app.get('/health', (req, res) => { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ status: 'ok', msg: 'no-db' })); });
+app.get('/health/readiness', (req, res) => { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ status: 'ready', msg: 'no-db' })); });
 
 // ── Production security ────────────────────────────────────────────
 app.set('trust proxy', 1);
