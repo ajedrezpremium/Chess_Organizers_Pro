@@ -21,12 +21,7 @@ function get(key, fallback) {
 function required(key, fallback, hint) {
   const val = get(key, fallback);
   if (!val || val === fallback) {
-    const msg = `⚠️  Variable de entorno faltante: ${key}.${hint ? ` ${hint}` : ''}`;
-    if (process.env.NODE_ENV === 'production') {
-      console.error(msg);
-      process.exit(1);
-    }
-    console.warn(msg);
+    console.warn(`⚠️  Variable de entorno faltante: ${key}.${hint ? ` ${hint}` : ''}`);
   }
   return val;
 }
