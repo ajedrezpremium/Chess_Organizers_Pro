@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import { getDb } from '../db/index.js';
 import { authenticate } from '../middleware/auth.js';
-import { PairingEngine } from '../../../src/engine/pairingEngine.js';
-import { serializeTRF } from '../../../src/trf/trf.js';
-import { applyRoundResults, buildStandings } from '../../../src/engine/dutch.js';
-import { calculateTiebreak } from '../../../src/engine/tiebreaks.js';
-import { DEFAULT_TIEBREAK_ORDER } from '../../../src/engine/types.js';
+import { PairingEngine } from '../engine/pairingEngine.js';
+import { serializeTRF } from '../trf/trf.js';
+import { applyRoundResults, buildStandings } from '../engine/dutch.js';
+import { calculateTiebreak } from '../engine/tiebreaks.js';
+import { DEFAULT_TIEBREAK_ORDER } from '../engine/types.js';
 import { buildPlayerState, savePlayerState } from '../utils/roundUtils.js';
 import { publish } from '../services/pubsub.js';
 import { notifyRoundGenerated, notifyResultUpdated } from '../services/notifications.js';
@@ -16,7 +16,7 @@ import { generateRatingReport } from '../services/ratingReport.js';
 const router = Router();
 const engine = new PairingEngine({ forceBackend: 'js', verbose: false });
 
-// ── Routes ─────────────────────────────────────────────────────────
+// â”€â”€ Routes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 // GET /tournaments/:tid/rounds
 router.get('/tournaments/:tid/rounds', authenticate, async (req, res) => {
@@ -38,7 +38,7 @@ router.get('/tournaments/:tid/rounds', authenticate, async (req, res) => {
   res.json(rounds);
 });
 
-// POST /tournaments/:tid/rounds/generate — generar siguiente ronda
+// POST /tournaments/:tid/rounds/generate â€” generar siguiente ronda
 router.post('/tournaments/:tid/rounds/generate', authenticate, async (req, res) => {
   try {
     const db = getDb();
@@ -108,7 +108,7 @@ router.post('/tournaments/:tid/rounds/generate', authenticate, async (req, res) 
   }
 });
 
-// POST /tournaments/:tid/rounds/:rid/pairings — añadir pairing manual
+// POST /tournaments/:tid/rounds/:rid/pairings â€” aÃ±adir pairing manual
 router.post('/tournaments/:tid/rounds/:rid/pairings', authenticate, async (req, res) => {
   const db = getDb();
   const t = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
@@ -123,7 +123,7 @@ router.post('/tournaments/:tid/rounds/:rid/pairings', authenticate, async (req, 
   const maxBoard = await db.prepare('SELECT MAX(board) as max FROM pairings WHERE round_id = ?').get(round.id);
   const boardNum = board ?? (maxBoard?.max ?? 0) + 1;
 
-  // Verificar que los jugadores no estén ya en esta ronda
+  // Verificar que los jugadores no estÃ©n ya en esta ronda
   const existing = await db.prepare('SELECT id FROM pairings WHERE round_id = ? AND (white_id = ? OR (black_id = ? AND black_id IS NOT NULL))').get(round.id, white_id, black_id || '');
   if (existing) return res.status(409).json({ error: 'Uno de los jugadores ya tiene pairing en esta ronda' });
 
@@ -139,7 +139,7 @@ router.post('/tournaments/:tid/rounds/:rid/pairings', authenticate, async (req, 
   res.status(201).json(pairing);
 });
 
-// DELETE /pairings/:id — eliminar pairing manual
+// DELETE /pairings/:id â€” eliminar pairing manual
 router.delete('/pairings/:id', authenticate, async (req, res) => {
   const db = getDb();
   const pairing = await db.prepare(`
@@ -153,7 +153,7 @@ router.delete('/pairings/:id', authenticate, async (req, res) => {
   res.json({ ok: true });
 });
 
-// PATCH /pairings/:id/swap — intercambiar colores de un pairing
+// PATCH /pairings/:id/swap â€” intercambiar colores de un pairing
 router.patch('/pairings/:id/swap', authenticate, async (req, res) => {
   const db = getDb();
   const pairing = await db.prepare(`
@@ -169,7 +169,7 @@ router.patch('/pairings/:id/swap', authenticate, async (req, res) => {
   res.json({ ok: true });
 });
 
-// POST /rounds/:rid/publish — publicar ronda
+// POST /rounds/:rid/publish â€” publicar ronda
 router.post('/rounds/:rid/publish', authenticate, async (req, res) => {
   const db = getDb();
   const round = await db.prepare(`
@@ -183,7 +183,7 @@ router.post('/rounds/:rid/publish', authenticate, async (req, res) => {
   res.json({ ok: true });
 });
 
-// PATCH /rounds/:rid/schedule — establecer horario de una ronda
+// PATCH /rounds/:rid/schedule â€” establecer horario de una ronda
 router.patch('/rounds/:rid/schedule', authenticate, async (req, res) => {
   const db = getDb();
   const round = await db.prepare(`
@@ -194,19 +194,19 @@ router.patch('/rounds/:rid/schedule', authenticate, async (req, res) => {
   if (round.created_by !== req.user.id) return res.status(403).json({ error: 'No autorizado' });
 
   const { scheduled_at } = req.body;
-  if (scheduled_at && isNaN(Date.parse(scheduled_at))) return res.status(400).json({ error: 'Fecha inválida' });
+  if (scheduled_at && isNaN(Date.parse(scheduled_at))) return res.status(400).json({ error: 'Fecha invÃ¡lida' });
 
   await db.prepare('UPDATE rounds SET scheduled_at = ? WHERE id = ?').run(scheduled_at || null, req.params.rid);
   res.json({ ok: true, scheduled_at });
 });
 
-// PATCH /rounds/:rid/result — guardar resultado de una partida
+// PATCH /rounds/:rid/result â€” guardar resultado de una partida
 router.patch('/rounds/:rid/result', authenticate, async (req, res) => {
   const db = getDb();
   const { pairing_id, result } = req.body;
 
   if (!['1','0','=','U','F','H','Z','-'].includes(result)) {
-    return res.status(400).json({ error: 'Resultado inválido' });
+    return res.status(400).json({ error: 'Resultado invÃ¡lido' });
   }
 
   const pairing = await db.prepare('SELECT * FROM pairings WHERE id = ?').get(pairing_id);
@@ -225,7 +225,7 @@ router.patch('/rounds/:rid/result', authenticate, async (req, res) => {
   res.json({ ok: true });
 });
 
-// POST /rounds/:rid/close — cerrar ronda y actualizar clasificación
+// POST /rounds/:rid/close â€” cerrar ronda y actualizar clasificaciÃ³n
 router.post('/rounds/:rid/close', authenticate, async (req, res) => {
   try {
     const db = getDb();
@@ -271,7 +271,7 @@ router.post('/rounds/:rid/close', authenticate, async (req, res) => {
       dispatchWebhooks('tournament.finished', round.tournament_id, { round_number: round.round_number });
     }
 
-    res.json({ ok: true, message: 'Ronda cerrada y clasificación actualizada' });
+    res.json({ ok: true, message: 'Ronda cerrada y clasificaciÃ³n actualizada' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -295,7 +295,7 @@ router.get('/tournaments/:tid/standings', authenticate, async (req, res) => {
 
   const standings = buildStandings(withTb);
 
-  // Calcular variación de rating FIDE
+  // Calcular variaciÃ³n de rating FIDE
   const closedRounds = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status = 'closed' ORDER BY round_number ASC").all(req.params.tid);
   const roundPairings = await Promise.all(closedRounds.map(async (r) => {
     const pairings = await db.prepare('SELECT * FROM pairings WHERE round_id = ? ORDER BY board ASC').all(r.id);
@@ -320,7 +320,7 @@ router.get('/tournaments/:tid/standings', authenticate, async (req, res) => {
   });
 });
 
-// GET /tournaments/:tid/bulletin — boletín HTML del torneo
+// GET /tournaments/:tid/bulletin â€” boletÃ­n HTML del torneo
 router.get('/tournaments/:tid/bulletin', authenticate, async (req, res) => {
   const db = getDb();
   const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ?').get(req.params.tid);
@@ -359,7 +359,7 @@ router.get('/tournaments/:tid/bulletin', authenticate, async (req, res) => {
     ORDER BY tp.final_position IS NOT NULL DESC, tp.final_position ASC, tp.current_points DESC
   `).all(req.params.tid);
 
-  // ── Performance data ──
+  // â”€â”€ Performance data â”€â”€
   const bpPlayers = await buildPlayerState(db, req.params.tid);
   const bpRounds = await Promise.all(rounds.filter((r) => r.status === 'closed').map(async (r) => {
     const pairings = await db.prepare(`
@@ -414,17 +414,17 @@ router.get('/tournaments/:tid/bulletin', authenticate, async (req, res) => {
 </style></head><body>
 <h1>${tournament.name}</h1>
 <div class="header-info">
-  ${tournament.city ? tournament.city + ' — ' : ''}${tournament.start_date || ''}${tournament.end_date ? ' → ' + tournament.end_date : ''}
+  ${tournament.city ? tournament.city + ' â€” ' : ''}${tournament.start_date || ''}${tournament.end_date ? ' â†’ ' + tournament.end_date : ''}
   ${tournament.federation ? ' | ' + tournament.federation : ''}
-  ${tournament.chief_arbiter ? ' | Árbitro: ' + tournament.chief_arbiter : ''}
+  ${tournament.chief_arbiter ? ' | Ãrbitro: ' + tournament.chief_arbiter : ''}
   | Sistema: ${tournament.system} | ${tournament.n_rounds} rondas
   ${tournament.time_control ? ' | ' + tournament.time_control : ''}
 </div>
 `;
 
   // Standings
-  html += `<h2 class="round-title">Clasificación Final</h2>
-<table><thead><tr><th>#</th><th>Jugador</th><th>Título</th><th>Elo</th><th>Fed</th><th>Pts</th></tr></thead><tbody>`;
+  html += `<h2 class="round-title">ClasificaciÃ³n Final</h2>
+<table><thead><tr><th>#</th><th>Jugador</th><th>TÃ­tulo</th><th>Elo</th><th>Fed</th><th>Pts</th></tr></thead><tbody>`;
   standings.forEach((s, i) => {
     html += `<tr><td>${i + 1}</td><td><strong>${s.name} ${s.last_name || ''}</strong></td>
       <td>${s.title || ''}</td><td>${s.fide_rating || ''}</td>
@@ -434,7 +434,7 @@ router.get('/tournaments/:tid/bulletin', authenticate, async (req, res) => {
 
   // Performance table
   html += `<h2 class="round-title">Rendimiento</h2>
-<table><thead><tr><th>#</th><th>Jugador</th><th>Elo</th><th>Pts</th><th>TPR</th>${perfRoundCols}<th>ΔR</th><th>K</th></tr></thead><tbody>`;
+<table><thead><tr><th>#</th><th>Jugador</th><th>Elo</th><th>Pts</th><th>TPR</th>${perfRoundCols}<th>Î”R</th><th>K</th></tr></thead><tbody>`;
   standings.forEach((s, i) => {
     const key = s.name + '|' + (s.last_name || '');
     const tprData = playerTpr[key] || {};
@@ -473,7 +473,7 @@ router.get('/tournaments/:tid/bulletin', authenticate, async (req, res) => {
     if (!pairings || pairings.length === 0) return;
     html += `<div class="page-break"></div>
 <h2 class="round-title">Ronda ${r.round_number}
-  ${r.scheduled_at ? `<span class="schedule">— ${new Date(r.scheduled_at).toLocaleString('es', { dateStyle: 'long', timeStyle: 'short' })}</span>` : ''}
+  ${r.scheduled_at ? `<span class="schedule">â€” ${new Date(r.scheduled_at).toLocaleString('es', { dateStyle: 'long', timeStyle: 'short' })}</span>` : ''}
   <span style="font-size:8pt;color:#888;font-weight:normal;margin-left:6px">(${r.status})</span>
 </h2>
 <table><thead><tr><th>Mesa</th><th>Blancas</th><th>Elo</th><th>Resultado</th><th>Negras</th><th>Elo</th></tr></thead><tbody>`;
@@ -482,14 +482,14 @@ router.get('/tournaments/:tid/bulletin', authenticate, async (req, res) => {
       html += `<tr><td class="center">${p.board}</td>
         <td>${p.w_name || ''} ${p.w_last || ''}</td>
         <td>${p.w_elo || ''}</td>
-        <td class="result ${isBye ? 'bye' : ''}">${isBye ? 'BYE' : p.result === '1' ? '1-0' : p.result === '0' ? '0-1' : p.result === '=' ? '½-½' : p.result}</td>
+        <td class="result ${isBye ? 'bye' : ''}">${isBye ? 'BYE' : p.result === '1' ? '1-0' : p.result === '0' ? '0-1' : p.result === '=' ? 'Â½-Â½' : p.result}</td>
         <td>${p.b_name || ''} ${p.b_last || ''}</td>
         <td>${p.b_elo || ''}</td></tr>`;
     });
     html += `</tbody></table>`;
   });
 
-  html += `<div style="text-align:center;color:#999;font-size:8pt;margin-top:30px">Generado por Chess Organizers Pro — ${new Date().toISOString().slice(0, 10)}</div>`;
+  html += `<div style="text-align:center;color:#999;font-size:8pt;margin-top:30px">Generado por Chess Organizers Pro â€” ${new Date().toISOString().slice(0, 10)}</div>`;
   html += `</body></html>`;
 
   res.set('Content-Type', 'text/html');
@@ -497,7 +497,7 @@ router.get('/tournaments/:tid/bulletin', authenticate, async (req, res) => {
   res.send(html);
 });
 
-// GET /tournaments/:tid/trf — exportar TRF
+// GET /tournaments/:tid/trf â€” exportar TRF
 router.get('/tournaments/:tid/trf', authenticate, async (req, res) => {
   const db = getDb();
   const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
