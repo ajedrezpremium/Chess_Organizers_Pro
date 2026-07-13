@@ -80,16 +80,21 @@ app.use('/public', publicRoutes);
 
 // ── Health check (ANTES de static/SPA) ────────────────────────────
 app.get('/health', async (req, res) => {
-  const db = getDb();
-  let dbOk = false;
-  try { await db.prepare('SELECT 1').get(); dbOk = true; } catch (e) { console.error('Health check DB error:', e); }
-  res.json({
-    status: 'ok',
-    version: '1.0.0',
-    uptime: process.uptime(),
-    database: dbOk ? 'connected' : 'error',
-    timestamp: new Date().toISOString(),
-  });
+  try {
+    const db = getDb();
+    let dbOk = false;
+    try { await db.prepare('SELECT 1').get(); dbOk = true; } catch (e) { console.error('Health check DB error:', e); }
+    res.json({
+      status: 'ok',
+      version: '1.0.0',
+      uptime: process.uptime(),
+      database: dbOk ? 'connected' : 'error',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.error('Health check fatal error:', err);
+    res.status(500).json({ error: 'Health check failed', details: err.message });
+  }
 });
 
 app.get('/health/readiness', async (req, res) => {
