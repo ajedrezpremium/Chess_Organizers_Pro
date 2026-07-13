@@ -50,7 +50,7 @@ app.use(cors({
   origin: config.cors.origin,
   credentials: true,
 }));
-app.use(compression());
+// app.use(compression());
 app.use(morgan(config.nodeEnv === 'production' ? 'combined' : 'dev'));
 app.use(express.json({ limit: '5mb' }));
 app.use('/auth', limiter);
