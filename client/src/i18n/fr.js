@@ -1,6 +1,6 @@
 export default {
   app: { title: 'CHESS ORGANIZERS PRO', tagline: 'Résultats en direct', footer: 'Chess Organizers Pro · Résultats en direct', allRights: 'Tous droits réservés.' },
-  nav: { tournaments: 'Tournois', players: 'Joueurs', searchPlayer: 'Chercher un joueur', live: 'En direct', finished: 'Terminé', newTournament: 'Nouveau Tournoi', myProfile: 'Mon Profil', arbiter: 'Arbitre', scanner: 'Scanner', elo: 'Tableau Elo', logout: 'Déconnexion', backToHome: "Retour à l'accueil", sitemap: 'Plan du site', pricing: 'Forfaits' },
+  nav: { tournaments: 'Tournois', players: 'Joueurs', searchPlayer: 'Chercher un joueur', live: 'En direct', finished: 'Terminé', newTournament: '+ Nouveau', myProfile: 'Mon Profil', arbiter: 'Arbitre', scanner: 'Scanner', elo: 'Tableau Elo', logout: 'Déconnexion', backToHome: "Retour à l'accueil", sitemap: 'Plan du site', pricing: 'Forfaits' },
   tournament: {
     title: 'Tournois en direct', subtitle: 'Suivez les résultats en temps réel',
     noResults: 'Aucun tournoi ne correspond', noActive: 'Aucun tournoi public actif',
@@ -68,7 +68,7 @@ export default {
   },
   common: { loading: 'Chargement...', save: 'Sauvegarder', cancel: 'Annuler', delete: 'Supprimer', close: 'Fermer', all: 'Tous', select: 'Sélectionner...', back: 'Retour', confirm: 'Confirmer', edit: 'Modifier', done: 'Prêt', add: 'Ajouter', search: 'Rechercher', noData: 'Aucune donnée', preview: 'Aperçu', actions: 'Actions', register: "S'inscrire", link: 'Lien', open: 'Ouvrir', yes: 'Oui', no: 'Non', or: 'ou', and: 'et', none: 'Aucun', notFound: 'Introuvable' },
   dashboard: {
-    myTournaments: 'Mes Tournois', newTournament: 'Nouveau Tournoi', noTournaments: "Vous n'avez pas encore de tournois",
+    myTournaments: 'Mes Tournois', newTournament: '+ Nouveau', noTournaments: "Vous n'avez pas encore de tournois",
     startPrompt: 'Créez votre premier tournoi et commencez à organiser',
     createFirst: 'Créer le premier tournoi', plan: 'Forfait', billing: 'Facturation',
     changePlan: 'Changer de forfait', tournamentsCount: '{n} tournoi(s)',

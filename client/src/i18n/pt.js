@@ -1,6 +1,6 @@
 export default {
   app: { title: 'CHESS ORGANIZERS PRO', tagline: 'Resultados ao vivo', footer: 'Chess Organizers Pro · Resultados ao vivo', allRights: 'Todos os direitos reservados.' },
-  nav: { tournaments: 'Torneios', players: 'Jogadores', searchPlayer: 'Buscar jogador', live: 'Ao vivo', finished: 'Finalizado', newTournament: 'Novo Torneio', myProfile: 'Meu Perfil', arbiter: 'Árbitro', scanner: 'Digitalizar', elo: 'Painel Elo', logout: 'Sair', backToHome: 'Voltar ao início', sitemap: 'Mapa do site', pricing: 'Planos' },
+  nav: { tournaments: 'Torneios', players: 'Jogadores', searchPlayer: 'Buscar jogador', live: 'Ao vivo', finished: 'Finalizado', newTournament: '+ Novo', myProfile: 'Meu Perfil', arbiter: 'Árbitro', scanner: 'Digitalizar', elo: 'Painel Elo', logout: 'Sair', backToHome: 'Voltar ao início', sitemap: 'Mapa do site', pricing: 'Planos' },
   tournament: {
     title: 'Torneios ao vivo', subtitle: 'Acompanhe resultados de torneios em tempo real',
     noResults: 'Nenhum torneio com esses filtros', noActive: 'Nenhum torneio público ativo',
@@ -68,7 +68,7 @@ export default {
   },
   common: { loading: 'Carregando...', save: 'Salvar', cancel: 'Cancelar', delete: 'Excluir', close: 'Fechar', all: 'Todos', select: 'Selecionar...', back: 'Voltar', confirm: 'Confirmar', edit: 'Editar', done: 'Pronto', add: 'Adicionar', search: 'Buscar', noData: 'Sem dados', preview: 'Visualizar', actions: 'Ações', register: 'Registrar', link: 'Link', open: 'Abrir', yes: 'Sim', no: 'Não', or: 'ou', and: 'e', none: 'Nenhum', notFound: 'Não encontrado' },
   dashboard: {
-    myTournaments: 'Meus Torneios', newTournament: 'Novo Torneio', noTournaments: 'Você não tem torneios ainda',
+    myTournaments: 'Meus Torneios', newTournament: '+ Novo', noTournaments: 'Você não tem torneios ainda',
     startPrompt: 'Crie seu primeiro torneio e comece a organizar',
     createFirst: 'Criar primeiro torneio', plan: 'Plano', billing: 'Faturamento',
     changePlan: 'Mudar plano', tournamentsCount: '{n} torneio(s)',
