@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS tournaments (
   deputy_arbiter  TEXT    DEFAULT '',
   tournament_type TEXT    DEFAULT 'S',
   status          TEXT    DEFAULT 'draft',
-  organizer_id    INTEGER REFERENCES users(id),
+  created_by      INTEGER REFERENCES users(id),
   description     TEXT    DEFAULT '',
   location        TEXT    DEFAULT '',
   category        TEXT    DEFAULT '',
@@ -65,6 +65,11 @@ export async function migrate() {
     } catch (e) {
       console.error('Migration error:', e.message);
     }
+  }
+  try {
+    await db.exec(`ALTER TABLE tournaments RENAME COLUMN organizer_id TO created_by`);
+  } catch (e) {
+    // Column may already be renamed or not exist
   }
   return true;
 }
