@@ -27,14 +27,14 @@ router.post('/register', validate({
       'INSERT INTO users (email, password_hash, name, role, federation) VALUES (?, ?, ?, ?, ?)'
     ).run(email, hash, name, role ?? 'organizer', federation ?? '');
 
+    const id = result.lastInsertRowid ?? existing?.id;
     const token = generateToken({
-      id: result.lastInsertRowid,
-      email, name, role: role ?? 'organizer',
+      id, email, name, role: role ?? 'organizer',
     });
 
     res.status(201).json({
       token,
-      user: { id: result.lastInsertRowid, email, name, role: role ?? 'organizer' },
+      user: { id, email, name, role: role ?? 'organizer' },
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

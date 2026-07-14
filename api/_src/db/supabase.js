@@ -43,7 +43,9 @@ function prepare(sql) {
       return rows;
     },
     run: async (...params) => {
-      const result = await pool.query(pgSql, params.filter(p => p !== undefined));
+      let execSql = pgSql;
+      if (/^INSERT\s+INTO/i.test(execSql)) execSql += ' RETURNING *';
+      const result = await pool.query(execSql, params.filter(p => p !== undefined));
       return { changes: result.rowCount, lastInsertRowid: result.rows?.[0]?.id ?? null };
     },
   };
