@@ -245,6 +245,11 @@ export const FIDE_LAWS_2023 = {
       article: '9.3',
     },
     {
+      q: '¿Qué hacer si toco una pieza?',
+      a: 'Artículo 4.3: Si el jugador con el turno toca una pieza propia, debe moverla. Si toca una pieza del oponente, debe capturarla (si es posible). Artículo 4.6: Si es imposible identificar qué pieza se tocó primero, se considera que es la pieza propia del jugador y no la del oponente.',
+      article: '4.3',
+    },
+    {
       q: '¿Qué significa "j\'adoube"?',
       a: 'Artículo 4.2.1: Solo el jugador con el turno puede ajustar una o más piezas en sus casillas, siempre que exprese su intención previamente, por ejemplo diciendo "j\'adoube" (francés: "ajusto") o "I adjust".',
       article: '4.2.1',
@@ -327,6 +332,11 @@ export const FIDE_LAWS_2023 = {
     'clock': '6',
     'bandera': '6.8',
     'flag': '6.8',
+    'pieza tocada': '4',
+    'piezas tocadas': '4',
+    'tocada': '4',
+    'tocar pieza': '4',
+    'touched piece': '4',
     'peón al paso': '3.7.3',
     'en passant': '3.7.3',
     'promoción': '3.7.3.3',
