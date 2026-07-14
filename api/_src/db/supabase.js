@@ -38,7 +38,7 @@ function prepare(sql) {
       return rows;
     },
     run: async (...params) => {
-      let execSql = pgSql;
+      let execSql = pgSql.trim();
       const isInsert = /^INSERT\s+INTO/i.test(execSql);
       if (isInsert && !/\bRETURNING\b/i.test(execSql)) execSql += ' RETURNING *';
       const result = await pool.query(execSql, params.filter(p => p !== undefined));
