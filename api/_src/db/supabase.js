@@ -39,9 +39,11 @@ function prepare(sql) {
     },
     run: async (...params) => {
       let execSql = pgSql;
-      if (/^INSERT\s+INTO/i.test(execSql)) execSql += ' RETURNING *';
+      const isInsert = /^INSERT\s+INTO/i.test(execSql);
+      if (isInsert && !/\bRETURNING\b/i.test(execSql)) execSql += ' RETURNING *';
       const result = await pool.query(execSql, params.filter(p => p !== undefined));
-      return { changes: result.rowCount, lastInsertRowid: result.rows?.[0]?.id ?? null };
+      const lastInsertRowid = isInsert ? (result.rows?.[0]?.id ?? null) : null;
+      return { changes: result.rowCount ?? 0, lastInsertRowid };
     },
   };
   preparedCache.set(sql, stmt);

@@ -51,7 +51,10 @@ router.post('/', authenticate, validate({
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(name, system ?? 'dutch', n_rounds ?? 6, start_date ?? null, end_date ?? null, city ?? '', federation ?? '', time_control ?? '90+30', rated ?? 1, chief_arbiter ?? '', description ?? '', req.user.id);
 
-    if (!result.lastInsertRowid) return res.status(500).json({ error: 'No se pudo crear el torneo' });
+    if (!result.lastInsertRowid) {
+      console.error('INSERT returned no id. result:', JSON.stringify(result));
+      return res.status(500).json({ error: 'No se pudo crear el torneo: ' + JSON.stringify(result) });
+    }
 
     const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ?').get(result.lastInsertRowid);
 
