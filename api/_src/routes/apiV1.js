@@ -2,16 +2,16 @@ import { Router } from 'express';
 import { getDb } from '../db/index.js';
 import { apiAuthenticate } from '../middleware/apiAuth.js';
 import { buildPlayerState } from '../utils/roundUtils.js';
-import { applyRoundResults, buildStandings } from '../engine/dutch.js';
-import { calculateTiebreak } from '../engine/tiebreaks.js';
-import { DEFAULT_TIEBREAK_ORDER } from '../engine/types.js';
+import { applyRoundResults, buildStandings } from '../../../src/engine/dutch.js';
+import { calculateTiebreak } from '../../../src/engine/tiebreaks.js';
+import { DEFAULT_TIEBREAK_ORDER } from '../../../src/engine/types.js';
 
 const router = Router();
 
 // All v1 API routes require API key authentication
 router.use(apiAuthenticate);
 
-// GET /api/v1/tournaments â€” list public tournaments
+// GET /api/v1/tournaments — list public tournaments
 router.get('/tournaments', async (req, res) => {
   const db = getDb();
   const { status, federation, page = 1, limit = 50 } = req.query;
@@ -133,7 +133,7 @@ router.get('/tournaments/:id/crosstab', async (req, res) => {
   res.json({ crosstab, rounds: closedRounds.length });
 });
 
-// GET /api/v1/players â€” search players
+// GET /api/v1/players — search players
 router.get('/players', async (req, res) => {
   const db = getDb();
   const { q, page = 1, limit = 20 } = req.query;

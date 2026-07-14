@@ -2,12 +2,12 @@ import { Router } from 'express';
 import { getDb } from '../db/index.js';
 import { authenticate } from '../middleware/auth.js';
 import { buildPlayerState } from '../utils/roundUtils.js';
-import { detectViolations, analyzeColorBalance } from '../engine/conflictDetector.js';
-import { generateSuggestions } from '../engine/suggestionEngine.js';
+import { detectViolations, analyzeColorBalance } from '../../../src/engine/conflictDetector.js';
+import { generateSuggestions } from '../../../src/engine/suggestionEngine.js';
 
 const router = Router();
 
-// GET /validation/:tid â€” anÃ¡lisis de conflictos y sugerencias
+// GET /validation/:tid — análisis de conflictos y sugerencias
 router.get('/:tid', authenticate, async (req, res) => {
   try {
     const db = getDb();

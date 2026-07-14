@@ -1,2 +1,2 @@
-import app from './minimal.js';
+import app from './_src/index.js';
 export default app;

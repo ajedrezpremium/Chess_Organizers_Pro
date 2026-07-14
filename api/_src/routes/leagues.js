@@ -2,8 +2,8 @@ import { Router } from 'express';
 import { getDb } from '../db/index.js';
 import { authenticate } from '../middleware/auth.js';
 import { buildPlayerState } from '../utils/roundUtils.js';
-import { calculateTiebreak } from '../engine/tiebreaks.js';
-import { DEFAULT_TIEBREAK_ORDER } from '../engine/types.js';
+import { calculateTiebreak } from '../../../src/engine/tiebreaks.js';
+import { DEFAULT_TIEBREAK_ORDER } from '../../../src/engine/types.js';
 
 const router = Router();
 router.use(authenticate);
@@ -77,7 +77,7 @@ router.delete('/:id', async (req, res) => {
   res.json({ ok: true });
 });
 
-// POST /leagues/:id/tournaments â€” asignar torneo a liga
+// POST /leagues/:id/tournaments — asignar torneo a liga
 router.post('/:id/tournaments', async (req, res) => {
   const db = getDb();
   const league = await db.prepare('SELECT * FROM leagues WHERE id = ? AND created_by = ?').get(req.params.id, req.user.id);
@@ -90,7 +90,7 @@ router.post('/:id/tournaments', async (req, res) => {
   try {
     await db.prepare('INSERT INTO league_tournaments (league_id, tournament_id, round_number, weight) VALUES (?, ?, ?, ?)').run(req.params.id, tournament_id, maxRound.r + 1, weight || 1.0);
     res.status(201).json({ ok: true });
-  } catch { res.status(409).json({ error: 'El torneo ya estÃ¡ en la liga' }); }
+  } catch { res.status(409).json({ error: 'El torneo ya está en la liga' }); }
 });
 
 // DELETE /leagues/:lid/tournaments/:tid
@@ -100,7 +100,7 @@ router.delete('/:lid/tournaments/:tid', async (req, res) => {
   res.json({ ok: true });
 });
 
-// POST /leagues/:id/calculate-standings â€” recalcular clasificaciÃ³n
+// POST /leagues/:id/calculate-standings — recalcular clasificación
 router.post('/:id/calculate-standings', async (req, res) => {
   const db = getDb();
   const league = await db.prepare('SELECT * FROM leagues WHERE id = ?').get(req.params.id);

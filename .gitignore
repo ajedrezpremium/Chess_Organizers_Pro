@@ -13,3 +13,5 @@ Thumbs.db
 
 # GitHub token lacks workflow scope
 .github/workflows/
+
+.vercel

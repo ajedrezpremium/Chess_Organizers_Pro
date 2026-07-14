@@ -6,7 +6,7 @@ import { perRoundChanges, rawDelta } from '../services/ratingChange.js';
 
 const router = Router();
 
-// â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Helpers ────────────────────────────────────────────────────────
 
 function resultPoints(r) {
   if (r === '1') return 1;
@@ -15,8 +15,8 @@ function resultPoints(r) {
   return null;
 }
 
-// â”€â”€ GET /stats/:tid/crosstab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Matriz jugador Ã— ronda: { playerId, name, ... , rounds: [{ opponent, result, color }] }
+// ── GET /stats/:tid/crosstab ──────────────────────────────────────
+// Matriz jugador × ronda: { playerId, name, ... , rounds: [{ opponent, result, color }] }
 router.get('/:tid/crosstab', authenticate, async (req, res) => {
   try {
     const db = getDb();
@@ -82,8 +82,8 @@ router.get('/:tid/crosstab', authenticate, async (req, res) => {
   }
 });
 
-// â”€â”€ GET /stats/:tid/performance â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// TPR (Tournament Performance Rating) + Î”R (Elo change estimate) + per-round delta
+// ── GET /stats/:tid/performance ──────────────────────────────────
+// TPR (Tournament Performance Rating) + ΔR (Elo change estimate) + per-round delta
 router.get('/:tid/performance', authenticate, async (req, res) => {
   try {
     const db = getDb();
@@ -158,8 +158,8 @@ router.get('/:tid/performance', authenticate, async (req, res) => {
   }
 });
 
-// â”€â”€ GET /stats/:tid/progression â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// ProgresiÃ³n de puntos por ronda para cada jugador + heat map data
+// ── GET /stats/:tid/progression ──────────────────────────────────
+// Progresión de puntos por ronda para cada jugador + heat map data
 router.get('/:tid/progression', authenticate, async (req, res) => {
   try {
     const db = getDb();
@@ -215,7 +215,7 @@ router.get('/:tid/progression', authenticate, async (req, res) => {
   }
 });
 
-// â”€â”€ GET /stats/:tid/head-to-head â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── GET /stats/:tid/head-to-head ─────────────────────────────────
 router.get('/:tid/head-to-head', authenticate, async (req, res) => {
   try {
     const db = getDb();
@@ -261,8 +261,8 @@ router.get('/:tid/head-to-head', authenticate, async (req, res) => {
   }
 });
 
-// â”€â”€ GET /stats/:tid/overview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// EstadÃ­sticas generales del torneo
+// ── GET /stats/:tid/overview ──────────────────────────────────────
+// Estadísticas generales del torneo
 router.get('/:tid/overview', authenticate, async (req, res) => {
   try {
     const db = getDb();
@@ -297,7 +297,7 @@ router.get('/:tid/overview', authenticate, async (req, res) => {
         (r.max === undefined || p.fideRating <= r.max)).length,
     }));
 
-    // TÃ­tulos
+    // Títulos
     const titleCount = {};
     for (const p of players) {
       const t = p.title || '-';
@@ -378,7 +378,7 @@ router.get('/:tid/overview', authenticate, async (req, res) => {
   }
 });
 
-// â”€â”€ GET /stats/:tid/rating-report â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── GET /stats/:tid/rating-report ────────────────────────────────
 // FIDE Rating Report (JSON + XML descargable)
 router.get('/:tid/rating-report', authenticate, async (req, res) => {
   try {

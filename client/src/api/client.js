@@ -110,6 +110,9 @@ export const api = {
   myMembership: () => request('GET', '/membership/my'),
   subscribe: (planSlug) => request('POST', '/membership/subscribe', { plan_slug: planSlug }),
 
+  // ── Scanner quota ──────────────────────────────────────────────────
+  scanQuota: () => request('GET', '/membership/scan-quota'),
+
   exportTrf: (tid) => request('GET', `/tournaments/${tid}/trf`),
   fideSubmit: (tid) => request('POST', `/fide/submit/${tid}`),
   fideReport: (tid) => request('GET', `/fide/report/${tid}`),

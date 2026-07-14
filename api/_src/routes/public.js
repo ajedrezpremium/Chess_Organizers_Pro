@@ -2,16 +2,16 @@ import { Router } from 'express';
 import { getDb } from '../db/index.js';
 import config from '../config.js';
 import { buildPlayerState } from '../utils/roundUtils.js';
-import { buildStandings } from '../engine/dutch.js';
+import { buildStandings } from '../../../src/engine/dutch.js';
 import { calculateRatingChanges, perRoundChanges } from '../services/ratingChange.js';
-import { calculateTiebreak } from '../engine/tiebreaks.js';
-import { DEFAULT_TIEBREAK_ORDER } from '../engine/types.js';
+import { calculateTiebreak } from '../../../src/engine/tiebreaks.js';
+import { DEFAULT_TIEBREAK_ORDER } from '../../../src/engine/types.js';
 import { subscribe } from '../services/pubsub.js';
 import { notifyRegistrationReceived } from '../services/notifications.js';
 
 const router = Router();
 
-// GET /public/tournaments â€” listar torneos pÃºblicos con filtros
+// GET /public/tournaments — listar torneos públicos con filtros
 router.get('/tournaments', async (req, res) => {
   const db = getDb();
   const { page = 1, limit = 20, federation, status, system, search, from, to } = req.query;
@@ -133,7 +133,7 @@ router.get('/tournaments/:id/standings', async (req, res) => {
   });
 });
 
-// GET /public/tournaments/:id/performance â€” TPR + per-round Î”R
+// GET /public/tournaments/:id/performance — TPR + per-round ΔR
 router.get('/tournaments/:id/performance', async (req, res) => {
   try {
     const db = getDb();
@@ -203,7 +203,7 @@ router.get('/tournaments/:id/performance', async (req, res) => {
   }
 });
 
-// GET /public/tournaments/:id/sse â€” Server-Sent Events
+// GET /public/tournaments/:id/sse — Server-Sent Events
 router.get('/tournaments/:id/sse', async (req, res) => {
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
@@ -212,7 +212,7 @@ router.get('/tournaments/:id/sse', async (req, res) => {
     'X-Accel-Buffering': 'no',
   });
 
-  // Enviar heartbeat cada 30s para mantener conexiÃ³n
+  // Enviar heartbeat cada 30s para mantener conexión
   const heartbeat = setInterval(() => {
     try { res.write(': heartbeat\n\n'); } catch { clearInterval(heartbeat); }
   }, 30000);
@@ -222,7 +222,7 @@ router.get('/tournaments/:id/sse', async (req, res) => {
   req.on('close', () => clearInterval(heartbeat));
 });
 
-// GET /public/players/search â€” bÃºsqueda global de jugadores
+// GET /public/players/search — búsqueda global de jugadores
 router.get('/players/search', async (req, res) => {
   const db = getDb();
   const { q, page = 1, limit = 30 } = req.query;
@@ -237,7 +237,7 @@ router.get('/players/search', async (req, res) => {
   res.json({ players, total: total.c, page: parseInt(page) });
 });
 
-// GET /public/players/:id/tournaments â€” historial de torneos de un jugador
+// GET /public/players/:id/tournaments — historial de torneos de un jugador
 router.get('/players/:id/tournaments', async (req, res) => {
   const db = getDb();
   const player = await db.prepare('SELECT id, fide_id, name, last_name, title, federation, fide_rating FROM players WHERE id = ?').get(req.params.id);
@@ -255,9 +255,9 @@ router.get('/players/:id/tournaments', async (req, res) => {
   res.json({ player, tournaments });
 });
 
-// â”€â”€ 6.4 CatÃ¡logo Global â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── 6.4 Catálogo Global ────────────────────────────────────────────
 
-// GET /public/federations â€” lista de federaciones con torneos
+// GET /public/federations — lista de federaciones con torneos
 router.get('/federations', async (req, res) => {
   const db = getDb();
   const fromTours = await db.prepare("SELECT DISTINCT federation FROM tournaments WHERE federation != '' AND status != 'pending' ORDER BY federation").all();
@@ -268,7 +268,7 @@ router.get('/federations', async (req, res) => {
   res.json(Object.values(fedMap).sort((a, b) => a.name.localeCompare(b.name)));
 });
 
-// GET /public/stats â€” estadÃ­sticas globales del catÃ¡logo
+// GET /public/stats — estadísticas globales del catálogo
 router.get('/stats', async (req, res) => {
   const db = getDb();
   const total = await db.prepare("SELECT COUNT(*) as c FROM tournaments WHERE status != 'pending'").get().c;
@@ -287,7 +287,7 @@ router.get('/stats', async (req, res) => {
   res.json({ total, active, finished, totalPlayers, byFederation, bySystem, totalOrganizers });
 });
 
-// GET /public/organizers â€” lista de organizadores
+// GET /public/organizers — lista de organizadores
 router.get('/organizers', async (req, res) => {
   const db = getDb();
   const organizers = await db.prepare(`
@@ -302,7 +302,7 @@ router.get('/organizers', async (req, res) => {
   res.json(organizers);
 });
 
-// GET /public/organizers/:id â€” detalle de organizador + sus torneos
+// GET /public/organizers/:id — detalle de organizador + sus torneos
 router.get('/organizers/:id', async (req, res) => {
   const db = getDb();
   const org = await db.prepare("SELECT id, name, email, federation FROM users WHERE id = ?").get(req.params.id);
@@ -317,7 +317,7 @@ router.get('/organizers/:id', async (req, res) => {
   res.json({ organizer: org, tournaments });
 });
 
-// â”€â”€ Widgets embeddables â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Widgets embeddables ────────────────────────────────────────────
 
 router.get('/widget/tournaments/:id/standings', async (req, res) => {
   const db = getDb();
@@ -360,9 +360,9 @@ router.get('/widget/tournaments/:id/standings', async (req, res) => {
   .ftr{text-align:center;padding:6px;font-size:8px;color:#666}
   .ftr a{color:${pc};text-decoration:none}
 </style></head><body>
-<div class="hdr">${tournament.logo_url ? `<img src="${tournament.logo_url}" alt="">` : `<span style="color:${pc}">â™›</span>`}
+<div class="hdr">${tournament.logo_url ? `<img src="${tournament.logo_url}" alt="">` : `<span style="color:${pc}">♛</span>`}
 <h1>${tournament.name}</h1></div>
-<table><thead><tr><th class="pos">#</th><th>Jugador</th><th class="elo">Elo</th><th class="pts">Pts</th><th class="chg">Î”</th></tr></thead><tbody>`;
+<table><thead><tr><th class="pos">#</th><th>Jugador</th><th class="elo">Elo</th><th class="pts">Pts</th><th class="chg">Δ</th></tr></thead><tbody>`;
   standings.forEach((s, i) => {
     const chg = ratingChanges[s.id] || 0;
     html += `<tr><td class="pos">${i + 1}</td><td>${s.title ? s.title + ' ' : ''}${s.name} ${s.lastName || ''}</td>
@@ -371,7 +371,7 @@ router.get('/widget/tournaments/:id/standings', async (req, res) => {
       <td class="chg ${chg > 0 ? 'pos' : chg < 0 ? 'neg' : ''}">${chg > 0 ? '+' : ''}${chg}</td></tr>`;
   });
   html += `</tbody></table>
-<div class="ftr">â™› <a href="/public/tournament/${tournament.id}" target="_blank">Chess Organizers Pro</a></div>
+<div class="ftr">♛ <a href="/public/tournament/${tournament.id}" target="_blank">Chess Organizers Pro</a></div>
 </body></html>`;
   res.set('Content-Type', 'text/html;charset=utf-8');
   res.send(html);
@@ -383,7 +383,7 @@ router.get('/widget/tournaments/:id/wall', async (req, res) => {
   if (!tournament) return res.status(404).send('Torneo no encontrado');
 
   const round = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status IN ('generated','published') ORDER BY round_number ASC").all(req.params.id).pop();
-  if (!round) return res.status(200).send(`<!DOCTYPE html><html><body style="font-family:sans-serif;background:#1f2937;color:#666;text-align:center;padding:40px;font-size:14px">â³ Esperando prÃ³xima ronda</body></html>`);
+  if (!round) return res.status(200).send(`<!DOCTYPE html><html><body style="font-family:sans-serif;background:#1f2937;color:#666;text-align:center;padding:40px;font-size:14px">⏳ Esperando próxima ronda</body></html>`);
 
   const pairings = await db.prepare(`
     SELECT p.board, p.result, p.is_bye,
@@ -416,7 +416,7 @@ router.get('/widget/tournaments/:id/wall', async (req, res) => {
   .live{display:inline-block;width:8px;height:8px;background:#4ade80;border-radius:50%;margin-right:4px;animation:pulse 1.5s infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 </style></head><body>
-<div class="hdr"><span style="color:${pc}">â™›</span><h1>${tournament.name}</h1></div>
+<div class="hdr"><span style="color:${pc}">♛</span><h1>${tournament.name}</h1></div>
 <div class="round"><span class="live"></span>Ronda ${round.round_number} en vivo</div>`;
   pairings.forEach((p) => {
     if (p.is_bye) return;
@@ -424,7 +424,7 @@ router.get('/widget/tournaments/:id/wall', async (req, res) => {
       <div class="board">Mesa ${p.board}</div>
       <div class="players">
         <div class="player">${p.w_name || ''} ${p.w_last || ''} <small>${p.w_elo || ''}</small></div>
-        <div class="result">${p.result === '1' ? '1-0' : p.result === '0' ? '0-1' : p.result === '=' ? 'Â½-Â½' : '-'}</div>
+        <div class="result">${p.result === '1' ? '1-0' : p.result === '0' ? '0-1' : p.result === '=' ? '½-½' : '-'}</div>
         <div class="player">${p.b_name || ''} ${p.b_last || ''} <small>${p.b_elo || ''}</small></div>
       </div>
     </div>`;
@@ -435,7 +435,7 @@ router.get('/widget/tournaments/:id/wall', async (req, res) => {
   res.send(html);
 });
 
-// â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Helpers ────────────────────────────────────────────────────────
 
 function resultPoints(r) {
   if (r === '1') return 1;
@@ -444,7 +444,7 @@ function resultPoints(r) {
   return null;
 }
 
-// GET /public/tournaments/:id/crosstab â€” tabla cruzada pÃºblica
+// GET /public/tournaments/:id/crosstab — tabla cruzada pública
 router.get('/tournaments/:id/crosstab', async (req, res) => {
   try {
     const db = getDb();
@@ -497,7 +497,7 @@ router.get('/tournaments/:id/crosstab', async (req, res) => {
   }
 });
 
-// GET /public/tournaments/:id/head-to-head â€” enfrentamientos directos entre dos jugadores
+// GET /public/tournaments/:id/head-to-head — enfrentamientos directos entre dos jugadores
 router.get('/tournaments/:id/head-to-head', async (req, res) => {
   try {
     const db = getDb();
@@ -535,7 +535,7 @@ router.get('/tournaments/:id/head-to-head', async (req, res) => {
   }
 });
 
-// GET /public/tournaments/:id/registration-status â€” estado de inscripciÃ³n
+// GET /public/tournaments/:id/registration-status — estado de inscripción
 router.get('/tournaments/:id/registration-status', async (req, res) => {
   const db = getDb();
   const t = await db.prepare("SELECT registration_open, registration_opens_at, registration_closes_at, max_players, registered_count, registration_fee, registration_currency, status, auto_approve FROM tournaments WHERE id = ?").get(req.params.id);
@@ -548,7 +548,7 @@ router.get('/tournaments/:id/registration-status', async (req, res) => {
   let canRegister = !!t.registration_open;
   let message = '';
 
-  if (!canRegister) message = 'Las inscripciones estÃ¡n cerradas.';
+  if (!canRegister) message = 'Las inscripciones están cerradas.';
   else if (opensAt && now < opensAt) { canRegister = false; message = `Las inscripciones abren el ${opensAt.toLocaleDateString()}.`; }
   else if (closesAt && now > closesAt) { canRegister = false; message = 'Las inscripciones han cerrado.'; }
   else if (t.max_players > 0 && (t.registered_count || 0) >= t.max_players) { canRegister = false; message = `Torneo completo (${t.max_players} jugadores).`; }
@@ -571,15 +571,15 @@ router.get('/tournaments/:id/registration-status', async (req, res) => {
   });
 });
 
-// POST /public/tournaments/:id/register â€” auto-registro de jugador
+// POST /public/tournaments/:id/register — auto-registro de jugador
 router.post('/tournaments/:id/register', async (req, res) => {
   const db = getDb();
   const t = await db.prepare("SELECT * FROM tournaments WHERE id = ? AND status != 'pending'").get(req.params.id);
   if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
 
-  // â”€â”€ Registration open checks â”€â”€
+  // ── Registration open checks ──
   if (!t.registration_open) {
-    return res.status(403).json({ error: 'Las inscripciones estÃ¡n cerradas para este torneo.' });
+    return res.status(403).json({ error: 'Las inscripciones están cerradas para este torneo.' });
   }
 
   const now = new Date();
@@ -596,20 +596,20 @@ router.post('/tournaments/:id/register', async (req, res) => {
     }
   }
 
-  // â”€â”€ Max players check â”€â”€
+  // ── Max players check ──
   if (t.max_players > 0) {
     const currentCount = await db.prepare(`
       SELECT COUNT(*) as c FROM tournament_players WHERE tournament_id = ?
     `).get(req.params.id).c;
     if (currentCount >= t.max_players) {
-      return res.status(403).json({ error: `El torneo ha alcanzado el lÃ­mite de ${t.max_players} jugadores.` });
+      return res.status(403).json({ error: `El torneo ha alcanzado el límite de ${t.max_players} jugadores.` });
     }
   }
 
   const { name, last_name, email, fide_id, fide_rating, federation, title, phone, notes, custom_data } = req.body;
   if (!name || name.trim().length === 0) return res.status(400).json({ error: 'El nombre es obligatorio' });
 
-  // â”€â”€ Duplicate check â”€â”€
+  // ── Duplicate check ──
   if (email || fide_id) {
     const dupes = await db.prepare(`
       SELECT COUNT(*) as c FROM registration_requests
@@ -625,7 +625,7 @@ router.post('/tournaments/:id/register', async (req, res) => {
       WHERE tp.tournament_id = ? AND ((? != '' AND p.email = ?) OR (? != '' AND p.fide_id = ?))
     `).get(req.params.id, email || '', email || '', fide_id || '', fide_id || '');
     if (enrolled.c > 0) {
-      return res.status(409).json({ error: 'Ya estÃ¡s inscrito en este torneo.' });
+      return res.status(409).json({ error: 'Ya estás inscrito en este torneo.' });
     }
   }
 
@@ -684,19 +684,19 @@ router.post('/tournaments/:id/register', async (req, res) => {
         ok: true, requires_payment: true,
         checkout_url: checkout.url,
         registration_id: regId,
-        message: 'Se requiere pago para completar la inscripciÃ³n.',
+        message: 'Se requiere pago para completar la inscripción.',
       });
     } catch (err) {
       // Stripe not configured or error - create as pending without payment
       await db.prepare("UPDATE registration_requests SET status = 'pending' WHERE id = ?").run(regId);
       return res.status(201).json({
         ok: true, requires_payment: false,
-        message: 'Solicitud de inscripciÃ³n enviada. El organizador la revisarÃ¡.',
+        message: 'Solicitud de inscripción enviada. El organizador la revisará.',
       });
     }
   }
 
-  res.status(201).json({ ok: true, message: 'Solicitud de inscripciÃ³n enviada. El organizador la revisarÃ¡.' });
+  res.status(201).json({ ok: true, message: 'Solicitud de inscripción enviada. El organizador la revisará.' });
 });
 
 export default router;

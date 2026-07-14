@@ -21,12 +21,26 @@ export default function PGNScanner({ tournamentId, onGamesImported }) {
   const [error, setError] = useState(null);
   const [progress, setProgress] = useState(0);
   const [statusMsg, setStatusMsg] = useState('');
+  const [scanQuota, setScanQuota] = useState(null);
 
   useEffect(() => {
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
   }, [previewUrl]);
+
+  // Fetch scan quota on mount
+  useEffect(() => {
+    const fetchQuota = async () => {
+      try {
+        const quota = await api.scanQuota();
+        setScanQuota(quota);
+      } catch (err) {
+        console.error('Failed to fetch scan quota:', err);
+      }
+    };
+    fetchQuota();
+  }, []);
 
   const handleFileSelect = (e) => {
     const f = e.target.files[0];
@@ -41,6 +55,17 @@ export default function PGNScanner({ tournamentId, onGamesImported }) {
 
   const startScan = async () => {
     if (!file) return;
+    
+    // Check quota before starting
+    if (scanQuota && !scanQuota.can_scan) {
+      if (scanQuota.limit === 0) {
+        toast.error(t('scanner.planNoScans'));
+      } else {
+        toast.error(`Límite alcanzado: ${scanQuota.used}/${scanQuota.limit} escaneos este mes`);
+      }
+      return;
+    }
+
     setStep('processing');
     setProgress(5);
     setStatusMsg(t('scanner.stages.ocr'));
@@ -189,6 +214,39 @@ export default function PGNScanner({ tournamentId, onGamesImported }) {
               <p className="mt-2 text-sm text-amber-700 dark:text-amber-300 font-medium">{file.name} ({(file.size / 1024 / 1024).toFixed(1)} MB)</p>
             )}
           </div>
+
+          {/* Scan Quota Display */}
+          {scanQuota && (
+            <div className={`mt-4 p-3 rounded-lg ${
+              scanQuota.can_scan 
+                ? 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800' 
+                : 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800'
+            } border`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className={scanQuota.can_scan ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}>
+                    {scanQuota.can_scan ? '✅' : '🚫'}
+                  </span>
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {scanQuota.can_scan 
+                      ? `Escaneos disponibles: ${scanQuota.remaining}/${scanQuota.limit} (${scanQuota.plan_name})`
+                      : scanQuota.limit === 0
+                        ? `Tu plan ${scanQuota.plan_name} no incluye escaneos`
+                        : `Límite alcanzado: ${scanQuota.used}/${scanQuota.limit} este mes`
+                    }
+                  </span>
+                </div>
+                {!scanQuota.can_scan && scanQuota.limit > 0 && (
+                  <button 
+                    onClick={() => window.location.href = '/pricing'}
+                    className="px-3 py-1 text-sm bg-fide-700 hover:bg-fide-800 text-white rounded-lg transition"
+                  >
+                    Actualizar plan
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
 
           {file && (
             <div className="mt-6 flex justify-center gap-3">

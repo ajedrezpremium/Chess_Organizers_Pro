@@ -218,6 +218,7 @@ CREATE TABLE IF NOT EXISTS membership_plans (
   max_players_per_tournament INTEGER DEFAULT -1,
   features    TEXT    DEFAULT '[]',
   recommended INTEGER DEFAULT 0,
+  monthly_scans_limit INTEGER DEFAULT 0,
   created_at  TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -389,11 +390,11 @@ CREATE INDEX IF NOT EXISTS idx_match_pairings_match          ON match_pairings(t
 -- ============================================================
 -- DATOS SEMILLA — Planes de membresía
 -- ============================================================
-INSERT INTO membership_plans (name, slug, description, price_mxn, price_usd, max_tournaments, max_players_per_tournament, features, recommended)
+INSERT INTO membership_plans (name, slug, description, price_mxn, price_usd, max_tournaments, max_players_per_tournament, features, recommended, monthly_scans_limit)
 VALUES
-  ('Free',     'free',   'Para organizadores que inician', 0, 0,    2,  30,  '["Hasta 2 torneos activos","30 jugadores por torneo","Pairings automáticos","Clasificación en vivo","Exportación PDF/CSV/TRF","Página pública del torneo"]', 0),
-  ('Básico',   'basico', 'Para clubes y torneos locales',  199, 9.99, 10, 100, '["Hasta 10 torneos activos","100 jugadores por torneo","Todo lo de Free","Múltiples árbitros","Check-in de jugadores","Widgets embeddables","Sin anuncios"]', 1),
-  ('Pro',      'pro',    'Para federaciones y eventos grandes', 499, 24.99, -1, -1, '["Torneos ilimitados","Jugadores ilimitados","Todo lo de Básico","Subida FIDE automática","Boletines PDF automáticos","API pública","Soporte prioritario","Múltiples organizadores"]', 0)
+  ('Free',     'free',   'Para organizadores que inician', 0, 0,    2,  30,  '["Hasta 2 torneos activos","30 jugadores por torneo","Pairings automáticos","Clasificación en vivo","Exportación PDF/CSV/TRF","Página pública del torneo"]', 0, 0),
+  ('Básico',   'basico', 'Para clubes y torneos locales',  199, 9.99, 10, 100, '["Hasta 10 torneos activos","100 jugadores por torneo","Todo lo de Free","Múltiples árbitros","Check-in de jugadores","Widgets embeddables","Sin anuncios"]', 1, 5),
+  ('Pro',      'pro',    'Para federaciones y eventos grandes', 499, 24.99, -1, -1, '["Torneos ilimitados","Jugadores ilimitados","Todo lo de Básico","Subida FIDE automática","Boletines PDF automáticos","API pública","Soporte prioritario","Múltiples organizadores"]', 0, 50)
 ON CONFLICT (slug) DO NOTHING;
 
 -- ============================================================

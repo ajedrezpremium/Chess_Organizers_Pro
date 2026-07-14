@@ -3,9 +3,9 @@ import { getDb } from '../db/index.js';
 import { authenticate } from '../middleware/auth.js';
 import * as fideService from '../services/fideRating.js';
 import { submitTRF } from '../services/trfSubmit.js';
-import { serializeTRF } from '../trf/trf.js';
+import { serializeTRF } from '../../../src/trf/trf.js';
 import { buildPlayerState } from '../utils/roundUtils.js';
-import { DEFAULT_TIEBREAK_ORDER } from '../engine/types.js';
+import { DEFAULT_TIEBREAK_ORDER } from '../../../src/engine/types.js';
 
 const router = Router();
 
@@ -13,7 +13,7 @@ const router = Router();
 router.get('/search', authenticate, async (req, res) => {
   try {
     const { q } = req.query;
-    if (!q || q.length < 2) return res.status(400).json({ error: 'MÃ­nimo 2 caracteres' });
+    if (!q || q.length < 2) return res.status(400).json({ error: 'Mínimo 2 caracteres' });
     const [last, first = ''] = q.split(',').map((s) => s.trim());
     const results = await fideService.searchPlayers(last || q, first);
     res.json(results);
@@ -32,7 +32,7 @@ router.get('/rating/:fideId', authenticate, async (req, res) => {
   }
 });
 
-// POST /fide/import/:fideId â€” importar jugador desde FIDE a la BD local
+// POST /fide/import/:fideId — importar jugador desde FIDE a la BD local
 router.post('/import/:fideId', authenticate, async (req, res) => {
   try {
     const db = getDb();
@@ -60,7 +60,7 @@ router.post('/import/:fideId', authenticate, async (req, res) => {
   }
 });
 
-// POST /fide/bulk-import â€” importaciÃ³n masiva de jugadores desde FIDE
+// POST /fide/bulk-import — importación masiva de jugadores desde FIDE
 router.post('/bulk-import', authenticate, async (req, res) => {
   try {
     const db = getDb();
@@ -89,11 +89,11 @@ router.post('/bulk-import', authenticate, async (req, res) => {
 
     res.json({ imported, skipped, errors, total: fide_ids.length });
   } catch (err) {
-    res.status(500).json({ error: 'Error en importaciÃ³n masiva', details: err.message });
+    res.status(500).json({ error: 'Error en importación masiva', details: err.message });
   }
 });
 
-// GET /fide/federation/:fed?month= â€” listar jugadores de una federaciÃ³n (descarga masiva)
+// GET /fide/federation/:fed?month= — listar jugadores de una federación (descarga masiva)
 router.get('/federation/:fed', authenticate, async (req, res) => {
   try {
     const month = req.query.month || '';
@@ -106,12 +106,12 @@ router.get('/federation/:fed', authenticate, async (req, res) => {
   }
 });
 
-// POST /fide/bulk-import-fed â€” importar todos los jugadores de una federaciÃ³n desde FIDE
+// POST /fide/bulk-import-fed — importar todos los jugadores de una federación desde FIDE
 router.post('/bulk-import-fed', authenticate, async (req, res) => {
   try {
     const db = getDb();
     const { federation, month } = req.body;
-    if (!federation) return res.status(400).json({ error: 'FederaciÃ³n requerida' });
+    if (!federation) return res.status(400).json({ error: 'Federación requerida' });
 
     const csv = await fideService.downloadRatingList(federation, month || '');
     const lines = csv.split('\n').slice(1).filter(Boolean);
@@ -141,11 +141,11 @@ router.post('/bulk-import-fed', authenticate, async (req, res) => {
 
     res.json({ imported, skipped: skipped.length, errors, total: lines.length });
   } catch (err) {
-    res.status(500).json({ error: 'Error al importar federaciÃ³n', details: err.message });
+    res.status(500).json({ error: 'Error al importar federación', details: err.message });
   }
 });
 
-// POST /fide/submit/:tournamentId â€” enviar TRF a FIDE
+// POST /fide/submit/:tournamentId — enviar TRF a FIDE
 router.post('/submit/:tournamentId', authenticate, async (req, res) => {
   try {
     const db = getDb();
@@ -192,7 +192,7 @@ router.post('/submit/:tournamentId', authenticate, async (req, res) => {
   }
 });
 
-// GET /fide/report/:tournamentId â€” Reporte FIDE homologado (HTML)
+// GET /fide/report/:tournamentId — Reporte FIDE homologado (HTML)
 router.get('/report/:tournamentId', authenticate, async (req, res) => {
   const db = getDb();
   const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ?').get(req.params.tournamentId);
@@ -206,7 +206,7 @@ router.get('/report/:tournamentId', authenticate, async (req, res) => {
 
   const tBody = (label, val) => `<tr><td style="font-weight:600;padding:4px 12px;border:1px solid #ccc;background:#f5f5f5">${label}</td><td style="padding:4px 12px;border:1px solid #ccc">${val || '-'}</td></tr>`;
 
-  let html = `<html><head><meta charset="utf-8"><title>FIDE Report â€” ${tournament.name}</title>
+  let html = `<html><head><meta charset="utf-8"><title>FIDE Report — ${tournament.name}</title>
 <style>body{font-family:Arial,sans-serif;font-size:12px;max-width:900px;margin:auto;padding:20px}
 h1{text-align:center;color:#1a237e;font-size:18px}
 table{width:100%;border-collapse:collapse;margin:10px 0}
@@ -216,7 +216,7 @@ td{padding:4px 8px;border:1px solid #ccc;font-size:11px}
 .footer{text-align:center;margin-top:20px;font-size:10px;color:#666}
 </style></head><body>
 <h1>FIDE Tournament Report</h1>
-<table>${tBody('Event', tournament.name)}${tBody('FIDE ID', tournament.fide_event_id)}${tBody('Federation', tournament.federation)}${tBody('City', tournament.city)}${tBody('Address', tournament.location_address)}${tBody('Dates', tournament.start_date + (tournament.end_date ? ' â€” '+tournament.end_date : ''))}${tBody('System', tournament.system)}${tBody('Rounds', tournament.n_rounds)}${tBody('Time Control', tournament.time_control)}${tBody('Chief Arbiter', tournament.chief_arbiter)}${tBody('Deputy Arbiter', tournament.deputy_arbiter)}${tBody('Tournament Director', tournament.tournament_director)}${tBody('Rated', tournament.rated ? 'Yes' : 'No')}</table>
+<table>${tBody('Event', tournament.name)}${tBody('FIDE ID', tournament.fide_event_id)}${tBody('Federation', tournament.federation)}${tBody('City', tournament.city)}${tBody('Address', tournament.location_address)}${tBody('Dates', tournament.start_date + (tournament.end_date ? ' — '+tournament.end_date : ''))}${tBody('System', tournament.system)}${tBody('Rounds', tournament.n_rounds)}${tBody('Time Control', tournament.time_control)}${tBody('Chief Arbiter', tournament.chief_arbiter)}${tBody('Deputy Arbiter', tournament.deputy_arbiter)}${tBody('Tournament Director', tournament.tournament_director)}${tBody('Rated', tournament.rated ? 'Yes' : 'No')}</table>
 
 <h2>Final Standings</h2>
 <table><thead><tr><th>#</th><th>Name</th><th>Title</th><th>FED</th><th>FIDE ID</th><th>Rating</th><th>Points</th><th>BH1</th><th>BH</th><th>SB</th></tr></thead><tbody>`;
@@ -236,13 +236,13 @@ td{padding:4px 8px;border:1px solid #ccc;font-size:11px}
       for (const p of pairings) {
         const w = players.find(x => x.id == p.white_id);
         const b = players.find(x => x.id == p.black_id);
-        html += `<tr><td style="text-align:center">${p.board}</td><td>${w ? w.name + ' ' + (w.lastName||'') + ' (' + (w.rating||0) + ')' : 'BYE'}</td><td style="text-align:center;font-weight:bold">${p.result === 'U' ? 'Â½-Â½' : p.result === '1' ? '1-0' : p.result === '0' ? '0-1' : p.result === '=' ? 'Â½-Â½' : p.result}</td><td>${b ? b.name + ' ' + (b.lastName||'') + ' (' + (b.rating||0) + ')' : '-'}</td></tr>`;
+        html += `<tr><td style="text-align:center">${p.board}</td><td>${w ? w.name + ' ' + (w.lastName||'') + ' (' + (w.rating||0) + ')' : 'BYE'}</td><td style="text-align:center;font-weight:bold">${p.result === 'U' ? '½-½' : p.result === '1' ? '1-0' : p.result === '0' ? '0-1' : p.result === '=' ? '½-½' : p.result}</td><td>${b ? b.name + ' ' + (b.lastName||'') + ' (' + (b.rating||0) + ')' : '-'}</td></tr>`;
       }
       html += `</tbody></table>`;
     }
   }
 
-  html += `<div class="footer">Generated by Chess Organizers Pro â€” FIDE Homologated Report<br>${new Date().toISOString()}</div></body></html>`;
+  html += `<div class="footer">Generated by Chess Organizers Pro — FIDE Homologated Report<br>${new Date().toISOString()}</div></body></html>`;
 
   res.type('html').send(html);
 });
