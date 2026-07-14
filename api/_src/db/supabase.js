@@ -19,12 +19,7 @@ function transpile(sql) {
     .replace(/INSERT\s+OR\s+IGNORE\s+INTO/gi, 'INSERT INTO')
     .replace(/REPLACE\s+INTO/gi, 'INSERT INTO');
 
-  if (/\bINSERT\s+INTO\b.*\bON\s+CONFLICT\b/i.test(result)) {
-    return result;
-  }
-  if (/^INSERT\s+INTO/i.test(result) && !/^\s*--/m.test(result)) {
-    result += ' ON CONFLICT DO NOTHING';
-  }
+  // ON CONFLICT DO NOTHING removed — interferes with RETURNING *
   return result;
 }
 
