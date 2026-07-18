@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { api } from '../api/client.js';
 import { useI18n } from '../i18n/context.jsx';
 import { CardSkeleton } from '../components/Skeleton.jsx';
@@ -23,6 +23,7 @@ const STATUS_STYLES = {
 
 export default function Dashboard() {
   const { t } = useI18n();
+  const location = useLocation();
   const [myTournaments, setMyTournaments] = useState([]);
   const [activeTournaments, setActiveTournaments] = useState([]);
   const [pastTournaments, setPastTournaments] = useState([]);
@@ -41,22 +42,23 @@ export default function Dashboard() {
     }
   };
 
-  useEffect(() => {
-    // Cargar torneos del usuario
+  const fetchData = useCallback(() => {
+    setLoading(true);
     api.listTournaments().then((d) => setMyTournaments(d.tournaments)).catch(() => {});
-
-    // Cargar torneos activos (PNEIDNETES) - catálogo global
     api.external.listTournaments({ status: 'active', limit: 20, sort: 'start_date', order: 'desc' })
-      .then((d) => setActiveTournaments(d.tournaments))
-      .catch(() => {});
-
-    // Cargar torneos pasados (finalizados) - catálogo global
+      .then((d) => setActiveTournaments(d.tournaments)).catch(() => {});
     api.external.listTournaments({ status: 'finished', limit: 20, sort: 'start_date', order: 'desc' })
-      .then((d) => setPastTournaments(d.tournaments))
-      .catch(() => {});
-
+      .then((d) => setPastTournaments(d.tournaments)).catch(() => {});
     api.myMembership().then((d) => setMembership(d.membership)).catch(() => {}).finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => { fetchData(); }, [location.key]);
+
+  useEffect(() => {
+    const onShow = (e) => { if (e.persisted) fetchData(); };
+    window.addEventListener('pageshow', onShow);
+    return () => window.removeEventListener('pageshow', onShow);
+  }, [fetchData]);
 
   const handleDelete = async (id) => {
     try {
