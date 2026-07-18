@@ -162,10 +162,8 @@ router.get('/tournaments', async (req, res) => {
           t.id, t.name, t.system, t.n_rounds, t.federation, t.status,
           t.city, t.start_date, t.end_date, t.time_control, t.description,
           t.created_at, t.primary_color, t.secondary_color, t.logo_url,
-          t.is_demo,
           (SELECT COUNT(*) FROM tournament_players WHERE tournament_id = t.id) as player_count
         FROM tournaments t
-        WHERE t.is_demo = 0
       `;
       const params = [];
 
@@ -179,8 +177,7 @@ router.get('/tournaments', async (req, res) => {
       if (status === 'active') { sql += " AND t.status = 'active'"; }
       else if (status === 'finished') { sql += " AND t.status = 'finished'"; }
       else if (status === 'pending') { sql += " AND t.status = 'pending'"; }
-      else if (status === 'upcoming') { sql += " AND t.status = 'pending' AND t.start_date > date('now')"; }
-      else if (status === 'demo') { sql += " AND t.is_demo = 1"; }
+      else if (status === 'upcoming') { sql += " AND t.status = 'pending' AND t.start_date > NOW()"; }
 
       const sortMap = {
         created_at: 't.created_at',
