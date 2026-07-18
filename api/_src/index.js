@@ -36,25 +36,6 @@ const app = express();
 // ── Health check (PRIMERO de todo) ─────────────────────────────────
 app.get('/health', (req, res) => { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ status: 'ok', msg: 'no-db' })); });
 app.get('/health/readiness', (req, res) => { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ status: 'ready', msg: 'no-db' })); });
-app.post('/health/readiness', (req, res) => {
-  let raw = '';
-  req.on('data', c => { raw += c; });
-  req.on('end', () => {
-    res.setHeader('content-type', 'application/json');
-    res.end(JSON.stringify({
-      rawFromStream: raw,
-      bodyType: typeof req.body,
-      bodyIsObj: req.body && typeof req.body === 'object',
-      isBuffer: Buffer.isBuffer(req.body),
-      bodyKeys: req.body && typeof req.body === 'object' ? Object.keys(req.body) : [],
-      bodyStr: typeof req.body === 'string' ? req.body : (Buffer.isBuffer(req.body) ? req.body.toString() : JSON.stringify(req.body)),
-      hasRawBody: 'rawBody' in req,
-      hasHttpBody: 'httpBody' in req,
-    }));
-  });
-  req.on('error', () => { res.status(500).end('{}'); });
-});
-
 
 // ── Production security ────────────────────────────────────────────
 app.set('trust proxy', 1);
@@ -75,32 +56,8 @@ app.use(cors({
 }));
 // app.use(compression());
 app.use(morgan(config.nodeEnv === 'production' ? 'combined' : 'dev'));
+app.use(express.json({ limit: '5mb' }));
 app.use('/auth', limiter);
-// Body parser for Vercel: express.json may receive empty stream if Vercel already consumed it
-app.use((req, res, next) => {
-  if (req.method !== 'POST' && req.method !== 'PUT' && req.method !== 'PATCH') return next();
-  if (!req.headers['content-type']?.startsWith('application/json')) return next();
-  // Already parsed successfully
-  if (req.body && typeof req.body === 'object' && Object.keys(req.body).length > 0) return next();
-  // Vercel may have set req.body as raw Buffer or string
-  if (req.body) {
-    if (typeof req.body === 'string') {
-      try { req.body = JSON.parse(req.body); req._body = true; return next(); } catch {}
-    }
-    if (Buffer.isBuffer(req.body)) {
-      try { req.body = JSON.parse(req.body.toString()); req._body = true; return next(); } catch {}
-    }
-  }
-  // Try reading buffered data from the request
-  try {
-    const chunk = req.read();
-    if (chunk) {
-      try { req.body = JSON.parse(chunk.toString()); req._body = true; return next(); } catch {}
-    }
-  } catch {}
-  // Last resort: use express.json (it will set empty {} if stream exhausted)
-  express.json()(req, res, () => next());
-});
 
 // ── Rutas ──────────────────────────────────────────────────────────
 app.use('/auth', authRoutes);
