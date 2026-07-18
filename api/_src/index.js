@@ -36,7 +36,6 @@ const app = express();
 // ── Health check (PRIMERO de todo) ─────────────────────────────────
 app.get('/health', (req, res) => { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ status: 'ok', msg: 'no-db' })); });
 app.get('/health/readiness', (req, res) => { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ status: 'ready', msg: 'no-db' })); });
-app.post('/health', (req, res) => { res.json({ pong: true, ct: req.headers['content-type'] }); });
 
 
 // ── Production security ────────────────────────────────────────────
@@ -58,7 +57,19 @@ app.use(cors({
 }));
 // app.use(compression());
 app.use(morgan(config.nodeEnv === 'production' ? 'combined' : 'dev'));
-app.use(express.json());
+// Custom JSON body parser that works on Vercel serverless
+app.use((req, res, next) => {
+  if (req.body && typeof req.body === 'object') return next();
+  if (!['POST', 'PUT', 'PATCH'].includes(req.method)) return next();
+  if (!req.headers['content-type']?.startsWith('application/json')) return next();
+  let raw = '';
+  req.on('data', c => { raw += c; });
+  req.on('end', () => {
+    try { if (raw) req.body = JSON.parse(raw); } catch {}
+    next();
+  });
+  req.on('error', () => next());
+});
 app.use('/auth', limiter);
 
 // ── Rutas ──────────────────────────────────────────────────────────
