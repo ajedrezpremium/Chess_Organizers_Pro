@@ -57,25 +57,22 @@ app.use(cors({
 }));
 // app.use(compression());
 app.use(morgan(config.nodeEnv === 'production' ? 'combined' : 'dev'));
-app.use((req, res, next) => {
-  if (req.method !== 'POST' && req.method !== 'PUT' && req.method !== 'PATCH') return next();
-  if (typeof req.body === 'string') {
-    try { req.body = JSON.parse(req.body); } catch {}
-    return next();
-  }
-  if (req.body && typeof req.body === 'object') return next();
-  // Read body from stream (works on Vercel serverless)
-  let raw = '';
-  req.on('data', c => { raw += c; });
-  req.on('end', () => {
-    if (raw && req.headers['content-type']?.startsWith('application/json')) {
-      try { req.body = JSON.parse(raw); } catch {}
-    }
-    next();
-  });
-  req.on('error', () => next());
-});
 app.use('/auth', limiter);
+// Body parser: try express.json with error suppression
+const jsonParser = express.json();
+app.use((req, res, next) => {
+  jsonParser(req, res, (err) => {
+    if (err) {
+      // express.json failed — try raw body from Vercel
+      if (typeof req.body === 'string') {
+        try { req.body = JSON.parse(req.body); } catch {}
+      }
+      next();
+    } else {
+      next();
+    }
+  });
+});
 
 // ── Rutas ──────────────────────────────────────────────────────────
 app.use('/auth', authRoutes);
