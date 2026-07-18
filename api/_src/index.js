@@ -36,6 +36,24 @@ const app = express();
 // ── Health check (PRIMERO de todo) ─────────────────────────────────
 app.get('/health', (req, res) => { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ status: 'ok', msg: 'no-db' })); });
 app.get('/health/readiness', (req, res) => { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ status: 'ready', msg: 'no-db' })); });
+app.post('/health/debug', (req, res) => {
+  let raw = '';
+  req.on('data', c => { raw += c; });
+  req.on('end', () => {
+    res.setHeader('content-type', 'application/json');
+    res.end(JSON.stringify({
+      rawFromStream: raw,
+      bodyType: typeof req.body,
+      bodyIsObject: req.body && typeof req.body === 'object',
+      isBuffer: Buffer.isBuffer(req.body),
+      bodyKeys: req.body && typeof req.body === 'object' ? Object.keys(req.body) : [],
+      bodyVal: req.body ? (typeof req.body === 'string' ? req.body : JSON.stringify(req.body).slice(0, 200)) : 'null/undef',
+      contentType: req.headers['content-type'],
+      contentLength: req.headers['content-length'],
+    }));
+  });
+  req.on('error', () => { res.status(500).end('{}'); });
+});
 
 
 // ── Production security ────────────────────────────────────────────
