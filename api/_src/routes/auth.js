@@ -7,6 +7,11 @@ import { validate } from '../middleware/validate.js';
 const router = Router();
 const SALT_ROUNDS = 12;
 
+// Debug: echo body
+router.post('/debug', (req, res) => {
+  res.json({ body: req.body, headers: req.headers['content-type'], rawBody: req.body ? JSON.stringify(req.body) : null });
+});
+
 // POST /auth/register
 router.post('/register', validate({
   email: { type: 'email', required: true },
