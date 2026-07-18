@@ -36,6 +36,21 @@ const app = express();
 // ── Health check (PRIMERO de todo) ─────────────────────────────────
 app.get('/health', (req, res) => { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ status: 'ok', msg: 'no-db' })); });
 app.get('/health/readiness', (req, res) => { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ status: 'ready', msg: 'no-db' })); });
+app.post('/bodytest', (req, res) => {
+  let raw = '';
+  req.on('data', chunk => { raw += chunk; });
+  req.on('end', () => {
+    try {
+      const parsed = JSON.parse(raw);
+      res.json({ ok: true, raw, parsed });
+    } catch (e) {
+      res.status(400).json({ ok: false, raw, error: e.message });
+    }
+  });
+  req.on('error', (e) => {
+    res.status(500).json({ ok: false, error: e.message });
+  });
+});
 
 // ── Production security ────────────────────────────────────────────
 app.set('trust proxy', 1);
