@@ -36,6 +36,7 @@ const app = express();
 // ── Health check (PRIMERO de todo) ─────────────────────────────────
 app.get('/health', (req, res) => { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ status: 'ok', msg: 'no-db' })); });
 app.get('/health/readiness', (req, res) => { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ status: 'ready', msg: 'no-db' })); });
+app.post('/ping', (req, res) => { res.json({ pong: true }); });
 
 
 // ── Production security ────────────────────────────────────────────
