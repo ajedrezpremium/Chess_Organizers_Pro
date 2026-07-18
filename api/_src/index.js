@@ -58,20 +58,30 @@ app.use(cors({
 // app.use(compression());
 app.use(morgan(config.nodeEnv === 'production' ? 'combined' : 'dev'));
 app.use('/auth', limiter);
-// Body parser: try express.json with error suppression
-const jsonParser = express.json();
+// Body parser for Vercel: express.json may receive empty stream if Vercel already consumed it
 app.use((req, res, next) => {
-  jsonParser(req, res, (err) => {
-    if (err) {
-      // express.json failed — try raw body from Vercel
-      if (typeof req.body === 'string') {
-        try { req.body = JSON.parse(req.body); } catch {}
-      }
-      next();
-    } else {
-      next();
+  if (req.method !== 'POST' && req.method !== 'PUT' && req.method !== 'PATCH') return next();
+  if (!req.headers['content-type']?.startsWith('application/json')) return next();
+  // Already parsed successfully
+  if (req.body && typeof req.body === 'object' && Object.keys(req.body).length > 0) return next();
+  // Vercel may have set req.body as raw Buffer or string
+  if (req.body) {
+    if (typeof req.body === 'string') {
+      try { req.body = JSON.parse(req.body); req._body = true; return next(); } catch {}
     }
-  });
+    if (Buffer.isBuffer(req.body)) {
+      try { req.body = JSON.parse(req.body.toString()); req._body = true; return next(); } catch {}
+    }
+  }
+  // Try reading buffered data from the request
+  try {
+    const chunk = req.read();
+    if (chunk) {
+      try { req.body = JSON.parse(chunk.toString()); req._body = true; return next(); } catch {}
+    }
+  } catch {}
+  // Last resort: use express.json (it will set empty {} if stream exhausted)
+  express.json()(req, res, () => next());
 });
 
 // ── Rutas ──────────────────────────────────────────────────────────
