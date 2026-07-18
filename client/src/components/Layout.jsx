@@ -28,7 +28,7 @@ export default function Layout() {
 
   const navLinks = [
     { to: '/app/dashboard', label: t('nav.tournaments'), icon: '◈' },
-    { to: '/app/new', label: t('nav.newTournament'), icon: '+' },
+    { to: '/app/new', label: t('nav.newTournament'), icon: 'svgPlus' },
     { to: '/app/scan', label: t('nav.scanner'), icon: '📸' },
     { to: '/app/elo', label: t('nav.elo'), icon: '📊' },
     { to: '/arbiter', label: t('nav.arbiter'), icon: '⚖️' },
@@ -55,7 +55,9 @@ export default function Layout() {
                     className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                       isActive ? 'bg-fide-700 text-white shadow-sm' : 'text-fide-300 hover:text-white hover:bg-fide-700/50'
                     }`}>
-                    <span className="text-xs">{l.icon}</span>
+                    {l.icon === 'svgPlus' ? (
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                    ) : <span className="text-xs">{l.icon}</span>}
                     {l.label}
                   </Link>
                 );
@@ -120,7 +122,9 @@ export default function Layout() {
             {navLinks.map((l) => (
               <Link key={l.to} to={l.to} onClick={() => setMenuOpen(false)}
                 className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-fide-200 hover:text-white hover:bg-fide-700 text-sm transition-all duration-200">
-                <span className="text-xs">{l.icon}</span>
+                {l.icon === 'svgPlus' ? (
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                ) : <span className="text-xs">{l.icon}</span>}
                 {l.label}
               </Link>
             ))}

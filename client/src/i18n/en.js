@@ -1,6 +1,6 @@
 export default {
   app: { title: 'CHESS ORGANIZERS PRO', tagline: 'Live Results', footer: 'Chess Organizers Pro · Live Results', allRights: 'All rights reserved.' },
-  nav: { tournaments: 'Tournaments', players: 'Players', searchPlayer: 'Search player', live: 'Live', finished: 'Finished', newTournament: '+ New', myProfile: 'My Profile', arbiter: 'Arbiter', scanner: 'Scan', elo: 'Elo Dashboard', logout: 'Logout', backToHome: 'Back to home', sitemap: 'Sitemap', pricing: 'Plans' },
+  nav: { tournaments: 'Tournaments', players: 'Players', searchPlayer: 'Search player', live: 'Live', finished: 'Finished', newTournament: 'New', myProfile: 'My Profile', arbiter: 'Arbiter', scanner: 'Scan', elo: 'Elo Dashboard', logout: 'Logout', backToHome: 'Back to home', sitemap: 'Sitemap', pricing: 'Plans' },
   tournament: {
     title: 'Live Tournaments', subtitle: 'Follow tournament results in real time',
     noResults: 'No tournaments match these filters', noActive: 'No active public tournaments',
@@ -68,7 +68,7 @@ export default {
   },
   common: { loading: 'Loading...', save: 'Save', cancel: 'Cancel', delete: 'Delete', close: 'Close', all: 'All', select: 'Select...', back: 'Back', confirm: 'Confirm', edit: 'Edit', done: 'Done', add: 'Add', search: 'Search', noData: 'No data', preview: 'Preview', actions: 'Actions', register: 'Register', link: 'Link', open: 'Open', yes: 'Yes', no: 'No', or: 'or', and: 'and', none: 'None', notFound: 'Not found' },
   dashboard: {
-    myTournaments: 'My Tournaments', newTournament: '+ New', noTournaments: "You don't have any tournaments yet",
+    myTournaments: 'My Tournaments', newTournament: 'New', noTournaments: "You don't have any tournaments yet",
     startPrompt: 'Create your first tournament and start organizing',
     createFirst: 'Create first tournament', plan: 'Plan', billing: 'Billing',
     changePlan: 'Change plan', tournamentsCount: '{n} tournament(s)',
