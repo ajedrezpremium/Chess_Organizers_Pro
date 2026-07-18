@@ -306,6 +306,7 @@ export default function Landing() {
             <a href="https://chessorganizers.com" target="_blank" rel="noreferrer" className="hover:text-white transition">chessorganizers.com</a>
             <a href="https://github.com/ajedrezpremium/Chess_Organizers_Pro" target="_blank" rel="noreferrer" className="hover:text-white transition">GitHub</a>
             <Link to="/login" className="hover:text-white transition">Ingresar</Link>
+            <Link to="/legal/terms" className="hover:text-white transition text-xs">Legal</Link>
           </div>
         </div>
       </footer>

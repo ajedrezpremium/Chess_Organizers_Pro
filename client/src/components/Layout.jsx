@@ -161,10 +161,10 @@ export default function Layout() {
             <div>
               <h4 className="text-xs font-semibold text-white uppercase tracking-wider mb-3">Legal</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">Términos y condiciones</a></li>
-                <li><a href="#" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">Política de privacidad</a></li>
-                <li><a href="#" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">Política de cookies</a></li>
-                <li><a href="#" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">Aviso legal</a></li>
+                <li><Link to="/legal/terms" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">Términos y condiciones</Link></li>
+                <li><Link to="/legal/privacy" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">Política de privacidad</Link></li>
+                <li><Link to="/legal/cookies" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">Política de cookies</Link></li>
+                <li><Link to="/legal/notice" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">Aviso legal</Link></li>
               </ul>
             </div>
 
