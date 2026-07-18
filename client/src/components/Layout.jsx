@@ -26,13 +26,22 @@ export default function Layout() {
 
   const handleLogout = () => { logout(); navigate('/login'); };
 
-  const navLinks = [
-    { to: '/app/dashboard', label: t('nav.tournaments'), icon: '◈' },
-    { to: '/app/new', label: t('nav.newTournament'), icon: 'svgPlus' },
-    { to: '/app/scan', label: t('nav.scanner'), icon: '📸' },
-    { to: '/app/elo', label: t('nav.elo'), icon: '📊' },
-    { to: '/arbiter', label: t('nav.arbiter'), icon: '⚖️' },
-    { to: '/app/leagues', label: 'Ligas', icon: '🏆' },
+  const SVG_ICONS = {
+  tournaments: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>,
+  newTournament: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 3a7 7 0 100 14 7 7 0 000-14zm0 3a4 4 0 100 8 4 4 0 000-8zm0 3a1 1 0 110 2 1 1 0 010-2z" /></svg>,
+  scan: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
+  elo: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
+  arbiter: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2l7 4v5c0 5-3.5 9.5-7 10.5C8.5 20.5 5 16 5 11V6l7-4z" /></svg>,
+  leagues: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 21h8m-4-3v3m0-3a5 5 0 005-5V5H7v8a5 5 0 005 5z" /></svg>,
+};
+
+const navLinks = [
+    { to: '/app/dashboard', label: t('nav.tournaments'), icon: 'tournaments', title: 'Torneos' },
+    { to: '/app/new', label: t('nav.newTournament'), icon: 'newTournament', title: 'Crear torneo' },
+    { to: '/app/scan', label: t('nav.scanner'), icon: 'scan', title: 'Escanear actas' },
+    { to: '/app/elo', label: t('nav.elo'), icon: 'elo', title: 'Panel Elo' },
+    { to: '/arbiter', label: t('nav.arbiter'), icon: 'arbiter', title: 'Árbitro IA' },
+    { to: '/app/leagues', label: 'Ligas', icon: 'leagues', title: 'Ligas y circuitos' },
   ];
 
   return (
@@ -51,13 +60,11 @@ export default function Layout() {
               {navLinks.map((l) => {
                 const isActive = location.pathname === l.to || (l.to !== '/' && location.pathname.startsWith(l.to));
                 return (
-                  <Link key={l.to} to={l.to}
+                  <Link key={l.to} to={l.to} title={l.title}
                     className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                       isActive ? 'bg-fide-700 text-white shadow-sm' : 'text-fide-300 hover:text-white hover:bg-fide-700/50'
                     }`}>
-                    {l.icon === 'svgPlus' ? (
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
-                    ) : <span className="text-xs">{l.icon}</span>}
+                    {SVG_ICONS[l.icon] || <span className="text-xs">{l.icon}</span>}
                     {l.label}
                   </Link>
                 );
@@ -120,11 +127,9 @@ export default function Layout() {
         {menuOpen && (
           <div className="sm:hidden border-t border-fide-700/50 px-4 py-3 space-y-1 bg-fide-800/95 backdrop-blur-sm animate-fadeIn">
             {navLinks.map((l) => (
-              <Link key={l.to} to={l.to} onClick={() => setMenuOpen(false)}
+              <Link key={l.to} to={l.to} onClick={() => setMenuOpen(false)} title={l.title}
                 className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-fide-200 hover:text-white hover:bg-fide-700 text-sm transition-all duration-200">
-                {l.icon === 'svgPlus' ? (
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
-                ) : <span className="text-xs">{l.icon}</span>}
+                {SVG_ICONS[l.icon] || <span className="text-xs">{l.icon}</span>}
                 {l.label}
               </Link>
             ))}
