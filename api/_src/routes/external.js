@@ -163,7 +163,7 @@ router.get('/tournaments', async (req, res) => {
           t.city, t.start_date, t.end_date, t.time_control, t.description,
           t.created_at, t.primary_color, t.secondary_color, t.logo_url,
           (SELECT COUNT(*) FROM tournament_players WHERE tournament_id = t.id) as player_count
-        FROM tournaments t
+        FROM tournaments t WHERE 1=1
       `;
       const params = [];
 
