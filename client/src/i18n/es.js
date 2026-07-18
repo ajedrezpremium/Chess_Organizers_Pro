@@ -1,6 +1,6 @@
 export default {
   app: { title: 'CHESS ORGANIZERS PRO', tagline: 'Resultados en vivo', footer: 'Chess Organizers Pro · Resultados en vivo', allRights: 'Todos los derechos reservados.' },
-  nav: { tournaments: 'Torneos', players: 'Jugadores', searchPlayer: 'Buscar jugador', live: 'En vivo', finished: 'Finalizado', newTournament: 'Nuevo', myProfile: 'Mi Perfil', arbiter: 'Árbitro', scanner: 'Escanear', elo: 'Dashboard Elo', logout: 'Salir', backToHome: 'Volver al inicio', sitemap: 'Mapa del sitio', pricing: 'Planes' },
+  nav: { tournaments: 'Torneos', players: 'Jugadores', searchPlayer: 'Buscar jugador', live: 'En vivo', finished: 'Finalizado', newTournament: 'Nuevo', myProfile: 'Mi Perfil', arbiter: 'Árbitro', scanner: 'Escanear', elo: 'Dashboard Elo', logout: 'Salir', backToHome: 'Volver al inicio', sitemap: 'Mapa del sitio', pricing: 'Planes', leagues: 'Ligas', darkMode: 'Modo oscuro', lightMode: 'Modo claro', inbox: 'Buzón de entrada', planMembership: 'Plan y membresía' },
   tournament: {
     title: 'Torneos en vivo', subtitle: 'Sigue los resultados de torneos en tiempo real',
     noResults: 'No hay torneos con esos filtros', noActive: 'No hay torneos públicos activos',
@@ -67,6 +67,7 @@ export default {
     placeholderPhone: '+34 600 000 000', placeholderNotes: 'Algo que el organizador deba saber...',
   },
   common: { loading: 'Cargando...', save: 'Guardar', cancel: 'Cancelar', delete: 'Eliminar', close: 'Cerrar', all: 'Todos', select: 'Seleccionar...', back: 'Volver', confirm: 'Confirmar', edit: 'Editar', done: 'Listo', add: 'Añadir', search: 'Buscar', noData: 'Sin datos', preview: 'Vista previa', actions: 'Acciones', register: 'Registrar', link: 'Link', open: 'Abrir', yes: 'Sí', no: 'No', or: 'o', and: 'y', none: 'Ninguno', notFound: 'No encontrado' },
+  footer: { legal: 'Legal', terms: 'Términos y condiciones', privacy: 'Política de privacidad', cookies: 'Política de cookies', legalNotice: 'Aviso legal' },
   dashboard: {
     myTournaments: 'Mis Torneos', newTournament: 'Nuevo', noTournaments: 'No tienes torneos aún',
     startPrompt: 'Crea tu primer torneo y empieza a organizar',

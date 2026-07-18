@@ -41,7 +41,7 @@ const navLinks = [
     { to: '/app/scan', label: t('nav.scanner'), icon: 'scan', title: 'Escanear' },
     { to: '/app/elo', label: t('nav.elo'), icon: 'elo', title: 'Dashboard Elo' },
     { to: '/arbiter', label: t('nav.arbiter'), icon: 'arbiter', title: 'Árbitro' },
-    { to: '/app/leagues', label: 'Ligas', icon: 'leagues', title: 'Liga' },
+    { to: '/app/leagues', label: t('nav.leagues'), icon: 'leagues', title: t('nav.leagues') },
   ];
 
   return (
@@ -74,7 +74,7 @@ const navLinks = [
             <LangSwitcher />
             <SyncStatus />
             <NotificationDropdown />
-            <button onClick={toggle} className="p-2 rounded-lg hover:bg-fide-700 transition-all duration-200" title={dark ? 'Modo claro' : 'Modo oscuro'}>
+            <button onClick={toggle} className="p-2 rounded-lg hover:bg-fide-700 transition-all duration-200" title={dark ? t('nav.lightMode') : t('nav.darkMode')}>
               {dark ? (
                 <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
               ) : (
@@ -102,11 +102,11 @@ const navLinks = [
                   </Link>
                   <Link to="/pricing" onClick={() => setUserMenuOpen(false)}
                     className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-fide-200 hover:bg-gray-50 dark:hover:bg-fide-700 transition">
-                    <span className="text-base">💎</span> Plan y membresía
+                    <span className="text-base">💎</span> {t('nav.planMembership')}
                   </Link>
                   <Link to="/app/inbox" onClick={() => setUserMenuOpen(false)}
                     className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-fide-200 hover:bg-gray-50 dark:hover:bg-fide-700 transition">
-                    <span className="text-base">📬</span> Buzón de entrada
+                    <span className="text-base">📬</span> {t('nav.inbox')}
                   </Link>
                   <div className="border-t dark:border-fide-700 mt-1 pt-1">
                     <button onClick={() => { setUserMenuOpen(false); handleLogout(); }}
@@ -167,12 +167,12 @@ const navLinks = [
 
             {/* Column 2: Legal */}
             <div>
-              <h4 className="text-xs font-semibold text-white uppercase tracking-wider mb-3">Legal</h4>
+              <h4 className="text-xs font-semibold text-white uppercase tracking-wider mb-3">{t('footer.legal')}</h4>
               <ul className="space-y-2">
-                <li><Link to="/legal/terms" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">Términos y condiciones</Link></li>
-                <li><Link to="/legal/privacy" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">Política de privacidad</Link></li>
-                <li><Link to="/legal/cookies" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">Política de cookies</Link></li>
-                <li><Link to="/legal/notice" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">Aviso legal</Link></li>
+                <li><Link to="/legal/terms" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('footer.terms')}</Link></li>
+                <li><Link to="/legal/privacy" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('footer.privacy')}</Link></li>
+                <li><Link to="/legal/cookies" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('footer.cookies')}</Link></li>
+                <li><Link to="/legal/notice" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('footer.legalNotice')}</Link></li>
               </ul>
             </div>
 
@@ -184,7 +184,7 @@ const navLinks = [
                 <li><Link to="/app/new" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('nav.newTournament')}</Link></li>
                 <li><Link to="/app/player" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('nav.myProfile')}</Link></li>
                 <li><Link to="/arbiter" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('nav.arbiter')}</Link></li>
-                <li><Link to="/app/leagues" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">Ligas</Link></li>
+                <li><Link to="/app/leagues" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('nav.leagues')}</Link></li>
                 <li><a href="/public" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('register.viewTournaments')}</a></li>
                 <li><a href="/pricing" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('nav.pricing') || 'Planes'}</a></li>
               </ul>

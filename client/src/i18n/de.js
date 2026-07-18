@@ -1,6 +1,6 @@
 export default {
   app: { title: 'CHESS ORGANIZERS PRO', tagline: 'Live-Ergebnisse', footer: 'Chess Organizers Pro · Live-Ergebnisse', allRights: 'Alle Rechte vorbehalten.' },
-  nav: { tournaments: 'Turniere', players: 'Spieler', searchPlayer: 'Spieler suchen', live: 'Live', finished: 'Beendet', newTournament: 'Neues', myProfile: 'Mein Profil', arbiter: 'Schiedsrichter', scanner: 'Scannen', elo: 'Elo Dashboard', logout: 'Abmelden', backToHome: 'Zurück zur Startseite', sitemap: 'Seitenübersicht', pricing: 'Tarife' },
+  nav: { tournaments: 'Turniere', players: 'Spieler', searchPlayer: 'Spieler suchen', live: 'Live', finished: 'Beendet', newTournament: 'Neues', myProfile: 'Mein Profil', arbiter: 'Schiedsrichter', scanner: 'Scannen', elo: 'Elo Dashboard', logout: 'Abmelden', backToHome: 'Zurück zur Startseite', sitemap: 'Seitenübersicht', pricing: 'Tarife', leagues: 'Ligen', darkMode: 'Dunkelmodus', lightMode: 'Hellmodus', inbox: 'Posteingang', planMembership: 'Tarif & Mitgliedschaft' },
   tournament: {
     title: 'Live-Turniere', subtitle: 'Verfolge Turnierergebnisse in Echtzeit',
     noResults: 'Keine Turniere gefunden', noActive: 'Keine aktiven öffentlichen Turniere',
@@ -67,6 +67,7 @@ export default {
     placeholderPhone: '+49 170 000 000', placeholderNotes: 'Was der Organisator wissen sollte...',
   },
   common: { loading: 'Laden...', save: 'Speichern', cancel: 'Abbrechen', delete: 'Löschen', close: 'Schließen', all: 'Alle', select: 'Auswählen...', back: 'Zurück', confirm: 'Bestätigen', edit: 'Bearbeiten', done: 'Fertig', add: 'Hinzufügen', search: 'Suchen', noData: 'Keine Daten', preview: 'Vorschau', actions: 'Aktionen', register: 'Registrieren', link: 'Link', open: 'Öffnen', yes: 'Ja', no: 'Nein', or: 'oder', and: 'und', none: 'Keine', notFound: 'Nicht gefunden' },
+  footer: { legal: 'Rechtliches', terms: 'AGB', privacy: 'Datenschutz', cookies: 'Cookie-Richtlinie', legalNotice: 'Impressum' },
   dashboard: {
     myTournaments: 'Meine Turniere', newTournament: 'Neues', noTournaments: 'Du hast noch keine Turniere',
     startPrompt: 'Erstelle dein erstes Turnier und beginne zu organisieren',
@@ -79,6 +80,12 @@ export default {
     tournamentDeleted: 'Turnier gelöscht',
     billingError: 'Fehler beim Öffnen der Abrechnung',
     statusActive: 'Live', statusFinished: 'Beendet', statusPending: 'Entwurf',
+    activeFeedTitle: 'Aktive Turniere — Ausstehend',
+    activeFeedSubtitle: '10 laufende Turniere — Aufruf zum Handeln',
+    pastFeedTitle: 'Beendete Turniere — Archiv',
+    pastFeedSubtitle: '10 aktuelle Turniere mit Ergebnissen',
+    viewAllActive: 'Alle aktiven anzeigen →',
+    viewAllPast: 'Alle beendeten anzeigen →',
   },
   newTournament: {
     title: 'Neues Turnier', subtitle: 'Konfiguriere die Turnierdetails',

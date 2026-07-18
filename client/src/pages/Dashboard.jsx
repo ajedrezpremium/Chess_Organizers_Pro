@@ -211,10 +211,10 @@ export default function Dashboard() {
               {/* 3. 10 Torneos ACTIVOS — Efecto Llamada */}
               <ActiveTournamentsFeed
                 tournaments={activeTournaments}
-                title="🔥 Torneos Activos"
-                subtitle="10 torneos en marcha ahora mismo — Efecto llamada"
+                title={`🔥 ${t('dashboard.activeFeedTitle')}`}
+                subtitle={t('dashboard.activeFeedSubtitle')}
                 linkTo="/catalog?status=active"
-                linkText="Ver todos los activos →"
+                linkText={t('dashboard.viewAllActive')}
                 limit={10}
                 onOpen={handleOpenTournament}
               />
@@ -234,10 +234,10 @@ export default function Dashboard() {
               {/* 2. 10 Torneos PASADOS */}
               <PastTournamentsFeed
                 tournaments={pastTournaments}
-                title="📜 Torneos Finalizados"
-                subtitle="10 torneos recientes con resultados disponibles — Histórico"
+                title={`📜 ${t('dashboard.pastFeedTitle')}`}
+                subtitle={t('dashboard.pastFeedSubtitle')}
                 linkTo="/catalog?status=finished"
-                linkText="Ver todos los pasados →"
+                linkText={t('dashboard.viewAllPast')}
                 limit={10}
                 onOpen={handleOpenTournament}
               />

@@ -1,6 +1,6 @@
 export default {
   app: { title: 'CHESS ORGANIZERS PRO', tagline: 'Resultados ao vivo', footer: 'Chess Organizers Pro · Resultados ao vivo', allRights: 'Todos os direitos reservados.' },
-  nav: { tournaments: 'Torneios', players: 'Jogadores', searchPlayer: 'Buscar jogador', live: 'Ao vivo', finished: 'Finalizado', newTournament: 'Novo', myProfile: 'Meu Perfil', arbiter: 'Árbitro', scanner: 'Digitalizar', elo: 'Painel Elo', logout: 'Sair', backToHome: 'Voltar ao início', sitemap: 'Mapa do site', pricing: 'Planos' },
+  nav: { tournaments: 'Torneios', players: 'Jogadores', searchPlayer: 'Buscar jogador', live: 'Ao vivo', finished: 'Finalizado', newTournament: 'Novo', myProfile: 'Meu Perfil', arbiter: 'Árbitro', scanner: 'Digitalizar', elo: 'Painel Elo', logout: 'Sair', backToHome: 'Voltar ao início', sitemap: 'Mapa do site', pricing: 'Planos', leagues: 'Ligas', darkMode: 'Modo escuro', lightMode: 'Modo claro', inbox: 'Caixa de entrada', planMembership: 'Plano e assinatura' },
   tournament: {
     title: 'Torneios ao vivo', subtitle: 'Acompanhe resultados de torneios em tempo real',
     noResults: 'Nenhum torneio com esses filtros', noActive: 'Nenhum torneio público ativo',
@@ -67,6 +67,7 @@ export default {
     placeholderPhone: '+55 11 99999-9999', placeholderNotes: 'Algo que o organizador precise saber...',
   },
   common: { loading: 'Carregando...', save: 'Salvar', cancel: 'Cancelar', delete: 'Excluir', close: 'Fechar', all: 'Todos', select: 'Selecionar...', back: 'Voltar', confirm: 'Confirmar', edit: 'Editar', done: 'Pronto', add: 'Adicionar', search: 'Buscar', noData: 'Sem dados', preview: 'Visualizar', actions: 'Ações', register: 'Registrar', link: 'Link', open: 'Abrir', yes: 'Sim', no: 'Não', or: 'ou', and: 'e', none: 'Nenhum', notFound: 'Não encontrado' },
+  footer: { legal: 'Legal', terms: 'Termos e Condições', privacy: 'Política de Privacidade', cookies: 'Política de Cookies', legalNotice: 'Aviso Legal' },
   dashboard: {
     myTournaments: 'Meus Torneios', newTournament: 'Novo', noTournaments: 'Você não tem torneios ainda',
     startPrompt: 'Crie seu primeiro torneio e comece a organizar',
@@ -76,8 +77,14 @@ export default {
     notifications: 'Notificações', tabTournaments: 'Torneios',
     deleteConfirm: 'Tem certeza que deseja excluir "{name}"? Esta ação não pode ser desfeita.',
     deleteTitle: 'Excluir torneio', round: 'rodada(s)', deleteSuccess: 'Torneio excluído',
-    tournamentDeleted: 'Torneio eliminado', billingError: 'Erro ao abrir faturamento',
+    tournamentDeleted: 'Torneio eliminado',     billingError: 'Erro ao abrir faturamento',
     statusActive: 'Ao vivo', statusFinished: 'Finalizado', statusPending: 'Rascunho',
+    activeFeedTitle: 'Torneios Ativos — Pendentes',
+    activeFeedSubtitle: '10 torneios em andamento — chamada para ação',
+    pastFeedTitle: 'Torneios Finalizados — Histórico',
+    pastFeedSubtitle: '10 torneios recentes com resultados disponíveis',
+    viewAllActive: 'Ver todos os ativos →',
+    viewAllPast: 'Ver todos os finalizados →',
   },
   newTournament: {
     title: 'Novo Torneio', subtitle: 'Configure os detalhes do torneio',
