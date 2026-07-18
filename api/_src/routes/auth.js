@@ -7,6 +7,19 @@ import { validate } from '../middleware/validate.js';
 const router = Router();
 const SALT_ROUNDS = 12;
 
+// Fallback raw body parser for Vercel (express.json sometimes fails in serverless)
+router.use((req, res, next) => {
+  if (!['POST', 'PUT', 'PATCH'].includes(req.method)) return next();
+  if (req.body && typeof req.body === 'object') return next();
+  let raw = '';
+  req.on('data', c => { raw += c; });
+  req.on('end', () => {
+    if (raw) { try { req.body = JSON.parse(raw); } catch {} }
+    next();
+  });
+  req.on('error', () => next());
+});
+
 // POST /auth/register
 router.post('/register', validate({
   email: { type: 'email', required: true },
