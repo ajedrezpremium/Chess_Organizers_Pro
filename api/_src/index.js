@@ -57,15 +57,20 @@ app.use(cors({
 }));
 // app.use(compression());
 app.use(morgan(config.nodeEnv === 'production' ? 'combined' : 'dev'));
-// Custom JSON body parser that works on Vercel serverless
 app.use((req, res, next) => {
+  if (req.method !== 'POST' && req.method !== 'PUT' && req.method !== 'PATCH') return next();
+  if (typeof req.body === 'string') {
+    try { req.body = JSON.parse(req.body); } catch {}
+    return next();
+  }
   if (req.body && typeof req.body === 'object') return next();
-  if (!['POST', 'PUT', 'PATCH'].includes(req.method)) return next();
-  if (!req.headers['content-type']?.startsWith('application/json')) return next();
+  // Read body from stream (works on Vercel serverless)
   let raw = '';
   req.on('data', c => { raw += c; });
   req.on('end', () => {
-    try { if (raw) req.body = JSON.parse(raw); } catch {}
+    if (raw && req.headers['content-type']?.startsWith('application/json')) {
+      try { req.body = JSON.parse(raw); } catch {}
+    }
     next();
   });
   req.on('error', () => next());
