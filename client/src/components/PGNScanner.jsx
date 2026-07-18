@@ -75,7 +75,8 @@ export default function PGNScanner({ tournamentId, onGamesImported }) {
       formData.append('file', file);
       if (tournamentId) formData.append('tournament_id', tournamentId);
 
-      const uploadRes = await fetch(`${import.meta.env.VITE_API_URL || ''}/scan/upload`, {
+      const BASE_URL = (import.meta.env.VITE_API_URL || '').includes('onrender.com') ? '' : (import.meta.env.VITE_API_URL || '');
+const uploadRes = await fetch(`${BASE_URL}/scan/upload`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
         body: formData,

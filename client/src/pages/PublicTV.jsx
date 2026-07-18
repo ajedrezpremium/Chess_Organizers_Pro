@@ -36,7 +36,7 @@ export default function PublicTV() {
   useEffect(() => { load(); loadStandings(); loadPerformance(); }, [load, loadStandings, loadPerformance]);
 
   useEffect(() => {
-    const BASE = import.meta.env.VITE_API_URL ?? '';
+    const BASE = (import.meta.env.VITE_API_URL ?? '').includes('onrender.com') ? '' : (import.meta.env.VITE_API_URL ?? '');
     const es = new EventSource(`${BASE}/public/tournaments/${id}/sse`);
     es.addEventListener('result:updated', () => { loadStandings(); loadPerformance(); });
     es.addEventListener('round:generated', () => load());

@@ -37,7 +37,7 @@ export default function PublicTournament() {
 
   useEffect(() => {
     loadStandings();
-    const BASE = import.meta.env.VITE_API_URL ?? '';
+    const BASE = (import.meta.env.VITE_API_URL ?? '').includes('onrender.com') ? '' : (import.meta.env.VITE_API_URL ?? '');
     const es = new EventSource(`${BASE}/public/tournaments/${id}/sse`);
     es.addEventListener('result:updated', () => { loadStandings(); load(); });
     es.addEventListener('round:generated', () => { load(); });

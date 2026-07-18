@@ -1,5 +1,5 @@
-const CACHE = 'chessorg-v3';
-const API_CACHE = 'chessorg-api-v2';
+const CACHE = 'chessorg-v4';
+const API_CACHE = 'chessorg-api-v3';
 const SHELL = ['/', '/index.html', '/manifest.json', '/icon.svg'];
 const AUTH_API_PREFIXES = ['/auth/', '/tournaments/', '/players/', '/rounds/', '/pairings/', '/arbiters/', '/stats/', '/membership/', '/notifications/', '/fide/', '/validation/', '/teams/', '/stripe/', '/import/', '/api-keys/', '/webhooks/', '/api/', '/external/'];
 const PUBLIC_API_PREFIXES = ['/public/', '/health', '/scan/'];

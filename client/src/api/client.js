@@ -1,7 +1,7 @@
 import { addToQueue } from '../utils/offlineQueue';
 import { offlineDB } from '../utils/db';
 
-const BASE = import.meta.env.VITE_API_URL ?? '';
+const BASE = (import.meta.env.VITE_API_URL ?? '').includes('onrender.com') ? '' : (import.meta.env.VITE_API_URL ?? '');
 
 let TOKEN = localStorage.getItem('token');
 
