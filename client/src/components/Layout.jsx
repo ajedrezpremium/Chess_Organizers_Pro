@@ -37,11 +37,11 @@ export default function Layout() {
 
 const navLinks = [
     { to: '/app/dashboard', label: t('nav.tournaments'), icon: 'tournaments', title: 'Torneos' },
-    { to: '/app/new', label: t('nav.newTournament'), icon: 'newTournament', title: 'Crear torneo' },
-    { to: '/app/scan', label: t('nav.scanner'), icon: 'scan', title: 'Escanear actas' },
-    { to: '/app/elo', label: t('nav.elo'), icon: 'elo', title: 'Panel Elo' },
-    { to: '/arbiter', label: t('nav.arbiter'), icon: 'arbiter', title: 'Árbitro IA' },
-    { to: '/app/leagues', label: 'Ligas', icon: 'leagues', title: 'Ligas y circuitos' },
+    { to: '/app/new', label: t('nav.newTournament'), icon: 'newTournament', title: 'Nuevo' },
+    { to: '/app/scan', label: t('nav.scanner'), icon: 'scan', title: 'Escanear' },
+    { to: '/app/elo', label: t('nav.elo'), icon: 'elo', title: 'Dashboard Elo' },
+    { to: '/arbiter', label: t('nav.arbiter'), icon: 'arbiter', title: 'Árbitro' },
+    { to: '/app/leagues', label: 'Ligas', icon: 'leagues', title: 'Liga' },
   ];
 
   return (
@@ -56,16 +56,15 @@ const navLinks = [
                 <span className="text-amber-400 text-[11px] font-semibold tracking-widest block -mt-0.5">ORGANIZERS PRO</span>
               </div>
             </Link>
-            <div className="hidden sm:flex items-center gap-1">
+              <div className="hidden sm:flex items-center gap-1">
               {navLinks.map((l) => {
                 const isActive = location.pathname === l.to || (l.to !== '/' && location.pathname.startsWith(l.to));
                 return (
                   <Link key={l.to} to={l.to} title={l.title}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    className={`flex items-center justify-center px-2.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                       isActive ? 'bg-fide-700 text-white shadow-sm' : 'text-fide-300 hover:text-white hover:bg-fide-700/50'
                     }`}>
                     {SVG_ICONS[l.icon] || <span className="text-xs">{l.icon}</span>}
-                    {l.label}
                   </Link>
                 );
               })}
