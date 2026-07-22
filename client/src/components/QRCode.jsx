@@ -1,8 +1,19 @@
 import { useState } from 'react';
 
-export default function QRCode({ url, size = 128 }) {
+export default function QRCode({ url, size = 128, onDownload }) {
   const [show, setShow] = useState(false);
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(url)}`;
+  const dlUrl = `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(url)}`;
+
+  const handleDownload = (e) => {
+    e.stopPropagation();
+    const a = document.createElement('a');
+    a.href = dlUrl;
+    a.download = 'qr_torneo.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
 
   return (
     <div className="relative">
@@ -12,9 +23,14 @@ export default function QRCode({ url, size = 128 }) {
         QR
       </button>
       {show && (
-        <div className="absolute right-0 mt-2 bg-white dark:bg-fide-800 border dark:border-fide-700 rounded-xl shadow-xl z-50 p-3 animate-fadeIn"
+        <div className="absolute right-0 mt-2 bg-white dark:bg-fide-800 border dark:border-fide-700 rounded-xl shadow-xl z-50 p-3 animate-fadeIn flex flex-col items-center gap-2"
           onClick={() => setShow(false)}>
           <img src={qrUrl} alt="QR Code" width={size} height={size} className="rounded-lg" />
+          <button onClick={handleDownload}
+            className="text-xs bg-fide-700 hover:bg-fide-600 text-white px-3 py-1.5 rounded-lg transition w-full flex items-center justify-center gap-1.5">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            Descargar QR
+          </button>
         </div>
       )}
     </div>

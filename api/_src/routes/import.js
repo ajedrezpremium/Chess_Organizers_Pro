@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { getDb } from '../db/index.js';
 import { authenticate } from '../middleware/auth.js';
-import { parseCSV, detectColumnMap, suggestColumnMap, importPlayers, importPlayersFromTRF } from '../services/importer.js';
+import { parseCSV, detectColumnMap, suggestColumnMap, importPlayers, importPlayersFromTRF, importPlayersFromSwissTXT } from '../services/importer.js';
 
 const router = Router();
 
@@ -54,6 +54,23 @@ router.post('/trf/:tid', authenticate, async (req, res) => {
     if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
 
     const results = importPlayersFromTRF(db, req.params.tid, trf);
+    res.json(results);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// POST /import/swiss-txt/:tid — importar desde Swiss-Manager TXT
+router.post('/swiss-txt/:tid', authenticate, async (req, res) => {
+  try {
+    const db = getDb();
+    const { txt } = req.body;
+    if (!txt) return res.status(400).json({ error: 'Contenido TXT requerido' });
+
+    const t = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
+    if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
+
+    const results = await importPlayersFromSwissTXT(db, req.params.tid, txt);
     res.json(results);
   } catch (err) {
     res.status(400).json({ error: err.message });

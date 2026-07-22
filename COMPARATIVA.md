@@ -15,7 +15,7 @@
 | 8 | **Sugerencias inteligentes de pairings** | ✅ | ❌ | ❌ | ❌ |
 | | **📋 REGISTRO Y JUGADORES** |
 | 9 | Base de datos de jugadores | ✅ | ✅ | ✅ | ✅ |
-|10 | **Formulario público de inscripción** | ✅ | ❌ | ❌ | ❌ |
+|10 | **Formulario público de inscripción** | ✅ | ❌ | ❌ | ✅ |
 |11 | **Campos personalizados en registro** | ✅ | ❌ | ❌ | ❌ |
 |12 | Importación CSV/TRF/TSV (auto-mapeo) | ✅ | ✅ | ✅ | ✅ |
 |13 | Importación desde FIDE (búsqueda + lote) | ✅ | ✅ | ✅ | ✅ |
@@ -24,16 +24,16 @@
 |15 | Clasificación en vivo con tiebreaks | ✅ | ✅ | ✅ | ✅ |
 |16 | Tabla cruzada (crosstab) | ✅ | ✅ | ✅ | ✅ |
 |17 | **Rendimiento (TPR + ΔR + K-factor)** | ✅ | ✅ | ❌ | ❌ |
-|18 | **Cálculo de cambio de rating FIDE** | ✅ | ✅ | ✅ | ✅ |
+|18 | **Cálculo de cambio de rating FIDE** | ✅ | ✅ | ✅ | ❌ |
 |19 | **Reporte FIDE XML (formato C.02)** | ✅ | ✅ | ✅ | ✅ |
 | | **🌐 PÁGINAS PÚBLICAS Y EN VIVO** |
-|20 | **Página pública del torneo** | ✅ | ❌ | ❌ | ❌ |
+|20 | **Página pública del torneo** | ✅ | ❌ | ❌ | ✅ |
 |21 | **Vista TV en vivo** | ✅ | ❌ | ❌ | ❌ |
 |22 | **Widgets embeddables (clasificación/pairings)** | ✅ | ❌ | ❌ | ❌ |
 |23 | **Streaming en vivo integrado** | ✅ | ❌ | ❌ | ❌ |
 |24 | **Boletín HTML descargable** | ✅ | ✅ | ❌ | ❌ |
 | | **💰 PAGOS Y MEMBRESÍAS** |
-|25 | **Pago Stripe integrado en inscripción** | ✅ | ❌ | ❌ | ❌ |
+|25 | **Pago online integrado en inscripción** | ✅ | ❌ | ❌ | ✅ |
 |26 | **Planes de membresía (Free/Básico/Pro)** | ✅ | ❌ | ❌ | ❌ |
 |27 | **Portal de facturación (Customer Portal)** | ✅ | ❌ | ❌ | ❌ |
 | | **📱 MOVIL Y OFFLINE** |
@@ -43,8 +43,8 @@
 |30 | **API REST pública** | ✅ | ❌ | ❌ | ❌ |
 |31 | **Webhooks (eventos en tiempo real)** | ✅ | ❌ | ❌ | ❌ |
 |32 | **API Keys para desarrolladores** | ✅ | ❌ | ❌ | ❌ |
-|33 | **Multi-idioma (5 idiomas)** | ✅ | ❌ | ❌ | ❌ |
-|34 | **Notificaciones multicanal (in-app/Telegram/WhatsApp/Email)** | ✅ | ❌ | ❌ | ❌ |
+|33 | **Multi-idioma (10+ idiomas)** | ✅ | ✅ | ❌ | ✅ |
+|34 | **Notificaciones multicanal (SMS/Email/Telegram)** | ✅ | ❌ | ❌ | ✅ |
 |35 | **Live Streaming (Twitch/YouTube/Custom)** | ✅ | ❌ | ❌ | ❌ |
 |36 | **Catálogo global de torneos** | ✅ | ❌ | ❌ | ❌ |
 |37 | **Panel de inteligencia de pairings** | ✅ | ❌ | ❌ | ❌ |

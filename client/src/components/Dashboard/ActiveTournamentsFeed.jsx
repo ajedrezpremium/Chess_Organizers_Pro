@@ -3,16 +3,21 @@ import { api } from '../../api/client.js';
 import TournamentCard from './TournamentCard.jsx';
 import SectionHeader from './SectionHeader.jsx';
 
-export default function ActiveTournamentsFeed({ title, subtitle, linkTo, linkText, limit = 10, onOpen }) {
-  const [tournaments, setTournaments] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function ActiveTournamentsFeed({ tournaments: initialTournaments, title, subtitle, linkTo, linkText, limit = 10, onOpen }) {
+  const [tournaments, setTournaments] = useState(initialTournaments || []);
+  const [loading, setLoading] = useState(initialTournaments === undefined);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    if (initialTournaments !== undefined) {
+      setTournaments(initialTournaments.slice(0, limit));
+      setLoading(false);
+      return;
+    }
+
     api.external.listTournaments({ status: 'active', limit: limit * 2, sort: 'start_date', order: 'desc' })
       .then((d) => {
-        // Filter internal active + external active
-        const all = (d.tournaments || []).filter(t => t.status === 'active');
+        const all = (d.tournaments || []).filter((t) => t.status === 'active');
         setTournaments(all.slice(0, limit));
       })
       .catch((e) => {
@@ -20,7 +25,7 @@ export default function ActiveTournamentsFeed({ title, subtitle, linkTo, linkTex
         setError(e.message);
       })
       .finally(() => setLoading(false));
-  }, [limit]);
+  }, [initialTournaments, limit]);
 
   if (loading) {
     return (

@@ -17,21 +17,25 @@ export default function PublicTournament() {
   const [standings, setStandings] = useState(null);
   const [tab, setTab] = useState('standings');
   const [error, setError] = useState('');
+  const [selectedGroup, setSelectedGroup] = useState(null);
+
+  const groupParams = (gid) => gid ? { group_id: gid } : {};
 
   const load = useCallback(async () => {
     try {
+      const params = groupParams(selectedGroup);
       const [t, p, r] = await Promise.all([
         api.public.getTournament(id),
         api.public.getPlayers(id),
-        api.public.getRounds(id),
+        api.public.getRounds(id, params),
       ]);
       setTournament(t); setPlayers(p); setRounds(r);
     } catch (e) { setError(e.message); }
-  }, [id]);
+  }, [id, selectedGroup]);
 
   const loadStandings = useCallback(async () => {
-    try { setStandings(await api.public.getStandings(id)); } catch {}
-  }, [id]);
+    try { setStandings(await api.public.getStandings(id, groupParams(selectedGroup))); } catch {}
+  }, [id, selectedGroup]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -106,6 +110,20 @@ export default function PublicTournament() {
           </div>
           <div className="flex items-center gap-2">
             <QRCode url={`${window.location.origin}/public/tournament/${id}`} />
+            <div className="hidden sm:flex items-center gap-0.5 border border-gray-700 rounded-lg overflow-hidden">
+              <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/public/tournament/' + id)}`} target="_blank" rel="noopener noreferrer"
+                className="px-2 py-1.5 text-xs text-gray-400 hover:text-blue-500 hover:bg-gray-800 transition" title="Compartir en Facebook">
+                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+              </a>
+              <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(tournament?.name || 'Torneo de ajedrez')}&url=${encodeURIComponent(window.location.origin + '/public/tournament/' + id)}`} target="_blank" rel="noopener noreferrer"
+                className="px-2 py-1.5 text-xs text-gray-400 hover:text-sky-400 hover:bg-gray-800 transition" title="Compartir en X">
+                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              </a>
+              <a href={`https://wa.me/?text=${encodeURIComponent(tournament?.name + ' — ' + window.location.origin + '/public/tournament/' + id)}`} target="_blank" rel="noopener noreferrer"
+                className="px-2 py-1.5 text-xs text-gray-400 hover:text-green-500 hover:bg-gray-800 transition" title="Compartir en WhatsApp">
+                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              </a>
+            </div>
             <Link to={`/public/tournament/${id}/tv`} title={t('tv.viewTV')}
               className="border border-gray-700 hover:border-gray-500 text-gray-400 hover:text-white px-2.5 py-1.5 rounded text-xs transition flex items-center gap-1">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
@@ -143,6 +161,12 @@ export default function PublicTournament() {
             {tournament.federation && <span>{tournament.federation}</span>}
             {tournament.city && <span>{tournament.city}</span>}
             {tournament.time_control && <span>{tournament.time_control}</span>}
+            {tournament.fide_event_id && (
+              <a href={`https://ratings.fide.com/tournament_details.phtml?event=${tournament.fide_event_id}`}
+                target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border border-amber-600/40 text-amber-400 hover:bg-amber-900/20 transition">
+                ♛ FIDE #{tournament.fide_event_id}
+              </a>
+            )}
           </div>
         </div>
 
@@ -166,6 +190,17 @@ export default function PublicTournament() {
           </div>
         )}
 
+        {(tournament?.groups?.length > 0) && (
+          <div className="flex gap-2 mb-4 flex-wrap">
+            <button onClick={() => setSelectedGroup(null)}
+              className={`text-xs px-3 py-1.5 rounded-full border transition ${!selectedGroup ? 'pub-btn text-black font-semibold' : 'border-gray-700 text-gray-400 hover:text-white'}`}>Todos</button>
+            {tournament.groups.map((g) => (
+              <button key={g.id} onClick={() => setSelectedGroup(g.id)}
+                className={`text-xs px-3 py-1.5 rounded-full border transition ${selectedGroup === g.id ? 'pub-btn text-black font-semibold' : 'border-gray-700 text-gray-400 hover:text-white'}`}>{g.name} <span className="opacity-60">({g.player_count})</span></button>
+            ))}
+          </div>
+        )}
+
         <div className="flex gap-1 border-b border-gray-800 mb-6 overflow-x-auto">
           {[
             { key: 'standings', label: t('tournament.standings') },
@@ -174,6 +209,7 @@ export default function PublicTournament() {
             { key: 'wall', label: t('tv.wall') },
             { key: 'crosstab', label: t('tv.crosstab') },
             { key: 'h2h', label: t('tv.h2h') },
+            ...(() => { try { const d = JSON.parse(tournament.documents || '[]'); return d.length > 0 ? [{ key: 'docs', label: `Documentos (${d.length})` }] : []; } catch { return []; } })(),
             { key: 'info', label: t('tournament.info') },
           ].map((t) => (
             <button key={t.key} onClick={() => setTab(t.key)}
@@ -181,13 +217,14 @@ export default function PublicTournament() {
           ))}
         </div>
 
-        {tab === 'standings' && <PublicStandings standings={standings} tournament={tournament} onFilter={async (cat) => { try { setStandings(await api.public.getStandings(id, cat ? { category: cat } : {})); } catch {} }} />}
+        {tab === 'standings' && <PublicStandings standings={standings} tournament={tournament} onFilter={async (cat) => { try { const params = { ...groupParams(selectedGroup) }; if (cat) params.category = cat; setStandings(await api.public.getStandings(id, params)); } catch {} }} />}
         {tab === 'players' && <PublicPlayers players={players} />}
         {tab === 'rounds' && <PublicRounds rounds={rounds} />}
         {tab === 'wall' && <PublicBoardWall tournamentId={id} rounds={rounds} pc={pc} />}
         {tab === 'crosstab' && <PublicCrosstab tournamentId={id} players={players} pc={pc} />}
         {tab === 'h2h' && <PublicHeadToHead tournamentId={id} players={players} pc={pc} />}
         {tab === 'info' && <PublicInfo tournament={tournament} />}
+        {tab === 'docs' && <PublicDocs tournament={tournament} pc={pc} />}
       </div>
 
       <footer className="border-t border-gray-800 py-6 mt-8">
@@ -345,7 +382,8 @@ function PublicRounds({ rounds }) {
               <span className="font-semibold text-white">{t('tournament.round')} {round.round_number}</span>
               {round.scheduled_at && (
                 <span className="text-[10px] text-gray-500 hidden sm:inline">
-                  {new Date(round.scheduled_at).toLocaleDateString()}
+                  {new Date(round.scheduled_at).toLocaleDateString('es', { day: 'numeric', month: 'short' })}
+                  {round.duration > 0 && ` · ${Math.floor(round.duration / 60)}h${round.duration % 60 > 0 ? round.duration % 60 + 'm' : ''}`}
                 </span>
               )}
               <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${round.status === 'closed' ? 'bg-blue-900 text-blue-300' : 'bg-yellow-900 text-yellow-300'}`}>{round.status}</span>
@@ -389,31 +427,67 @@ function PublicRounds({ rounds }) {
 
 function PublicInfo({ tournament }) {
   const { t } = useI18n();
+  let links = {};
+  try { links = JSON.parse(tournament.links || '{}'); } catch {}
+
+  const linkSections = [
+    links.website && { icon: '🌐', label: 'Sitio web', url: links.website, color: 'text-blue-400' },
+    links.facebook && { icon: '📘', label: 'Facebook', url: links.facebook, color: 'text-blue-500' },
+    links.twitter && { icon: '🐦', label: 'X (Twitter)', url: links.twitter, color: 'text-sky-400' },
+    links.instagram && { icon: '📷', label: 'Instagram', url: links.instagram, color: 'text-pink-400' },
+    links.whatsapp && { icon: '💬', label: 'WhatsApp', url: links.whatsapp, color: 'text-green-400' },
+    (links.location_address || tournament.location_address) && { icon: '📍', label: 'Ver en Google Maps', url: `https://www.google.com/maps/search/${encodeURIComponent(links.location_address || tournament.location_address)}`, color: 'text-red-400' },
+  ].filter(Boolean);
+
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-      <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-        {[
-          [t('tournament.system'), tournament.system],
-          [t('tournament.rounds'), tournament.n_rounds],
-          [t('tournament.federation'), tournament.federation || '-'],
-          [t('tournament.city'), tournament.city || '-'],
-          [t('tournament.timeControl'), tournament.time_control || '-'],
-          [t('tournament.status'), tournament.status === 'active' ? t('tournament.live') : t('tournament.finished')],
-          [t('tournament.players'), tournament.player_count],
-          [t('tournament.created'), tournament.created_at?.slice(0, 10)],
-        ].map(([label, value]) => (
-          <div key={label}>
-            <dt className="text-gray-500">{label}</dt>
-            <dd className="font-medium text-white capitalize">{value}</dd>
+    <div className="space-y-4">
+      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+          {[
+            [t('tournament.system'), tournament.system],
+            [t('tournament.rounds'), tournament.n_rounds],
+            [t('tournament.federation'), tournament.federation || '-'],
+            [t('tournament.city'), tournament.city || '-'],
+            [t('tournament.timeControl'), tournament.time_control || '-'],
+            [t('tournament.status'), tournament.status === 'active' ? t('tournament.live') : t('tournament.finished')],
+            [t('tournament.players'), tournament.player_count],
+            [t('tournament.created'), tournament.created_at?.slice(0, 10)],
+          ].map(([label, value]) => (
+            <div key={label}>
+              <dt className="text-gray-500">{label}</dt>
+              <dd className="font-medium text-white capitalize">{value}</dd>
+            </div>
+          ))}
+          {tournament.description && (
+            <div className="sm:col-span-2">
+              <dt className="text-gray-500">{t('tournament.description')}</dt>
+              <dd className="font-medium text-white">{tournament.description}</dd>
+            </div>
+          )}
+        </dl>
+      </div>
+
+      {linkSections.length > 0 && (
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+          <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+            Enlaces
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {linkSections.map((link, i) => (
+              <a key={i} href={link.url} target="_blank" rel="noopener noreferrer"
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-800 hover:border-gray-700 transition group`}>
+                <span className="text-xl shrink-0">{link.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-medium ${link.color} group-hover:underline truncate`}>{link.label}</p>
+                  <p className="text-xs text-gray-500 truncate">{link.url}</p>
+                </div>
+                <svg className="w-4 h-4 text-gray-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+              </a>
+            ))}
           </div>
-        ))}
-        {tournament.description && (
-          <div className="sm:col-span-2">
-            <dt className="text-gray-500">{t('tournament.description')}</dt>
-            <dd className="font-medium text-white">{tournament.description}</dd>
-          </div>
-        )}
-      </dl>
+        </div>
+      )}
     </div>
   );
 }
@@ -462,7 +536,7 @@ function PublicBoardWall({ tournamentId, rounds, pc }) {
         {rounds.map((r, i) => (
           <button key={r.id} onClick={() => setRoundIdx(i)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${roundIdx === i ? 'pub-btn text-black' : 'bg-gray-800 text-gray-400 hover:text-white border border-gray-700'}`}>
-            {r.scheduled_at && <span className="text-[9px] text-gray-600 mr-1">{new Date(r.scheduled_at).toLocaleDateString()}</span>}
+            {r.scheduled_at && <span className="text-[9px] text-gray-600 mr-1">{new Date(r.scheduled_at).toLocaleDateString('es', { day: 'numeric', month: 'short' })}</span>}
             R{r.round_number}
             <span className={`ml-1.5 w-1.5 h-1.5 inline-block rounded-full ${r.status === 'closed' ? 'bg-blue-500' : r.status === 'generated' || r.status === 'published' ? 'bg-green-500 animate-pulse' : 'bg-gray-600'}`} />
           </button>
@@ -676,6 +750,30 @@ function PublicHeadToHead({ tournamentId, players, pc }) {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function PublicDocs({ tournament, pc }) {
+  const { t } = useI18n();
+  let docs = [];
+  try { docs = JSON.parse(tournament.documents || '[]'); } catch {}
+  if (docs.length === 0) return null;
+  return (
+    <div className="space-y-3">
+      {docs.map((doc, i) => (
+        <a key={i} href={doc.url} target="_blank" rel="noopener noreferrer"
+          className="flex items-center gap-3 bg-gray-900 border border-gray-800 rounded-xl p-4 hover:border-gray-700 transition group">
+          <span className="text-2xl shrink-0">📄</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-white group-hover:underline truncate">{doc.name || 'Documento'}</p>
+            <p className="text-xs text-gray-500 truncate">{doc.url}</p>
+          </div>
+          <svg className="w-5 h-5 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </a>
+      ))}
     </div>
   );
 }

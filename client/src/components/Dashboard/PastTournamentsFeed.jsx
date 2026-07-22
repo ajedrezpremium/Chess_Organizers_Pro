@@ -3,15 +3,21 @@ import { api } from '../../api/client.js';
 import TournamentCard from './TournamentCard.jsx';
 import SectionHeader from './SectionHeader.jsx';
 
-export default function PastTournamentsFeed({ title, subtitle, linkTo, linkText, limit = 10, onOpen }) {
-  const [tournaments, setTournaments] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function PastTournamentsFeed({ tournaments: initialTournaments, title, subtitle, linkTo, linkText, limit = 10, onOpen }) {
+  const [tournaments, setTournaments] = useState(initialTournaments || []);
+  const [loading, setLoading] = useState(initialTournaments === undefined);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    if (initialTournaments !== undefined) {
+      setTournaments(initialTournaments.slice(0, limit));
+      setLoading(false);
+      return;
+    }
+
     api.external.listTournaments({ status: 'finished', limit: limit * 2, sort: 'end_date', order: 'desc' })
       .then((d) => {
-        const all = (d.tournaments || []).filter(t => t.status === 'finished');
+        const all = (d.tournaments || []).filter((t) => t.status === 'finished');
         setTournaments(all.slice(0, limit));
       })
       .catch((e) => {
@@ -19,7 +25,7 @@ export default function PastTournamentsFeed({ title, subtitle, linkTo, linkText,
         setError(e.message);
       })
       .finally(() => setLoading(false));
-  }, [limit]);
+  }, [initialTournaments, limit]);
 
   if (loading) {
     return (

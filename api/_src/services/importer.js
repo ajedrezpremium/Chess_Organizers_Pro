@@ -24,6 +24,9 @@ const KNOWN_COLUMNS = {
   email: ['email', 'e-mail', 'mail', 'correo', 'e-mail address'],
   phone: ['phone', 'telefono', 'teléfono', 'telephone', 'mobile', 'celular'],
   notes: ['notes', 'notas', 'observaciones', 'comment', 'remarks'],
+  // Swiss-Manager column names (DE/EN)
+  birthYear: ['birth year', 'geb', 'geburtsjahr', 'birthyear', 'año nacimiento', 'year of birth'],
+  swissNr: ['nr.', 'nr', 'number', 'num', 'start nr', 'start number'],
 };
 
 const COLUMN_ALIASES = {};
@@ -276,6 +279,191 @@ export async function importPlayersFromTRF(db, tournamentId, trfContent) {
         const maxSeed = await db.prepare('SELECT MAX(seed_rank) as max FROM tournament_players WHERE tournament_id = ?').get(tournamentId);
         const nextSeed = (maxSeed?.max ?? 0) + 1;
         await db.prepare('INSERT INTO tournament_players (tournament_id, player_id, seed_rank) VALUES (?, ?, ?)').run(tournamentId, player.id, nextSeed);
+      }
+
+      results.players.push(player);
+      results.imported++;
+    } catch (err) {
+      results.errors.push(err.message);
+      results.skipped++;
+    }
+  }
+
+  return results;
+}
+
+// ── Swiss-Manager TXT Import ──────────────────────────────────────
+
+/**
+ * Parsea el formato TXT de Swiss-Manager (player list)
+ *
+ * Formato típico:
+ *   Nr.  Name                        Elo    FIDE      Titel  Land   Geb.
+ *   001  Carlsen, Magnus             2863   12345678  GM     NOR    1990
+ *
+ * También soporta formato compacto:
+ *   001 12345678 Carlsen, Magnus 2863 NOR GM 1990
+ */
+export function parseSwissTXT(text) {
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const players = [];
+  let isHeader = true;
+  let headerMapping = null;
+
+  for (const line of lines) {
+    if (isHeader && /^(Nr\.|Name|Elo|FIDE|Titel|Land|Geb)/i.test(line)) {
+      headerMapping = detectSwissHeader(line);
+      isHeader = false;
+      continue;
+    }
+    if (/^-+/.test(line)) continue;
+    if (headerMapping) {
+      players.push(parseSwissLine(line, headerMapping));
+    } else {
+      players.push(parseSwissCompact(line));
+    }
+  }
+  return players.filter(Boolean);
+}
+
+function detectSwissHeader(line) {
+  const parts = line.split(/\s{2,}/).map((s) => s.trim()).filter(Boolean);
+  const map = {};
+  for (let i = 0; i < parts.length; i++) {
+    const lower = parts[i].toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (/^nr/.test(lower)) map.nr = i;
+    else if (/name/.test(lower)) map.name = i;
+    else if (/elo/.test(lower)) map.elo = i;
+    else if (/fide/.test(lower)) map.fide = i;
+    else if (/titel/.test(lower) || /title/.test(lower)) map.title = i;
+    else if (/land/.test(lower) || /fed/.test(lower) || /country/.test(lower)) map.federation = i;
+    else if (/geb/.test(lower) || /birth/.test(lower)) map.birthYear = i;
+  }
+  return Object.keys(map).length > 0 ? map : null;
+}
+
+function parseSwissLine(line, map) {
+  const parts = line.split(/\s{2,}/).map((s) => s.trim()).filter(Boolean);
+  const get = (key) => (map[key] !== undefined ? parts[map[key]] || '' : '');
+
+  let fullName = get('name');
+  let firstName = fullName;
+  let lastName = '';
+  if (fullName.includes(',')) {
+    const spl = fullName.split(',').map((s) => s.trim());
+    lastName = spl[0];
+    firstName = spl[1] || '';
+  } else {
+    const spaceIdx = fullName.lastIndexOf(' ');
+    if (spaceIdx > 0) {
+      lastName = fullName.slice(spaceIdx + 1).trim();
+      firstName = fullName.slice(0, spaceIdx).trim();
+    }
+  }
+
+  return {
+    name: firstName,
+    lastName,
+    fideRating: parseInt(get('elo'), 10) || 0,
+    fideId: get('fide'),
+    title: get('title'),
+    federation: get('federation').toUpperCase(),
+    birthYear: get('birthYear'),
+  };
+}
+
+function parseSwissCompact(line) {
+  const parts = line.split(/\s+/).filter(Boolean);
+  if (parts.length < 3) return null;
+
+  let fideId = '';
+  let rating = 0;
+  let federation = '';
+  let title = '';
+  let nameIdx = 1;
+
+  if (/^\d{7,8}$/.test(parts[1])) {
+    fideId = parts[1];
+    nameIdx = 2;
+  }
+
+  let nameParts = [];
+  let ratingIdx = -1;
+  for (let i = nameIdx; i < parts.length; i++) {
+    if (/^\d{3,4}$/.test(parts[i]) && parseInt(parts[i]) >= 1000) {
+      rating = parseInt(parts[i]);
+      ratingIdx = i;
+      break;
+    }
+    nameParts.push(parts[i]);
+  }
+
+  const fullName = nameParts.join(' ');
+  let firstName = fullName;
+  let lastName = '';
+  if (fullName.includes(',')) {
+    const spl = fullName.split(',').map((s) => s.trim());
+    lastName = spl[0];
+    firstName = spl[1] || '';
+  } else {
+    const spaceIdx = fullName.lastIndexOf(' ');
+    if (spaceIdx > 0) {
+      lastName = fullName.slice(spaceIdx + 1).trim();
+      firstName = fullName.slice(0, spaceIdx).trim();
+    }
+  }
+
+  if (ratingIdx > 0 && ratingIdx + 1 < parts.length) {
+    const next = parts[ratingIdx + 1];
+    if (/^[A-Z]{2,4}$/.test(next)) {
+      federation = next;
+    } else if (['GM', 'IM', 'FM', 'CM', 'WGM', 'WIM', 'WFM', 'WCM', 'NM', 'SM'].includes(next.toUpperCase())) {
+      title = next.toUpperCase();
+      if (ratingIdx + 2 < parts.length && /^[A-Z]{2,4}$/.test(parts[ratingIdx + 2])) {
+        federation = parts[ratingIdx + 2];
+      }
+    } else {
+      federation = next;
+    }
+  }
+
+  return { name: firstName, lastName, fideRating: rating, fideId, title, federation };
+}
+
+export async function importPlayersFromSwissTXT(db, tournamentId, txtContent) {
+  const results = { imported: 0, skipped: 0, errors: [], players: [] };
+
+  const t = await db.prepare('SELECT * FROM tournaments WHERE id = ?').get(tournamentId);
+  if (!t) throw new Error('Torneo no encontrado');
+
+  const parsed = parseSwissTXT(txtContent);
+
+  for (const playerData of parsed) {
+    if (!playerData || !playerData.name) { results.skipped++; continue; }
+    try {
+      let existing = null;
+      if (playerData.fideId) {
+        existing = await db.prepare('SELECT * FROM players WHERE fide_id = ?').get(playerData.fideId);
+      }
+      if (!existing) {
+        existing = await db.prepare('SELECT * FROM players WHERE name = ? AND last_name = ?').get(playerData.name, playerData.lastName || '');
+      }
+
+      let player;
+      if (existing) {
+        player = existing;
+      } else {
+        const insert = await db.prepare(`
+          INSERT INTO players (fide_id, name, last_name, fide_rating, title, federation)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).run(playerData.fideId || '', playerData.name, playerData.lastName || '', playerData.fideRating || 0, playerData.title || '', playerData.federation || '');
+        player = await db.prepare('SELECT * FROM players WHERE id = ?').get(insert.lastInsertRowid);
+      }
+
+      const enrolled = await db.prepare('SELECT id FROM tournament_players WHERE tournament_id = ? AND player_id = ?').get(tournamentId, player.id);
+      if (!enrolled) {
+        const maxSeed = await db.prepare('SELECT MAX(seed_rank) as max FROM tournament_players WHERE tournament_id = ?').get(tournamentId);
+        await db.prepare('INSERT INTO tournament_players (tournament_id, player_id, seed_rank) VALUES (?, ?, ?)').run(tournamentId, player.id, (maxSeed?.max ?? 0) + 1);
       }
 
       results.players.push(player);

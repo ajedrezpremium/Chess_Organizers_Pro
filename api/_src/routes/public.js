@@ -45,6 +45,11 @@ router.get('/tournaments/:id', async (req, res) => {
 
   t.tiebreaks = t.tiebreaks ? t.tiebreaks.split(',') : ['BH1','BH','SB','DE','PR'];
   t.categories = t.categories ? t.categories.split(',').map((c) => c.trim()).filter(Boolean) : [];
+  t.groups = await db.prepare('SELECT * FROM tournament_groups WHERE tournament_id = ? ORDER BY sort_order ASC, id ASC').all(req.params.id);
+  for (const g of t.groups) {
+    const cnt = await db.prepare('SELECT COUNT(*) as c FROM tournament_players WHERE tournament_id = ? AND group_id = ?').get(req.params.id, g.id);
+    g.player_count = cnt.c;
+  }
   const players = await db.prepare('SELECT COUNT(*) as count FROM tournament_players WHERE tournament_id = ?').get(req.params.id);
   t.player_count = players.count;
 
@@ -67,7 +72,12 @@ router.get('/tournaments/:id/players', async (req, res) => {
 // GET /public/tournaments/:id/rounds
 router.get('/tournaments/:id/rounds', async (req, res) => {
   const db = getDb();
-  const rounds = await db.prepare('SELECT * FROM rounds WHERE tournament_id = ? ORDER BY round_number ASC').all(req.params.id);
+  const { group_id } = req.query;
+  let sql = 'SELECT * FROM rounds WHERE tournament_id = ?';
+  const params = [req.params.id];
+  if (group_id) { sql += ' AND group_id = ?'; params.push(group_id); }
+  sql += ' ORDER BY round_number ASC';
+  const rounds = await db.prepare(sql).all(...params);
   for (const r of rounds) {
     r.pairings = await db.prepare(`
       SELECT p.*, w.name as white_name, w.last_name as white_last, w.fide_rating as white_rating,
@@ -90,8 +100,12 @@ router.get('/tournaments/:id/standings', async (req, res) => {
   const tournament = await db.prepare("SELECT * FROM tournaments WHERE id = ?").get(req.params.id);
   if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
 
-  let players = await buildPlayerState(db, req.params.id);
-  const totalRounds = await db.prepare("SELECT MAX(round_number) as max FROM rounds WHERE tournament_id = ? AND status = 'closed'").get(req.params.id)?.max ?? 0;
+  const { group_id } = req.query;
+  const groupId = group_id || null;
+  let players = await buildPlayerState(db, req.params.id, { groupId });
+  const roundWhere = groupId ? ' AND group_id = ?' : ' AND group_id IS NULL';
+  const roundParams = groupId ? [req.params.id, groupId] : [req.params.id];
+  const totalRounds = await db.prepare(`SELECT MAX(round_number) as max FROM rounds WHERE tournament_id = ? AND status = 'closed'${roundWhere}`).get(...roundParams)?.max ?? 0;
   const tiebreaks = tournament.tiebreaks ? tournament.tiebreaks.split(',') : DEFAULT_TIEBREAK_ORDER;
 
   // Category filter
@@ -108,7 +122,7 @@ router.get('/tournaments/:id/standings', async (req, res) => {
 
   const standings = buildStandings(withTb);
 
-  const closedRounds = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status = 'closed' ORDER BY round_number ASC").all(req.params.id);
+  const closedRounds = await db.prepare(`SELECT * FROM rounds WHERE tournament_id = ? AND status = 'closed'${roundWhere} ORDER BY round_number ASC`).all(...roundParams);
   const roundPairings = await Promise.all(closedRounds.map(async (r) => {
     const pairings = await db.prepare('SELECT * FROM pairings WHERE round_id = ? ORDER BY board ASC').all(r.id);
     return { number: r.round_number, pairings };
@@ -123,6 +137,7 @@ router.get('/tournaments/:id/standings', async (req, res) => {
       lastName: s.lastName,
       fideRating: s.fideRating,
       title: s.title,
+      groupId: groupId,
       category: s.category,
       points: s.points,
       tiebreakValues: s.tiebreakValues,

@@ -37,6 +37,51 @@ router.post('/upload', authenticate, upload.single('file'), async (req, res) => 
     const db = getDb();
     const userId = req.user.id;
 
+    // Check scan limits based on user's plan
+    const membership = await db.prepare(`
+      SELECT um.*, mp.monthly_scans_limit
+      FROM user_memberships um 
+      JOIN membership_plans mp ON mp.id = um.plan_id
+      WHERE um.user_id = ? AND um.status = 'active'
+      ORDER BY um.id DESC LIMIT 1
+    `).get(userId);
+
+    if (!membership) {
+      return res.status(403).json({ 
+        error: 'No tienes una membresía activa', 
+        code: 'NO_MEMBERSHIP',
+        upgrade_required: true 
+      });
+    }
+
+    const monthlyLimit = membership.monthly_scans_limit || 0;
+    if (monthlyLimit > 0) {
+      // Count scans this month
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      const scansThisMonth = await db.prepare(`
+        SELECT COUNT(*) as count FROM scan_jobs 
+        WHERE user_id = ? AND created_at >= ?
+      `).get(userId, startOfMonth.toISOString());
+
+      if (scansThisMonth.count >= monthlyLimit) {
+        return res.status(403).json({ 
+          error: `Límite mensual de escaneos alcanzado (${monthlyLimit}/mes). Actualiza tu plan para más escaneos.`,
+          code: 'SCAN_LIMIT_EXCEEDED',
+          limit: monthlyLimit,
+          used: scansThisMonth.count,
+          upgrade_required: true
+        });
+      }
+    } else if (monthlyLimit === 0) {
+      return res.status(403).json({ 
+        error: 'Tu plan no incluye escaneos. Actualiza a Básico o Pro para usar el escáner.',
+        code: 'SCAN_NOT_INCLUDED',
+        upgrade_required: true
+      });
+    }
+
     if (!req.file) {
       return res.status(400).json({ error: 'No se subió ningún archivo' });
     }

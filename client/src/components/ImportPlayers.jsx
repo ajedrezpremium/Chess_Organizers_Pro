@@ -6,6 +6,7 @@ const FORMATS = [
   { value: 'csv', label: 'CSV (coma)', ext: '.csv' },
   { value: 'tsv', label: 'TSV / Vega', ext: '.tsv' },
   { value: 'trf', label: 'TRF FIDE', ext: '.trf' },
+  { value: 'swiss', label: 'Swiss-Manager TXT', ext: '.txt' },
 ];
 
 const FIELD_OPTIONS = [
@@ -53,14 +54,16 @@ export default function ImportPlayers({ tournamentId, onImport }) {
     setLoading(true);
     try {
       if (format === 'trf') {
-        // TRF preview: just show count
         const lines = text.split('\n').filter((l) => l.startsWith('001 '));
         setPreview({ totalRows: lines.length, isTRF: true });
+        setStep('preview');
+      } else if (format === 'swiss') {
+        const lines = text.split('\n').filter((l) => l.trim() && !/^Nr\.|^-+/.test(l));
+        setPreview({ totalRows: lines.length, isSwiss: true });
         setStep('preview');
       } else {
         const data = await api.importPreviewCSV({ csv: text, format });
         setPreview(data);
-        // Auto-build column map
         const map = {};
         for (const s of data.columnSuggestions) {
           if (s.suggested && s.suggested !== 'skip') map[s.suggested] = s.header;

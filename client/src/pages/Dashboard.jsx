@@ -25,8 +25,6 @@ export default function Dashboard() {
   const { t } = useI18n();
   const location = useLocation();
   const [myTournaments, setMyTournaments] = useState([]);
-  const [activeTournaments, setActiveTournaments] = useState([]);
-  const [pastTournaments, setPastTournaments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [membership, setMembership] = useState(null);
@@ -44,12 +42,9 @@ export default function Dashboard() {
 
   const fetchData = useCallback(() => {
     setLoading(true);
-    api.listTournaments().then((d) => setMyTournaments(d.tournaments)).catch(() => {});
-    api.external.listTournaments({ status: 'active', limit: 20, sort: 'start_date', order: 'desc' })
-      .then((d) => setActiveTournaments(d.tournaments)).catch(() => {});
-    api.external.listTournaments({ status: 'finished', limit: 20, sort: 'start_date', order: 'desc' })
-      .then((d) => setPastTournaments(d.tournaments)).catch(() => {});
-    api.myMembership().then((d) => setMembership(d.membership)).catch(() => {}).finally(() => setLoading(false));
+    const timeout = setTimeout(() => { setLoading(false); }, 5000);
+    api.listTournaments().then((d) => setMyTournaments(d.tournaments)).catch(() => {}).finally(() => clearTimeout(timeout));
+    api.myMembership().then((d) => setMembership(d.membership)).catch(() => {}).finally(() => { clearTimeout(timeout); setLoading(false); });
   }, []);
 
   useEffect(() => { fetchData(); }, [location.key]);
@@ -224,15 +219,31 @@ export default function Dashboard() {
 
             {/* COLUMNA DERECHA (7/12): PENDIENTES (enlaces externos) → PASADOS */}
             <div className="lg:col-span-7 space-y-6">
+              <div className="bg-gradient-to-r from-fide-900/80 to-amber-900/80 border border-amber-700/30 rounded-3xl p-6 shadow-lg text-white">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-xl sm:text-2xl font-bold">{t('dashboard.scannerTitle')}</h2>
+                    <p className="mt-2 text-sm text-gray-200 max-w-2xl">{t('dashboard.scannerSubtitle')}</p>
+                  </div>
+                  <div className="text-4xl">📸</div>
+                </div>
+                <div className="mt-5 flex flex-col sm:flex-row sm:items-center gap-3">
+                  <Link to="/app/scan" className="inline-flex items-center justify-center rounded-xl bg-amber-400 text-fide-950 font-semibold px-5 py-3 text-sm transition hover:bg-amber-300">
+                    {t('dashboard.scannerButton')}
+                  </Link>
+                  <span className="text-sm text-gray-200">{t('dashboard.scannerNote')}</span>
+                </div>
+              </div>
+ 
               {/* 0. LIVE — En Directo desde Lichess Broadcast */}
               <LiveBroadcastPanel />
-
+ 
               {/* 1. 10 Torneos PENDIENTES — Próximos eventos */}
               <PendingTournamentsFeed
                 limit={10}
                 onOpen={handleOpenTournament}
               />
-
+ 
               {/* 2. 10 Torneos PASADOS */}
               <PastTournamentsFeed
                 tournaments={pastTournaments}

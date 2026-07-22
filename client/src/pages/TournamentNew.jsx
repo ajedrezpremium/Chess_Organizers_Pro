@@ -30,8 +30,13 @@ export default function TournamentNew() {
     setSaving(true);
     try {
       const tourn = await api.createTournament(form);
-      toast.success('Torneo creado correctamente');
-      navigate(`/app/tournament/${tourn.id}`);
+      if (tourn.queued) {
+        toast.info('Torneo encolado para creación cuando haya conexión.');
+        navigate('/app/dashboard');
+      } else {
+        toast.success('Torneo creado correctamente');
+        navigate(`/app/tournament/${tourn.id}`);
+      }
     } catch (err) { toast.error(err.message); setSaving(false); }
   };
 

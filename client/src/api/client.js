@@ -116,7 +116,7 @@ export const api = {
   exportTrf: (tid) => request('GET', `/tournaments/${tid}/trf`),
   fideSubmit: (tid) => request('POST', `/fide/submit/${tid}`),
   fideReport: (tid) => request('GET', `/fide/report/${tid}`),
-  scheduleRound: (rid, scheduled_at) => request('PATCH', `/rounds/${rid}/schedule`, { scheduled_at }),
+  scheduleRound: (rid, scheduled_at, duration) => request('PATCH', `/rounds/${rid}/schedule`, { scheduled_at, duration }),
   bulletin: (tid) => request('GET', `/tournaments/${tid}/bulletin`),
 
   fideSearch: (q) => request('GET', `/fide/search?q=${encodeURIComponent(q)}`),
@@ -134,9 +134,17 @@ export const api = {
   stripeCheckout: (data) => request('POST', '/stripe/create-checkout-session', data),
   stripePortal: (data) => request('POST', '/stripe/create-portal-session', data),
 
+  // ── Grupos / Secciones ─────────────────────────────────────
+  listGroups: (tid) => request('GET', `/tournaments/${tid}/groups`),
+  createGroup: (tid, data) => request('POST', `/tournaments/${tid}/groups`, data),
+  updateGroup: (gid, data) => request('PATCH', `/groups/${gid}`, data),
+  deleteGroup: (gid) => request('DELETE', `/groups/${gid}`),
+  assignGroup: (tid, playerId, groupId) => request('PATCH', `/tournaments/${tid}/groups/assign`, { player_id: playerId, group_id: groupId }),
+
   importPreviewCSV: (data) => request('POST', '/import/preview-csv', data),
   importPlayers: (tid, data) => request('POST', `/import/players/${tid}`, data),
   importTRF: (tid, data) => request('POST', `/import/trf/${tid}`, data),
+  importSwissTXT: (tid, data) => request('POST', `/import/swiss-txt/${tid}`, data),
 
   getNotifications: (params) => request('GET', `/notifications?${new URLSearchParams(params)}`),
   markAllRead: () => request('PATCH', '/notifications/read-all'),
@@ -206,7 +214,7 @@ export const api = {
       registrationStatus: (id) => request('GET', `/public/tournaments/${id}/registration-status`),
     listTournaments: (params) => request('GET', `/public/tournaments?${new URLSearchParams(params)}`),
     getPlayers: (id) => request('GET', `/public/tournaments/${id}/players`),
-    getRounds: (id) => request('GET', `/public/tournaments/${id}/rounds`),
+    getRounds: (id, params) => request('GET', `/public/tournaments/${id}/rounds${params ? `?${new URLSearchParams(params)}` : ''}`),
     getStandings: (id, params) => request('GET', `/public/tournaments/${id}/standings${params ? `?${new URLSearchParams(params)}` : ''}`),
     register: (id, data) => request('POST', `/public/tournaments/${id}/register`, data),
     crosstab: (id) => request('GET', `/public/tournaments/${id}/crosstab`),

@@ -66,6 +66,8 @@ CREATE TABLE IF NOT EXISTS tournaments (
   registered_count INTEGER DEFAULT 0,
   fide_event_id   TEXT    DEFAULT '',
   fide_approved   INTEGER DEFAULT 0,
+  documents       TEXT    DEFAULT '[]',
+  links           TEXT    DEFAULT '{}',
   deputy_arbiter_2 TEXT   DEFAULT '',
   tournament_director TEXT DEFAULT '',
   location_address TEXT   DEFAULT '',
@@ -122,6 +124,7 @@ CREATE TABLE IF NOT EXISTS rounds (
   published_at    TIMESTAMPTZ,
   closed_at       TIMESTAMPTZ,
   scheduled_at    TIMESTAMPTZ,
+  duration        INTEGER,
   created_at      TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(tournament_id, round_number)
 );
@@ -366,6 +369,29 @@ CREATE TABLE IF NOT EXISTS match_pairings (
   created_at      TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(team_match_id, board)
 );
+
+-- Tournament Groups (múltiples secciones dentro de un torneo)
+CREATE TABLE IF NOT EXISTS tournament_groups (
+  id              SERIAL PRIMARY KEY,
+  tournament_id   INTEGER NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+  name            TEXT NOT NULL,
+  system          TEXT NOT NULL DEFAULT 'dutch'
+                          CHECK(system IN ('dutch','roundrobin','burstein','dubov')),
+  n_rounds        INTEGER NOT NULL DEFAULT 6,
+  time_control    TEXT DEFAULT '90+30',
+  tiebreaks       TEXT DEFAULT 'BH1,BH,SB,DE,PR',
+  status          TEXT DEFAULT 'pending'
+                          CHECK(status IN ('pending','active','finished','cancelled')),
+  sort_order      INTEGER DEFAULT 0,
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE rounds ADD COLUMN IF NOT EXISTS group_id INTEGER REFERENCES tournament_groups(id) ON DELETE CASCADE;
+ALTER TABLE tournament_players ADD COLUMN IF NOT EXISTS group_id INTEGER REFERENCES tournament_groups(id) ON DELETE SET NULL;
+ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS documents TEXT DEFAULT '[]';
+CREATE INDEX IF NOT EXISTS idx_rounds_group ON rounds(group_id);
+CREATE INDEX IF NOT EXISTS idx_tournament_players_group ON tournament_players(group_id);
 
 -- ============================================================
 -- ÍNDICES

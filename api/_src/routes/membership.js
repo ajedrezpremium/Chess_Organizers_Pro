@@ -14,17 +14,24 @@ router.get('/plans', async (req, res) => {
 
 // GET /membership/my — membresía del usuario autenticado
 router.get('/my', authenticate, async (req, res) => {
-  const db = getDb();
-  const membership = await db.prepare(`
-    SELECT um.*, mp.name as plan_name, mp.slug as plan_slug, mp.max_tournaments, mp.max_players_per_tournament, mp.features, mp.monthly_scans_limit
-    FROM user_memberships um JOIN membership_plans mp ON mp.id = um.plan_id
-    WHERE um.user_id = ? AND um.status = 'active'
-    ORDER BY um.id DESC LIMIT 1
-  `).get(req.user.id);
+  try {
+    const db = getDb();
+    const membership = await db.prepare(`
+      SELECT um.*, mp.name as plan_name, mp.slug as plan_slug, mp.max_tournaments, mp.max_players_per_tournament, mp.features, mp.monthly_scans_limit
+      FROM user_memberships um JOIN membership_plans mp ON mp.id = um.plan_id
+      WHERE um.user_id = ? AND um.status = 'active'
+      ORDER BY um.id DESC LIMIT 1
+    `).get(req.user.id);
 
-  const activeCount = (await db.prepare("SELECT COUNT(*) as c FROM tournaments WHERE created_by = ? AND status = 'active'").get(req.user.id)).c;
+    let activeCount = 0;
+    try {
+      activeCount = (await db.prepare("SELECT COUNT(*) as c FROM tournaments WHERE created_by = ? AND status = 'active'").get(req.user.id)).c;
+    } catch {}
 
-  res.json({ membership, active_tournaments: activeCount });
+    res.json({ membership, active_tournaments: activeCount });
+  } catch (err) {
+    res.json({ membership: null, active_tournaments: 0 });
+  }
 });
 
 // GET /membership/scan-quota — cuota de escáner del usuario

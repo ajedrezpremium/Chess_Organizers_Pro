@@ -88,8 +88,12 @@ export function resolveBinaryPath() {
   const key  = `${platform}-${arch}`;
   const name = binaryNames[key] ?? 'bbpPairings';
 
-  // Intentar ruta local ./bin/ primero
-  const localPath = resolve(new URL('.', import.meta.url).pathname, '..', 'bin', name);
+  let localPath;
+  try {
+    localPath = resolve(new URL('.', eval('import.meta.url')).pathname, '..', 'bin', name);
+  } catch {
+    localPath = resolve(process.cwd(), 'bin', name);
+  }
   return localPath;
 }
 

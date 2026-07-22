@@ -1,12 +1,18 @@
 import { createPlayer } from '../../../src/engine/types.js';
 
-export async function buildPlayerState(db, tournamentId) {
-  const rows = await db.prepare(`
+export async function buildPlayerState(db, tournamentId, opts = {}) {
+  const { groupId, category } = opts;
+  let sql = `
     SELECT tp.*, p.name, p.last_name, p.fide_rating, p.title, p.federation, p.fide_id
     FROM tournament_players tp JOIN players p ON tp.player_id = p.id
     WHERE tp.tournament_id = ?
-    ORDER BY tp.seed_rank ASC
-  `).all(tournamentId);
+  `;
+  const params = [tournamentId];
+  if (groupId) { sql += ' AND tp.group_id = ?'; params.push(groupId); }
+  if (category) { sql += ' AND tp.category = ?'; params.push(category); }
+  sql += ' ORDER BY tp.seed_rank ASC';
+
+  const rows = await db.prepare(sql).all(...params);
 
   return rows.map((row) => createPlayer({
     id: String(row.id),

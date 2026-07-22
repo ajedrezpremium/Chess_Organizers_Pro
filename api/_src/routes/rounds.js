@@ -21,7 +21,12 @@ const engine = new PairingEngine({ forceBackend: 'js', verbose: false });
 // GET /tournaments/:tid/rounds
 router.get('/tournaments/:tid/rounds', authenticate, async (req, res) => {
   const db = getDb();
-  const rounds = await db.prepare('SELECT * FROM rounds WHERE tournament_id = ? ORDER BY round_number ASC').all(req.params.tid);
+  const { group_id } = req.query;
+  let sql = 'SELECT * FROM rounds WHERE tournament_id = ?';
+  const params = [req.params.tid];
+  if (group_id) { sql += ' AND group_id = ?'; params.push(group_id); }
+  sql += ' ORDER BY round_number ASC';
+  const rounds = await db.prepare(sql).all(...params);
   for (const r of rounds) {
     r.pairings = await db.prepare(`
       SELECT p.*, w.name as white_name, w.last_name as white_last, w.fide_rating as white_rating,
@@ -45,26 +50,41 @@ router.post('/tournaments/:tid/rounds/generate', authenticate, async (req, res) 
     const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
     if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
 
-    const lastRound = await db.prepare('SELECT MAX(round_number) as max FROM rounds WHERE tournament_id = ?').get(req.params.tid);
+    const groupId = req.body.group_id || null;
+
+    // If group_id provided, get group-specific settings
+    let system = tournament.system;
+    let nRounds = tournament.n_rounds;
+    if (groupId) {
+      const group = await db.prepare('SELECT * FROM tournament_groups WHERE id = ? AND tournament_id = ?').get(groupId, req.params.tid);
+      if (group) {
+        system = group.system || system;
+        nRounds = group.n_rounds || nRounds;
+      }
+    }
+
+    const roundWhere = groupId ? ' AND group_id = ?' : ' AND group_id IS NULL';
+    const roundParams = groupId ? [req.params.tid, groupId] : [req.params.tid];
+    const lastRound = await db.prepare(`SELECT MAX(round_number) as max FROM rounds WHERE tournament_id = ?${roundWhere}`).get(...roundParams);
     const nextRound = (lastRound?.max ?? 0) + 1;
 
-    if (nextRound > tournament.n_rounds) {
+    if (nextRound > nRounds) {
       return res.status(400).json({ error: 'Todas las rondas ya fueron generadas' });
     }
 
-    const players = await buildPlayerState(db, req.params.tid);
+    const players = await buildPlayerState(db, req.params.tid, { groupId });
     if (players.length < 2) return res.status(400).json({ error: 'Se necesitan al menos 2 jugadores' });
 
     const result = await engine.pairNextRound({
       players,
       round: nextRound,
-      system: tournament.system,
+      system,
     });
 
     // Crear ronda
     const round = await db.prepare(
-      'INSERT INTO rounds (tournament_id, round_number, status) VALUES (?, ?, ?)'
-    ).run(req.params.tid, nextRound, 'generated');
+      'INSERT INTO rounds (tournament_id, round_number, status, group_id) VALUES (?, ?, ?, ?)'
+    ).run(req.params.tid, nextRound, 'generated', groupId);
 
     // Insertar pairings
     const insertPairing = await db.prepare(
@@ -193,11 +213,11 @@ router.patch('/rounds/:rid/schedule', authenticate, async (req, res) => {
   if (!round) return res.status(404).json({ error: 'Ronda no encontrada' });
   if (round.created_by !== req.user.id) return res.status(403).json({ error: 'No autorizado' });
 
-  const { scheduled_at } = req.body;
+  const { scheduled_at, duration } = req.body;
   if (scheduled_at && isNaN(Date.parse(scheduled_at))) return res.status(400).json({ error: 'Fecha inválida' });
 
-  await db.prepare('UPDATE rounds SET scheduled_at = ? WHERE id = ?').run(scheduled_at || null, req.params.rid);
-  res.json({ ok: true, scheduled_at });
+  await db.prepare('UPDATE rounds SET scheduled_at = ?, duration = ? WHERE id = ?').run(scheduled_at || null, duration ?? null, req.params.rid);
+  res.json({ ok: true, scheduled_at, duration });
 });
 
 // PATCH /rounds/:rid/result — guardar resultado de una partida
@@ -244,8 +264,8 @@ router.post('/rounds/:rid/close', authenticate, async (req, res) => {
     const allResultsIn = pairings.every((p) => p.result !== '-');
     if (!allResultsIn) return res.status(400).json({ error: 'Faltan resultados por ingresar' });
 
-    // Reconstruir estado y aplicar resultados
-    let players = await buildPlayerState(db, round.tournament_id);
+    // Reconstruir estado y aplicar resultados (filtrar por grupo si la ronda tiene grupo)
+    let players = await buildPlayerState(db, round.tournament_id, { groupId: round.group_id || null });
 
     const enginePairings = pairings.map((p) => ({
       board: p.board,
@@ -283,8 +303,12 @@ router.get('/tournaments/:tid/standings', authenticate, async (req, res) => {
   const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
   if (!tournament) return res.status(404).json({ error: 'Torneo no encontrado' });
 
-  const players = await buildPlayerState(db, req.params.tid);
-  const totalRounds = await db.prepare("SELECT MAX(round_number) as max FROM rounds WHERE tournament_id = ? AND status = 'closed'").get(req.params.tid)?.max ?? 0;
+  const { group_id } = req.query;
+  const groupId = group_id || null;
+  const players = await buildPlayerState(db, req.params.tid, { groupId });
+  const roundWhere = groupId ? ' AND group_id = ?' : ' AND group_id IS NULL';
+  const roundParams = groupId ? [req.params.tid, groupId] : [req.params.tid];
+  const totalRounds = await db.prepare(`SELECT MAX(round_number) as max FROM rounds WHERE tournament_id = ? AND status = 'closed'${roundWhere}`).get(...roundParams)?.max ?? 0;
   const tiebreaks = tournament.tiebreaks ? tournament.tiebreaks.split(',') : DEFAULT_TIEBREAK_ORDER;
 
   const playersById = Object.fromEntries(players.map((p) => [p.id, p]));
@@ -296,7 +320,7 @@ router.get('/tournaments/:tid/standings', authenticate, async (req, res) => {
   const standings = buildStandings(withTb);
 
   // Calcular variación de rating FIDE
-  const closedRounds = await db.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND status = 'closed' ORDER BY round_number ASC").all(req.params.tid);
+  const closedRounds = await db.prepare(`SELECT * FROM rounds WHERE tournament_id = ? AND status = 'closed'${roundWhere} ORDER BY round_number ASC`).all(...roundParams);
   const roundPairings = await Promise.all(closedRounds.map(async (r) => {
     const pairings = await db.prepare('SELECT * FROM pairings WHERE round_id = ? ORDER BY board ASC').all(r.id);
     return { number: r.round_number, pairings };
@@ -311,6 +335,7 @@ router.get('/tournaments/:tid/standings', authenticate, async (req, res) => {
       lastName: s.lastName,
       fideRating: s.fideRating,
       title: s.title,
+      groupId: groupId,
       points: s.points,
       tiebreakValues: s.tiebreakValues,
       ratingChange: ratingChanges[s.id] ?? 0,

@@ -70,7 +70,7 @@ router.patch('/:id', authenticate, async (req, res) => {
   const t = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.id, req.user.id);
   if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
 
-  const allowed = ['name','system','n_rounds','start_date','end_date','city','federation','time_control','rated','chief_arbiter','status','description','primary_color','secondary_color','logo_url','banner_url','stream_url','stream_platform','registration_fee','registration_currency','auto_approve','custom_fields'];
+  const allowed = ['name','system','n_rounds','start_date','end_date','city','federation','time_control','rated','chief_arbiter','status','description','primary_color','secondary_color','logo_url','banner_url','stream_url','stream_platform','registration_fee','registration_currency','auto_approve','custom_fields','categories','fide_event_id','documents','links'];
   const updates = [];
   const params = [];
 

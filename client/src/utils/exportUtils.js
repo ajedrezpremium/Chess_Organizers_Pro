@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 const SYS_LABELS = { dutch: 'Suizo Holandés', roundrobin: 'Round Robin', burstein: 'Burstein', dubov: 'Dubov' };
 
@@ -7,6 +8,13 @@ const SYS_LABELS = { dutch: 'Suizo Holandés', roundrobin: 'Round Robin', burste
 
 function download(filename, content, mime = 'text/plain') {
   const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url; a.download = filename;
@@ -610,4 +618,278 @@ export function exportCertificatePDF(tournament, playerData) {
   doc.text('Generado por Chess Organizers Pro', pw / 2, ph - 18, { align: 'center' });
 
   doc.save(`${tournament.name.replace(/\s+/g, '_')}_certificado_${playerData.name.replace(/\s+/g, '_')}.pdf`);
+}
+
+// ── XLSX ────────────────────────────────────────────────────────────
+
+export function exportPlayersXLSX(tournament, players) {
+  const data = players.map((p, i) => ({
+    '#': p.seed_rank || i + 1,
+    'Nombre': p.name,
+    'Apellido': p.last_name || '',
+    'Título': p.title || '',
+    'Rating FIDE': p.fide_rating || 0,
+    'Federación': p.federation || '',
+    'FIDE ID': p.fide_id || '',
+    'Categoría': p.category || '',
+    'Puntos': p.current_points ?? 0,
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Jugadores');
+  const xlsx = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  downloadBlob(new Blob([xlsx]), `${tournament.name.replace(/\s+/g, '_')}_jugadores.xlsx`);
+}
+
+export function exportStandingsXLSX(tournament, standings) {
+  if (!standings) return;
+  const tbLabels = standings.tiebreaks || [];
+  const data = standings.standings.map((s) => {
+    const row = {
+      '#': s.position,
+      'Nombre': s.name,
+      'Apellido': s.lastName || '',
+      'Título': s.title || '',
+      'Rating': s.fideRating || '',
+      'Puntos': s.points,
+    };
+    tbLabels.forEach((tb, i) => {
+      row[tb] = s.tiebreakValues?.[i] ?? '';
+    });
+    row['ΔR'] = s.ratingChange ?? '';
+    return row;
+  });
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Clasificación');
+  const xlsx = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  downloadBlob(new Blob([xlsx]), `${tournament.name.replace(/\s+/g, '_')}_clasificacion.xlsx`);
+}
+
+export function exportPairingsXLSX(tournament, rounds) {
+  if (!rounds || rounds.length === 0) return;
+  const data = [];
+  for (const r of rounds) {
+    if (!r.pairings) continue;
+    for (const p of r.pairings) {
+      data.push({
+        'Ronda': r.round_number,
+        'Mesa': p.board,
+        'Blancas': `${p.white_name || ''} ${p.white_last || ''}`.trim(),
+        'Rating B': p.white_rating || '',
+        'Resultado': p.result,
+        'Negras': p.is_bye ? 'BYE' : `${p.black_name || ''} ${p.black_last || ''}`.trim(),
+        'Rating N': p.is_bye ? '' : p.black_rating || '',
+      });
+    }
+  }
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Pairings');
+  const xlsx = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  downloadBlob(new Blob([xlsx]), `${tournament.name.replace(/\s+/g, '_')}_pairings.xlsx`);
+}
+
+export function exportCrosstableXLSX(tournament, crosstabData) {
+  if (!crosstabData || !crosstabData.players || crosstabData.players.length === 0) return;
+  const { players, nRounds } = crosstabData;
+  const data = players.map((p, i) => {
+    const row = {
+      '#': i + 1,
+      'Jugador': `${p.name} ${p.lastName || ''}`.trim(),
+      'Título': p.title || '',
+      'Rating': p.rating || '',
+      'Puntos': p.points,
+    };
+    for (let ri = 0; ri < nRounds; ri++) {
+      const r = p.rounds[ri];
+      if (!r) { row[`R${ri + 1}`] = '-'; continue; }
+      if (r.isBye) { row[`R${ri + 1}`] = 'B'; continue; }
+      if (!r.opponent) { row[`R${ri + 1}`] = '-'; continue; }
+      row[`R${ri + 1}`] = `${r.result === '=' ? '½' : r.result} ${r.color === 'W' ? 'w' : 'b'}`;
+    }
+    return row;
+  });
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Tabla Cruzada');
+  const xlsx = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  downloadBlob(new Blob([xlsx]), `${tournament.name.replace(/\s+/g, '_')}_crosstable.xlsx`);
+}
+
+export function exportTournamentReportXLSX(tournament, standings, rounds, players, crosstabData) {
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: Info
+  const info = [
+    ['Torneo', tournament.name],
+    ['Sistema', SYS_LABELS[tournament.system] || tournament.system],
+    ['Rondas', tournament.n_rounds],
+    ['Federación', tournament.federation || ''],
+    ['Ciudad', tournament.city || ''],
+    ['Ritmo', tournament.time_control || ''],
+    ['Inicio', tournament.start_date || ''],
+    ['Estado', tournament.status === 'active' ? 'En curso' : tournament.status === 'finished' ? 'Finalizado' : 'Programado'],
+    ['Jugadores', players?.length || 0],
+  ];
+  const wsInfo = XLSX.utils.aoa_to_sheet(info);
+  XLSX.utils.book_append_sheet(wb, wsInfo, 'Información');
+
+  // Sheet 2: Standings
+  if (standings && standings.standings?.length > 0) {
+    const tbLabels = standings.tiebreaks || [];
+    const stData = standings.standings.map((s) => {
+      const row = {
+        '#': s.position, 'Nombre': s.name, 'Apellido': s.lastName || '',
+        'Título': s.title || '', 'Rating': s.fideRating || '', 'Puntos': s.points,
+      };
+      tbLabels.forEach((tb, i) => { row[tb] = s.tiebreakValues?.[i] ?? ''; });
+      row['ΔR'] = s.ratingChange ?? '';
+      return row;
+    });
+    const wsSt = XLSX.utils.json_to_sheet(stData);
+    XLSX.utils.book_append_sheet(wb, wsSt, 'Clasificación');
+  }
+
+  // Sheet 3: Pairings
+  if (rounds && rounds.length > 0) {
+    const pData = [];
+    for (const r of rounds) {
+      if (!r.pairings) continue;
+      for (const p of r.pairings) {
+        pData.push({
+          'Ronda': r.round_number, 'Mesa': p.board,
+          'Blancas': `${p.white_name || ''} ${p.white_last || ''}`.trim(),
+          'Resultado': p.result,
+          'Negras': p.is_bye ? 'BYE' : `${p.black_name || ''} ${p.black_last || ''}`.trim(),
+        });
+      }
+    }
+    const wsP = XLSX.utils.json_to_sheet(pData);
+    XLSX.utils.book_append_sheet(wb, wsP, 'Emparejamientos');
+  }
+
+  // Sheet 4: Players
+  if (players && players.length > 0) {
+    const plData = players.map((p, i) => ({
+      '#': p.seed_rank || i + 1, 'Nombre': p.name, 'Apellido': p.last_name || '',
+      'Título': p.title || '', 'Rating': p.fide_rating || '',
+      'Federación': p.federation || '', 'Puntos': p.current_points ?? 0,
+    }));
+    const wsPl = XLSX.utils.json_to_sheet(plData);
+    XLSX.utils.book_append_sheet(wb, wsPl, 'Jugadores');
+  }
+
+  const xlsx = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  downloadBlob(new Blob([xlsx]), `${tournament.name.replace(/\s+/g, '_')}_reporte_completo.xlsx`);
+}
+
+export function exportPerformanceXLSX(tournament, performanceData) {
+  if (!performanceData || performanceData.length === 0) return;
+  const data = [...performanceData]
+    .sort((a, b) => b.points - a.points || (b.rating || 0) - (a.rating || 0))
+    .map((p, i) => {
+      const row = {
+        '#': i + 1,
+        'Jugador': `${p.title ? p.title + ' ' : ''}${p.name} ${p.lastName || ''}`.trim(),
+        'Elo': p.rating || '',
+        'Pts/Games': `${p.points}/${p.games}`,
+        'TPR': p.tpr ?? '',
+        'ΔR': p.ratingChg ?? '',
+        'K': p.kFactor ?? 20,
+      };
+      (p.roundChanges || []).forEach((d, ri) => {
+        row[`R${ri + 1}`] = d !== null && d !== undefined ? `${(d * (p.kFactor || 20)) > 0 ? '+' : ''}${Math.round(d * (p.kFactor || 20))}` : '-';
+      });
+      return row;
+    });
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Rendimiento');
+  const xlsx = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  downloadBlob(new Blob([xlsx]), `${tournament.name.replace(/\s+/g, '_')}_rendimiento.xlsx`);
+}
+
+// ── QR Download ──────────────────────────────────────────────────────
+
+export function downloadQR(url, filename = 'qr.png') {
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(url)}`;
+  const a = document.createElement('a');
+  a.href = qrUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+// ── Initial List Export ──────────────────────────────────────────────
+
+export function exportInitialListCSV(tournament, players) {
+  const headers = ['# Inicial', 'Nombre', 'Apellido', 'Título', 'Rating FIDE', 'Federación', 'FIDE ID', 'Categoría'];
+  const rows = players.map((p, i) => [p.seed_rank || i + 1, p.name, p.last_name || '', p.title || '', p.fide_rating || '', p.federation || '', p.fide_id || '', p.category || '']);
+  const csv = [headers.join(','), ...rows.map((r) => r.map((v) => `"${v}"`).join(','))].join('\n');
+  download(`${tournament.name.replace(/\s+/g, '_')}_lista_inicial.csv`, csv, 'text/csv;charset=utf-8');
+}
+
+export function exportInitialListPDF(tournament, players) {
+  if (!players || players.length === 0) return;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const pageW = doc.internal.pageSize.getWidth();
+
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text('♛ CHESS ORGANIZERS PRO', pageW / 2, 16, { align: 'center' });
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'normal');
+  doc.text(tournament.name, pageW / 2, 24, { align: 'center' });
+  doc.setFontSize(8);
+  doc.setTextColor(100);
+  doc.text(`Lista Inicial de Jugadores · ${players.length} jugadores`, pageW / 2, 30, { align: 'center' });
+  doc.setTextColor(0);
+
+  const header = ['#', 'Jugador', 'Título', 'Rating', 'Federación', 'FIDE ID', 'Categoría'];
+  const body = players.map((p, i) => [
+    p.seed_rank || i + 1,
+    `${p.name} ${p.last_name || ''}`.trim(),
+    p.title || '',
+    p.fide_rating || '-',
+    p.federation || '-',
+    p.fide_id || '-',
+    p.category || '-',
+  ]);
+
+  doc.autoTable({
+    head: [header],
+    body,
+    startY: 36,
+    styles: { fontSize: 8, cellPadding: 2 },
+    headStyles: { fillColor: [52, 73, 94], textColor: 255, fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: [245, 247, 250] },
+    columnStyles: { 0: { cellWidth: 10, halign: 'center' } },
+  });
+
+  const dateStr = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+  doc.setFontSize(7);
+  doc.setTextColor(150);
+  doc.text(`Generado el ${dateStr} · Chess Organizers Pro`, pageW / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
+
+  doc.save(`${tournament.name.replace(/\s+/g, '_')}_lista_inicial.pdf`);
+}
+
+export function exportInitialListXLSX(tournament, players) {
+  const data = players.map((p, i) => ({
+    '# Inicial': p.seed_rank || i + 1,
+    'Nombre': p.name,
+    'Apellido': p.last_name || '',
+    'Título': p.title || '',
+    'Rating FIDE': p.fide_rating || '',
+    'Federación': p.federation || '',
+    'FIDE ID': p.fide_id || '',
+    'Categoría': p.category || '',
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Lista Inicial');
+  const xlsx = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  downloadBlob(new Blob([xlsx]), `${tournament.name.replace(/\s+/g, '_')}_lista_inicial.xlsx`);
 }

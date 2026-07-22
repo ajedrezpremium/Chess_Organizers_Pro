@@ -6,7 +6,7 @@ import { CardSkeleton } from '../components/Skeleton.jsx';
 import ConfirmModal from '../components/ConfirmModal.jsx';
 import { useToast } from '../components/Toast.jsx';
 import QRCode from '../components/QRCode.jsx';
-import { exportStandingsPDF, exportPairingsPDF, exportCrosstablePDF, exportTournamentReportPDF, exportPGN, exportPlayersCSV, exportStandingsCSV, exportPairingsCSV } from '../utils/exportUtils.js';
+import { exportStandingsPDF, exportPairingsPDF, exportCrosstablePDF, exportTournamentReportPDF, exportPGN, exportPlayersCSV, exportStandingsCSV, exportPairingsCSV, exportPlayersXLSX, exportStandingsXLSX, exportPairingsXLSX, exportCrosstableXLSX, exportTournamentReportXLSX, exportPerformanceXLSX, downloadQR, exportInitialListCSV, exportInitialListPDF, exportInitialListXLSX } from '../utils/exportUtils.js';
 import RatingCalculator, { calculateChange, getKFactor } from '../components/RatingCalculator.jsx';
 
 const CrossTable = lazy(() => import('../components/CrossTable.jsx'));
@@ -36,6 +36,7 @@ export default function TournamentDetail() {
   const [tournament, setTournament] = useState(null);
   const [players, setPlayers] = useState([]);
   const [rounds, setRounds] = useState([]);
+  const [groups, setGroups] = useState([]);
   const [standings, setStandings] = useState(null);
   const [crosstab, setCrosstab] = useState(null);
   const [overview, setOverview] = useState(null);
@@ -49,10 +50,10 @@ export default function TournamentDetail() {
   const autoRefreshRef = useRef(null);
 
   const load = useCallback(async () => {
-    const [t, p, r] = await Promise.all([
-      api.getTournament(id), api.listTournamentPlayers(id), api.listRounds(id),
+    const [t, p, r, g] = await Promise.all([
+      api.getTournament(id), api.listTournamentPlayers(id), api.listRounds(id), api.listGroups(id),
     ]);
-    setTournament(t); setPlayers(p); setRounds(r);
+    setTournament(t); setPlayers(p); setRounds(r); setGroups(g);
   }, [id]);
 
   useEffect(() => { load().catch((e) => setError(e.message)); }, [load]);
@@ -213,6 +214,7 @@ export default function TournamentDetail() {
           { key: 'matches', label: 'Matches' },
           { key: 'rounds', label: `${t('tournament.rounds')} (${rounds.length})` },
           { key: 'standings', label: t('tournament.standings') },
+          { key: 'groups', label: `Grupos (${groups.length})` },
           { key: 'crosstab', label: t('tv.crosstab') },
           { key: 'wall', label: t('tv.wall') },
           { key: 'schedule', label: t('stats.schedule') },
@@ -233,12 +235,13 @@ export default function TournamentDetail() {
 
       <div className="tab-content">
         {tab === 'info' && <InfoTab tournament={tournament} />}
-        {tab === 'players' && <PlayersTab tournamentId={id} players={players} onUpdate={load} />}
+        {tab === 'players' && <PlayersTab tournamentId={id} players={players} groups={groups} onUpdate={load} />}
         {tab === 'registrations' && <LazyTab><RegistrationsTab tournamentId={id} /></LazyTab>}
         {tab === 'teams' && <LazyTab><TeamsTab tournamentId={id} players={players} /></LazyTab>}
         {tab === 'matches' && <LazyTab><MatchesTab tournamentId={id} players={players} teams={teams} /></LazyTab>}
         {tab === 'rounds' && <RoundsTab tournament={tournament} rounds={rounds} players={players} onGenerate={handleGenerate} onResult={handleResult} onClose={handleClose} onPublish={handlePublish} onAddPairing={handleAddPairing} onDeletePairing={handleDeletePairing} onSwapColors={handleSwapColors} />}
         {tab === 'standings' && <StandingsTab standings={standings} onLoad={loadStandings} autoRefresh={tournament?.status !== 'finished'} />}
+        {tab === 'groups' && <GroupsTab tournamentId={id} groups={groups} tournament={tournament} onUpdate={load} />}
         {tab === 'schedule' && <ScheduleTab tournament={tournament} rounds={rounds} onUpdate={load} />}
         {tab === 'settings' && <SettingsTab tournament={tournament} onUpdate={load} />}
         { tab === 'intel' && <LazyTab><PairingIntelligence tournamentId={id} /></LazyTab>}
@@ -314,7 +317,7 @@ function InfoTab({ tournament }) {
 }
 
 /* ── Players Tab ── */
-function PlayersTab({ tournamentId, players, onUpdate }) {
+function PlayersTab({ tournamentId, players, groups, onUpdate }) {
   const regUrl = `${window.location.origin}/public/tournament/${tournamentId}/register`;
   const { toast } = useToast();
   const { t } = useI18n();
@@ -327,6 +330,9 @@ function PlayersTab({ tournamentId, players, onUpdate }) {
   const [form, setForm] = useState({ fide_id: '', name: '', last_name: '', fide_rating: '', federation: '' });
   const [localPlayers, setLocalPlayers] = useState(players);
   const [tournamentData, setTournamentData] = useState(null);
+  const [sortBy, setSortBy] = useState('seed');
+  const [editSeedId, setEditSeedId] = useState(null);
+  const [editSeedVal, setEditSeedVal] = useState('');
 
   useEffect(() => { setLocalPlayers(players); }, [players]);
   useEffect(() => { api.getTournament(tournamentId).then(setTournamentData).catch(() => {}); }, [tournamentId]);
@@ -436,11 +442,45 @@ function PlayersTab({ tournamentId, players, onUpdate }) {
       {localPlayers.length === 0 ? (
         <div className="text-center py-12 text-gray-400 dark:text-fide-400"><p>{t('playersTab.noPlayers')}</p></div>
       ) : (
-        <div className="bg-white dark:bg-fide-800 border dark:border-fide-700 rounded-xl overflow-hidden shadow-sm">
+        <div>
+          {/* Sort & Reorder toolbar */}
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <span className="text-xs text-gray-500 dark:text-fide-400">Ordenar:</span>
+            <button onClick={() => { const sorted = [...localPlayers].sort((a, b) => (a.seed_rank || 0) - (b.seed_rank || 0)); setLocalPlayers(sorted); setSortBy('seed'); }}
+              className={`text-xs px-2.5 py-1.5 rounded-lg transition ${sortBy === 'seed' ? 'bg-fide-700 text-white' : 'border dark:border-fide-600 dark:text-fide-200 hover:bg-gray-50 dark:hover:bg-fide-700'}`}># Seed</button>
+            <button onClick={() => { const sorted = [...localPlayers].sort((a, b) => `${a.name} ${a.last_name}`.localeCompare(`${b.name} ${b.last_name}`)); setLocalPlayers(sorted); setSortBy('alpha'); }}
+              className={`text-xs px-2.5 py-1.5 rounded-lg transition ${sortBy === 'alpha' ? 'bg-fide-700 text-white' : 'border dark:border-fide-600 dark:text-fide-200 hover:bg-gray-50 dark:hover:bg-fide-700'}`}>A-Z</button>
+            <button onClick={() => { const sorted = [...localPlayers].sort((a, b) => (b.fide_rating || 0) - (a.fide_rating || 0)); setLocalPlayers(sorted); setSortBy('rating'); }}
+              className={`text-xs px-2.5 py-1.5 rounded-lg transition ${sortBy === 'rating' ? 'bg-fide-700 text-white' : 'border dark:border-fide-600 dark:text-fide-200 hover:bg-gray-50 dark:hover:bg-fide-700'}`}>Rating ↓</button>
+            <span className="w-px h-4 bg-gray-600 mx-1" />
+            <button onClick={async () => {
+              const reordered = [...localPlayers].sort((a, b) => (a.seed_rank || 0) - (b.seed_rank || 0));
+              for (let i = 0; i < reordered.length; i++) {
+                const newSeed = i + 1;
+                if (reordered[i].seed_rank !== newSeed) {
+                  await api.enrollPlayer(tournamentId, reordered[i].id, newSeed);
+                }
+              }
+              toast.success(`Seed reordenado: ${reordered.length} jugadores`);
+              onUpdate();
+            }}
+              className="text-xs bg-fide-700 hover:bg-fide-800 text-white px-2.5 py-1.5 rounded-lg transition">🔄 Renumerar 1..N</button>
+            <button onClick={async () => {
+              const reversed = [...localPlayers].reverse();
+              for (let i = 0; i < reversed.length; i++) {
+                await api.enrollPlayer(tournamentId, reversed[i].id, i + 1);
+              }
+              toast.success('Orden invertido');
+              onUpdate();
+            }}
+              className="text-xs border dark:border-fide-600 dark:text-fide-200 px-2.5 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-fide-700 transition">↕ Invertir</button>
+          </div>
+
+          <div className="bg-white dark:bg-fide-800 border dark:border-fide-700 rounded-xl overflow-hidden shadow-sm">
           <div className="table-wrap">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-fide-900 text-gray-600 dark:text-fide-300">
-                <tr><th className="text-left px-4 py-2 font-medium">{t('playersTab.seed')}</th><th className="text-left px-4 py-2 font-medium">{t('playersTab.name')}</th><th className="text-left px-4 py-2 font-medium">{t('playersTab.title')}</th><th className="text-left px-4 py-2 font-medium">{t('playersTab.rating')}</th><th className="text-left px-4 py-2 font-medium">{t('playersTab.fed')}</th><th className="text-left px-4 py-2 font-medium">{t('playersTab.category')}</th><th className="text-left px-4 py-2 font-medium">{t('playersTab.pts')}</th><th className="text-center px-4 py-2 font-medium">Acciones</th></tr>
+                <tr><th className="text-left px-4 py-2 font-medium">{t('playersTab.seed')}</th><th className="text-left px-4 py-2 font-medium">{t('playersTab.name')}</th><th className="text-left px-4 py-2 font-medium">{t('playersTab.title')}</th><th className="text-left px-4 py-2 font-medium">{t('playersTab.rating')}</th><th className="text-left px-4 py-2 font-medium">{t('playersTab.fed')}</th><th className="text-left px-4 py-2 font-medium">{t('playersTab.category')}</th><th className="text-left px-4 py-2 font-medium">Grupo</th><th className="text-left px-4 py-2 font-medium">{t('playersTab.pts')}</th><th className="text-center px-4 py-2 font-medium">Acciones</th></tr>
               </thead>
               <tbody className="divide-y dark:divide-fide-700">
                 {localPlayers.map((p) => {
@@ -448,7 +488,28 @@ function PlayersTab({ tournamentId, players, onUpdate }) {
                   const currentCat = p.category || '';
                   return (
                     <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-fide-700 dark:text-fide-200">
-                      <td className="px-4 py-2 text-gray-500 dark:text-fide-400">{p.seed_rank}</td>
+                      <td className="px-4 py-2">
+                        {editSeedId === p.id ? (
+                          <input autoFocus type="number" value={editSeedVal}
+                            onChange={(e) => setEditSeedVal(e.target.value)}
+                            onBlur={async () => {
+                              const val = parseInt(editSeedVal);
+                              if (val > 0 && val !== p.seed_rank) {
+                                await api.enrollPlayer(tournamentId, p.id, val);
+                                onUpdate();
+                              }
+                              setEditSeedId(null);
+                            }}
+                            onKeyDown={async (e) => {
+                              if (e.key === 'Enter') { e.target.blur(); }
+                              if (e.key === 'Escape') { setEditSeedId(null); }
+                            }}
+                            className="w-14 border border-fide-500 rounded px-1.5 py-0.5 text-xs font-mono bg-white dark:bg-fide-700 dark:text-white outline-none text-center" />
+                        ) : (
+                          <span onClick={() => { setEditSeedId(p.id); setEditSeedVal(String(p.seed_rank)); }}
+                            className="text-gray-500 dark:text-fide-400 cursor-pointer hover:text-fide-600 dark:hover:text-fide-300 px-1.5 py-0.5 -ml-1.5 rounded hover:bg-gray-100 dark:hover:bg-fide-700 transition">{p.seed_rank}</span>
+                        )}
+                      </td>
                       <td className="px-4 py-2 font-medium">{p.name} {p.last_name}</td>
                       <td className="px-4 py-2">{p.title || '-'}</td>
                       <td className="px-4 py-2">{p.fide_rating || '-'}</td>
@@ -460,6 +521,15 @@ function PlayersTab({ tournamentId, players, onUpdate }) {
                         }} className="text-xs bg-gray-50 dark:bg-fide-700 border dark:border-fide-600 rounded px-1.5 py-0.5 dark:text-white outline-none">
                           <option value="">{t('playersTab.noCategory')}</option>
                           {cats.map((c) => <option key={c} value={c} selected={currentCat === c}>{c}</option>)}
+                        </select>
+                      </td>
+                      <td className="px-4 py-2">
+                        <select value={p.group_id || ''} onChange={async (e) => {
+                          const gid = e.target.value;
+                          try { await api.assignGroup(tournamentId, p.id, gid || null); setLocalPlayers((prev) => prev.map((pp) => pp.id === p.id ? { ...pp, group_id: gid || null } : pp)); toast.success('Grupo asignado'); } catch (ex) { toast.error(ex.message); }
+                        }} className="text-xs bg-gray-50 dark:bg-fide-700 border dark:border-fide-600 rounded px-1.5 py-0.5 dark:text-white outline-none">
+                          <option value="">Sin grupo</option>
+                          {groups.map((g) => <option key={g.id} value={g.id} selected={p.group_id === g.id}>{g.name}</option>)}
                         </select>
                       </td>
                       <td className="px-4 py-2 font-mono">
@@ -485,6 +555,134 @@ function PlayersTab({ tournamentId, players, onUpdate }) {
               </tbody>
             </table>
           </div>
+        </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Groups Tab ── */
+function GroupsTab({ tournamentId, groups, tournament, onUpdate }) {
+  const { t } = useI18n();
+  const { toast } = useToast();
+  const [showCreate, setShowCreate] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState({ name: '', system: tournament?.system || 'dutch', n_rounds: tournament?.n_rounds || 6, time_control: tournament?.time_control || '90+30', tiebreaks: 'BH1,BH,SB,DE,PR' });
+
+  const handleCreate = async () => {
+    if (!form.name.trim()) { toast.error('El nombre del grupo es obligatorio'); return; }
+    try {
+      await api.createGroup(tournamentId, form);
+      toast.success('Grupo creado');
+      setShowCreate(false);
+      setForm({ name: '', system: tournament?.system || 'dutch', n_rounds: tournament?.n_rounds || 6, time_control: tournament?.time_control || '90+30', tiebreaks: 'BH1,BH,SB,DE,PR' });
+      onUpdate();
+    } catch (e) { toast.error(e.message); }
+  };
+
+  const handleUpdate = async (gid) => {
+    try {
+      await api.updateGroup(gid, editing);
+      toast.success('Grupo actualizado');
+      setEditing(null);
+      onUpdate();
+    } catch (e) { toast.error(e.message); }
+  };
+
+  const handleDelete = async (gid) => {
+    if (!window.confirm('¿Eliminar este grupo? Los jugadores serán desasignados.')) return;
+    try { await api.deleteGroup(gid); toast.success('Grupo eliminado'); onUpdate(); }
+    catch (e) { toast.error(e.message); }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-lg font-semibold dark:text-white">Grupos / Secciones</h2>
+        {tournament?.status === 'pending' && (
+          <button onClick={() => setShowCreate(!showCreate)}
+            className="bg-fide-700 hover:bg-fide-800 text-white px-3 py-1.5 rounded text-xs font-medium transition">
+            {showCreate ? 'Cancelar' : 'Nuevo grupo'}
+          </button>
+        )}
+      </div>
+
+      {showCreate && (
+        <div className="bg-white dark:bg-fide-800 border dark:border-fide-700 rounded-xl p-4 shadow-sm space-y-3">
+          <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
+            placeholder="Nombre del grupo (ej: Masters)"
+            className="w-full border dark:border-fide-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <select value={form.system} onChange={(e) => setForm({ ...form, system: e.target.value })}
+              className="border dark:border-fide-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none">
+              <option value="dutch">Suizo Holandés</option>
+              <option value="roundrobin">Round Robin</option>
+              <option value="burstein">Burstein</option>
+              <option value="dubov">Dubov</option>
+            </select>
+            <input type="number" value={form.n_rounds} onChange={(e) => setForm({ ...form, n_rounds: parseInt(e.target.value) || 6 })}
+              placeholder="Rondas" className="border dark:border-fide-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none" />
+            <input value={form.time_control} onChange={(e) => setForm({ ...form, time_control: e.target.value })}
+              placeholder="Control de tiempo" className="border dark:border-fide-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none" />
+            <input value={form.tiebreaks} onChange={(e) => setForm({ ...form, tiebreaks: e.target.value })}
+              placeholder="Desempates" className="border dark:border-fide-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none" />
+          </div>
+          <button onClick={handleCreate}
+            className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+            Crear grupo
+          </button>
+        </div>
+      )}
+
+      {groups.length === 0 ? (
+        <div className="text-center py-12 text-gray-400 dark:text-fide-400"><p>No hay grupos definidos. Añade grupos como "Masters", "U2000", "Rapid" para organizar el torneo en secciones.</p></div>
+      ) : (
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {groups.map((g) => (
+            <div key={g.id} className="bg-white dark:bg-fide-800 border dark:border-fide-700 rounded-xl p-4 shadow-sm">
+              {editing?.id === g.id ? (
+                <div className="space-y-2">
+                  <input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+                    className="w-full border dark:border-fide-600 rounded px-2 py-1 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none" />
+                  <select value={editing.system} onChange={(e) => setEditing({ ...editing, system: e.target.value })}
+                    className="w-full border dark:border-fide-600 rounded px-2 py-1 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none">
+                    <option value="dutch">Suizo Holandés</option><option value="roundrobin">Round Robin</option>
+                    <option value="burstein">Burstein</option><option value="dubov">Dubov</option>
+                  </select>
+                  <div className="flex gap-2">
+                    <input type="number" value={editing.n_rounds} onChange={(e) => setEditing({ ...editing, n_rounds: parseInt(e.target.value) || 6 })}
+                      className="flex-1 border dark:border-fide-600 rounded px-2 py-1 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none" />
+                    <input value={editing.time_control} onChange={(e) => setEditing({ ...editing, time_control: e.target.value })}
+                      className="flex-1 border dark:border-fide-600 rounded px-2 py-1 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none" />
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleUpdate(g.id)} className="bg-green-700 hover:bg-green-800 text-white px-3 py-1 rounded text-xs">Guardar</button>
+                    <button onClick={() => setEditing(null)} className="bg-gray-200 dark:bg-fide-600 dark:text-white px-3 py-1 rounded text-xs">Cancelar</button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-semibold dark:text-white text-sm">{g.name}</h3>
+                    {tournament?.status === 'pending' && (
+                      <div className="flex gap-1">
+                        <button onClick={() => setEditing({ id: g.id, name: g.name, system: g.system, n_rounds: g.n_rounds, time_control: g.time_control })}
+                          className="text-fide-600 hover:underline text-xs">Editar</button>
+                        <button onClick={() => handleDelete(g.id)}
+                          className="text-red-600 hover:underline text-xs">Eliminar</button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-fide-400 space-y-1">
+                    <p>Sistema: {g.system} · {g.n_rounds} rondas · {g.time_control}</p>
+                    <p>{g.player_count || 0} jugadores</p>
+                    <p>Estado: {g.status}</p>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -731,6 +929,14 @@ function SettingsTab({ tournament, onUpdate }) {
   const [customFields, setCustomFields] = useState(() => {
     try { return JSON.parse(tournament.custom_fields || '[]'); } catch { return []; }
   });
+  const [fideEventId, setFideEventId] = useState(tournament.fide_event_id || '');
+  const [fideApproved, setFideApproved] = useState(tournament.fide_approved || 0);
+  const [documents, setDocuments] = useState(() => {
+    try { return JSON.parse(tournament.documents || '[]'); } catch { return []; }
+  });
+  const [links, setLinks] = useState(() => {
+    try { return JSON.parse(tournament.links || '{}'); } catch { return {}; }
+  });
   const [arbiters, setArbiters] = useState([]);
   const [newArbiterEmail, setNewArbiterEmail] = useState('');
 
@@ -767,6 +973,9 @@ function SettingsTab({ tournament, onUpdate }) {
         stream_url: streamUrl, stream_platform: streamPlatform, categories: cats,
         registration_fee: parseInt(regFee) || 0, registration_currency: regCurrency,
         auto_approve: autoApprove ? 1 : 0, custom_fields: JSON.stringify(customFields),
+        fide_event_id: fideEventId,
+        documents: JSON.stringify(documents),
+        links: JSON.stringify(links),
       });
       toast.success(t('settings.saved'));
       onUpdate();
@@ -774,9 +983,9 @@ function SettingsTab({ tournament, onUpdate }) {
   };
 
   const handleReset = async () => {
-    setPrimary('#f59e0b'); setSecondary('#1f2937'); setLogo(''); setBannerUrl(''); setStreamUrl(''); setStreamPlatform(''); setCategoriesStr(''); setRegFee(0); setRegCurrency('usd'); setAutoApprove(false); setCustomFields([]);
+    setPrimary('#f59e0b'); setSecondary('#1f2937'); setLogo(''); setBannerUrl(''); setStreamUrl(''); setStreamPlatform(''); setCategoriesStr(''); setRegFee(0); setRegCurrency('usd'); setAutoApprove(false); setCustomFields([]); setFideEventId(''); setFideApproved(0); setDocuments([]); setLinks({});
     try {
-      await api.updateTournament(tournament.id, { primary_color: '#f59e0b', secondary_color: '#1f2937', logo_url: '', banner_url: '', stream_url: '', stream_platform: '', categories: '', registration_fee: 0, registration_currency: 'usd', auto_approve: 0, custom_fields: '[]' });
+      await api.updateTournament(tournament.id, { primary_color: '#f59e0b', secondary_color: '#1f2937', logo_url: '', banner_url: '', stream_url: '', stream_platform: '', categories: '', registration_fee: 0, registration_currency: 'usd', auto_approve: 0, custom_fields: '[]', fide_event_id: '', documents: '[]', links: '{}' });
       toast.success(t('settings.resetSuccess'));
       onUpdate();
     } catch (e) { toast.error(e.message); }
@@ -910,6 +1119,129 @@ function SettingsTab({ tournament, onUpdate }) {
         </div>
       </div>
 
+      {/* FIDE Event ID */}
+      <div className="bg-white dark:bg-fide-800 border dark:border-fide-700 rounded-xl p-6 shadow-sm">
+        <h3 className="text-sm font-semibold dark:text-white mb-4 flex items-center gap-2">♛ FIDE Event ID</h3>
+        <p className="text-xs text-gray-500 dark:text-fide-400 mb-4">
+          Ingresa el ID del evento FIDE para que el torneo aparezca vinculado al registro oficial de FIDE.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs text-gray-500 dark:text-fide-400 mb-1 block">FIDE Event ID</label>
+            <input value={fideEventId} onChange={(e) => setFideEventId(e.target.value)}
+              placeholder="Ej: 123456"
+              className="w-full border dark:border-fide-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none focus:ring-2 focus:ring-fide-500 font-mono" />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 dark:text-fide-400 mb-1 block">Estado FIDE</label>
+            <div className="flex items-center gap-2 h-10">
+              {fideApproved || tournament.submitted_to_fide ? (
+                <span className="inline-flex items-center gap-1 text-xs bg-green-900/40 text-green-400 px-3 py-1.5 rounded-full border border-green-700/50">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                  {tournament.submitted_to_fide ? 'Enviado a FIDE' : 'Aprobado por FIDE'}
+                </span>
+              ) : (
+                <span className="text-xs text-gray-500">No enviado</span>
+              )}
+              {fideEventId && (
+                <a href={`https://ratings.fide.com/tournament_details.phtml?event=${fideEventId}`} target="_blank" rel="noopener noreferrer"
+                  className="text-xs text-fide-500 hover:underline ml-2">Ver en FIDE ↗</a>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Documentos (reglamentos, PDFs) */}
+      <div className="bg-white dark:bg-fide-800 border dark:border-fide-700 rounded-xl p-6 shadow-sm">
+        <h3 className="text-sm font-semibold dark:text-white mb-4">Documentos</h3>
+        <p className="text-xs text-gray-500 dark:text-fide-400 mb-4">Añade enlaces a reglamentos, PDFs, circulares. Se mostrarán en la página pública del torneo.</p>
+        <div className="space-y-3">
+          {documents.map((doc, i) => (
+            <div key={i} className="flex gap-2 items-start">
+              <div className="flex-1 space-y-2">
+                <input value={doc.name} onChange={(e) => {
+                  const d = [...documents]; d[i] = { ...d[i], name: e.target.value }; setDocuments(d);
+                }} placeholder="Nombre (ej: Reglamento del torneo)"
+                  className="w-full border dark:border-fide-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none" />
+                <input value={doc.url} onChange={(e) => {
+                  const d = [...documents]; d[i] = { ...d[i], url: e.target.value }; setDocuments(d);
+                }} placeholder="URL del PDF (Google Drive, Dropbox, etc.)"
+                  className="w-full border dark:border-fide-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none font-mono" />
+              </div>
+              <button onClick={() => setDocuments(documents.filter((_, j) => j !== i))}
+                className="text-red-500 hover:text-red-700 text-xs mt-2 shrink-0">Eliminar</button>
+            </div>
+          ))}
+          <button onClick={() => setDocuments([...documents, { name: '', url: '' }])}
+            className="text-fide-600 hover:text-fide-500 text-sm font-medium">+ Añadir documento</button>
+        </div>
+      </div>
+
+      {/* Enlaces (Redes sociales, web, mapa) */}
+      <div className="bg-white dark:bg-fide-800 border dark:border-fide-700 rounded-xl p-6 shadow-sm">
+        <h3 className="text-sm font-semibold dark:text-white mb-4 flex items-center gap-2">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+          Enlaces
+        </h3>
+        <p className="text-xs text-gray-500 dark:text-fide-400 mb-4">Redes sociales, web del torneo, ubicación en mapa. Se mostrarán en la página pública.</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs text-gray-500 dark:text-fide-400 mb-1 block flex items-center gap-1">
+              <span>🌐</span> Sitio web
+            </label>
+            <input value={links.website || ''} onChange={(e) => setLinks({ ...links, website: e.target.value })}
+              placeholder="https://chessorganizers.com"
+              className="w-full border dark:border-fide-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none focus:ring-2 focus:ring-fide-500 font-mono" />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 dark:text-fide-400 mb-1 block flex items-center gap-1">
+              <span>📍</span> Dirección (Google Maps)
+            </label>
+            <input value={links.location_address || tournament.location_address || ''} onChange={(e) => setLinks({ ...links, location_address: e.target.value })}
+              placeholder="Calle, Ciudad, País"
+              className="w-full border dark:border-fide-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none focus:ring-2 focus:ring-fide-500" />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 dark:text-fide-400 mb-1 block flex items-center gap-1">
+              <span>📘</span> Facebook
+            </label>
+            <input value={links.facebook || ''} onChange={(e) => setLinks({ ...links, facebook: e.target.value })}
+              placeholder="https://facebook.com/torneo"
+              className="w-full border dark:border-fide-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none focus:ring-2 focus:ring-fide-500 font-mono" />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 dark:text-fide-400 mb-1 block flex items-center gap-1">
+              <span>🐦</span> X (Twitter)
+            </label>
+            <input value={links.twitter || ''} onChange={(e) => setLinks({ ...links, twitter: e.target.value })}
+              placeholder="https://x.com/torneo"
+              className="w-full border dark:border-fide-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none focus:ring-2 focus:ring-fide-500 font-mono" />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 dark:text-fide-400 mb-1 block flex items-center gap-1">
+              <span>📷</span> Instagram
+            </label>
+            <input value={links.instagram || ''} onChange={(e) => setLinks({ ...links, instagram: e.target.value })}
+              placeholder="https://instagram.com/torneo"
+              className="w-full border dark:border-fide-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none focus:ring-2 focus:ring-fide-500 font-mono" />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 dark:text-fide-400 mb-1 block flex items-center gap-1">
+              <span>💬</span> WhatsApp
+            </label>
+            <input value={links.whatsapp || ''} onChange={(e) => setLinks({ ...links, whatsapp: e.target.value })}
+              placeholder="https://wa.me/521234567890"
+              className="w-full border dark:border-fide-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none focus:ring-2 focus:ring-fide-500 font-mono" />
+          </div>
+        </div>
+        <div className="mt-4">
+          <label className="text-xs text-gray-500 dark:text-fide-400 mb-1 block flex items-center gap-1">
+            <span>📺</span> Streaming (Twitch/YouTube) — configurado en sección "Stream en Vivo"
+          </label>
+        </div>
+      </div>
+
       {/* Custom Fields */}
       <div className="bg-white dark:bg-fide-800 border dark:border-fide-700 rounded-xl p-6 shadow-sm">
         <h3 className="text-sm font-semibold dark:text-white mb-4">Campos personalizados</h3>
@@ -973,24 +1305,63 @@ function SettingsTab({ tournament, onUpdate }) {
 function ScheduleTab({ tournament, rounds, onUpdate }) {
   const { toast } = useToast();
   const { t } = useI18n();
-  const [local, setLocal] = useState(() => rounds.map((r) => ({ id: r.id, round_number: r.round_number, scheduled_at: r.scheduled_at || '' })));
+  const [local, setLocal] = useState(() => rounds.map((r) => ({ id: r.id, round_number: r.round_number, scheduled_at: r.scheduled_at || '', duration: r.duration || 0 })));
+  const [bulkDate, setBulkDate] = useState('');
+  const [bulkTime, setBulkTime] = useState('');
+  const [bulkInterval, setBulkInterval] = useState(24);
+  const [bulkDuration, setBulkDuration] = useState(180);
+  const [view, setView] = useState('list');
 
   useEffect(() => {
-    setLocal(rounds.map((r) => ({ id: r.id, round_number: r.round_number, scheduled_at: r.scheduled_at || '' })));
+    setLocal(rounds.map((r) => ({ id: r.id, round_number: r.round_number, scheduled_at: r.scheduled_at || '', duration: r.duration || 0 })));
   }, [rounds]);
 
   const setSched = (rid, val) => {
     setLocal((prev) => prev.map((s) => s.id === rid ? { ...s, scheduled_at: val } : s));
   };
+  const setDur = (rid, val) => {
+    setLocal((prev) => prev.map((s) => s.id === rid ? { ...s, duration: val } : s));
+  };
 
   const save = async (rid) => {
     const s = local.find((s) => s.id === rid);
     try {
-      await api.scheduleRound(rid, s.scheduled_at || null);
+      await api.scheduleRound(rid, s.scheduled_at || null, s.duration);
       toast.success(t('schedule.saved'));
       onUpdate();
     } catch (e) { toast.error(e.message); }
   };
+
+  const saveAll = async () => {
+    try {
+      for (const s of local) {
+        await api.scheduleRound(s.id, s.scheduled_at || null, s.duration);
+      }
+      toast.success('Todos los horarios guardados');
+      onUpdate();
+    } catch (e) { toast.error(e.message); }
+  };
+
+  const applyBulk = () => {
+    if (!bulkDate || !bulkTime) { toast.error('Selecciona fecha y hora inicial'); return; }
+    const start = new Date(`${bulkDate}T${bulkTime}:00`);
+    setLocal((prev) => prev.map((s, i) => {
+      const d = new Date(start.getTime() + i * bulkInterval * 3600000);
+      return { ...s, scheduled_at: d.toISOString().slice(0, 19).replace('T', ' '), duration: bulkDuration };
+    }));
+    toast.success(`Horario aplicado: ${rounds.length} rondas cada ${bulkInterval}h`);
+  };
+
+  const clearAll = () => {
+    setLocal((prev) => prev.map((s) => ({ ...s, scheduled_at: '', duration: 0 })));
+  };
+
+  const hasSchedules = local.some((s) => s.scheduled_at);
+  const sortedByDate = [...local].filter((s) => s.scheduled_at).sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at));
+  const startDate = sortedByDate.length > 0 ? new Date(sortedByDate[0].scheduled_at) : null;
+  const endDate = sortedByDate.length > 0 ? new Date(sortedByDate[sortedByDate.length - 1].scheduled_at) : null;
+  const endDateCalc = endDate && sortedByDate[sortedByDate.length - 1].duration > 0
+    ? new Date(endDate.getTime() + sortedByDate[sortedByDate.length - 1].duration * 60000) : endDate;
 
   if (!rounds || rounds.length === 0) return (
     <div className="bg-white dark:bg-fide-800 border dark:border-fide-700 rounded-xl p-6 text-center text-sm text-gray-500">
@@ -999,21 +1370,171 @@ function ScheduleTab({ tournament, rounds, onUpdate }) {
   );
 
   return (
-    <div className="bg-white dark:bg-fide-800 border dark:border-fide-700 rounded-xl p-6 shadow-sm">
-      <h3 className="text-sm font-semibold dark:text-white mb-4">{t('schedule.title')}</h3>
-      <div className="space-y-2">
-        {local.map((s) => (
-          <div key={s.id} className="flex items-center gap-3 bg-gray-50 dark:bg-fide-900 rounded-lg px-4 py-3">
-            <span className="text-sm font-medium dark:text-white w-16 shrink-0">{t('schedule.round')} {s.round_number}</span>
-            <input type="datetime-local" value={s.scheduled_at ? s.scheduled_at.slice(0, 16) : ''}
-              onChange={(e) => setSched(s.id, e.target.value ? e.target.value + ':00' : '')}
-              className="flex-1 border dark:border-fide-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none focus:ring-2 focus:ring-fide-500" />
-            <button onClick={() => save(s.id)}
-              className="bg-fide-700 hover:bg-fide-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition shrink-0">{t('schedule.save')}</button>
+    <div className="space-y-4">
+      {/* Bulk scheduling panel */}
+      <div className="bg-white dark:bg-fide-800 border dark:border-fide-700 rounded-xl p-5 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold dark:text-white flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            Horario automático
+          </h3>
+          <div className="flex gap-2">
+            <button onClick={() => setView(view === 'list' ? 'calendar' : 'list')}
+              className="text-xs border dark:border-fide-600 px-2.5 py-1.5 rounded-lg dark:text-fide-200 hover:bg-gray-50 dark:hover:bg-fide-700 transition">
+              {view === 'list' ? '📅 Vista calendario' : '📋 Vista lista'}
+            </button>
           </div>
-        ))}
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          <div>
+            <label className="text-xs text-gray-500 dark:text-fide-400 mb-1 block">Fecha inicio</label>
+            <input type="date" value={bulkDate} onChange={(e) => setBulkDate(e.target.value)}
+              className="w-full border dark:border-fide-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none" />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 dark:text-fide-400 mb-1 block">Hora inicio</label>
+            <input type="time" value={bulkTime} onChange={(e) => setBulkTime(e.target.value)}
+              className="w-full border dark:border-fide-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none" />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 dark:text-fide-400 mb-1 block">Intervalo (horas)</label>
+            <input type="number" value={bulkInterval} onChange={(e) => setBulkInterval(parseInt(e.target.value) || 24)} min={1}
+              className="w-full border dark:border-fide-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none" />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 dark:text-fide-400 mb-1 block">Duración (min)</label>
+            <input type="number" value={bulkDuration} onChange={(e) => setBulkDuration(parseInt(e.target.value) || 0)} min={0}
+              className="w-full border dark:border-fide-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none" />
+          </div>
+          <div className="flex items-end gap-1">
+            <button onClick={applyBulk}
+              className="bg-fide-700 hover:bg-fide-800 text-white px-3 py-2 rounded-lg text-xs font-medium transition flex-1">Aplicar</button>
+            <button onClick={clearAll}
+              className="border dark:border-fide-600 px-3 py-2 rounded-lg text-xs font-medium dark:text-fide-200 hover:bg-gray-50 dark:hover:bg-fide-700 transition">×</button>
+          </div>
+        </div>
       </div>
-      <p className="text-xs text-gray-500 dark:text-fide-400 mt-4">{t('schedule.saved')}</p>
+
+      {/* Schedule list */}
+      <div className="bg-white dark:bg-fide-800 border dark:border-fide-700 rounded-xl shadow-sm overflow-hidden">
+        {view === 'calendar' && hasSchedules ? (
+          <div className="p-5">
+            <h3 className="text-sm font-semibold dark:text-white mb-3">📅 Calendario de rondas</h3>
+            <div className="grid grid-cols-7 gap-1 text-center text-xs mb-2">
+              {['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'].map((d) => (
+                <div key={d} className="text-gray-500 dark:text-fide-400 font-medium py-1">{d}</div>
+              ))}
+            </div>
+            {(() => {
+              const firstDay = startDate ? new Date(startDate.getFullYear(), startDate.getMonth(), 1) : new Date();
+              const lastDay = endDateCalc ? new Date(endDateCalc.getFullYear(), endDateCalc.getMonth() + 1, 0) : new Date();
+              firstDay.setDate(firstDay.getDate() - firstDay.getDay());
+              const weeks = [];
+              let cursor = new Date(firstDay);
+              while (cursor <= lastDay) {
+                const week = [];
+                for (let d = 0; d < 7; d++) {
+                  const dateStr = cursor.toISOString().slice(0, 10);
+                  const dayRounds = sortedByDate.filter((s) => s.scheduled_at.slice(0, 10) === dateStr);
+                  week.push({ date: new Date(cursor), rounds: dayRounds });
+                  cursor.setDate(cursor.getDate() + 1);
+                }
+                weeks.push(week);
+              }
+              return weeks.map((week, wi) => (
+                <div key={wi} className="grid grid-cols-7 gap-1 mb-1">
+                  {week.map((day, di) => (
+                    <div key={di} className={`rounded-lg p-1.5 min-h-[60px] ${
+                      day.date.getMonth() === (startDate || new Date()).getMonth()
+                        ? day.rounds.length > 0
+                          ? 'bg-fide-700/30 border border-fide-600/50'
+                          : 'bg-gray-50 dark:bg-fide-900'
+                        : 'opacity-30'
+                    }`}>
+                      <div className="text-[10px] font-medium dark:text-fide-400">{day.date.getDate()}</div>
+                      {day.rounds.map((r) => (
+                        <div key={r.id} className="text-[9px] text-fide-300 truncate mt-0.5">
+                          R{r.round_number} {r.scheduled_at?.slice(11, 16)}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              ));
+            })()}
+          </div>
+        ) : (
+          <div className="divide-y dark:divide-fide-700">
+            {local.map((s) => {
+              const saved = rounds.find((r) => r.id === s.id);
+              const isModified = s.scheduled_at !== (saved?.scheduled_at || '') || s.duration !== (saved?.duration || 0);
+              return (
+                <div key={s.id} className="flex items-center gap-2 sm:gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-fide-900/50 transition">
+                  <span className="text-xs font-bold dark:text-white w-12 shrink-0">R{s.round_number}</span>
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <input type="datetime-local" value={s.scheduled_at ? s.scheduled_at.slice(0, 16) : ''}
+                      onChange={(e) => setSched(s.id, e.target.value ? e.target.value + ':00' : '')}
+                      className="border dark:border-fide-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none focus:ring-2 focus:ring-fide-500 w-full" />
+                    <div className="flex items-center gap-2">
+                      <input type="number" value={s.duration || ''} onChange={(e) => setDur(s.id, parseInt(e.target.value) || 0)}
+                        placeholder="Duración (min)" min={0}
+                        className="flex-1 border dark:border-fide-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none focus:ring-2 focus:ring-fide-500" />
+                      {s.duration > 0 && (
+                        <span className="text-xs text-gray-500 whitespace-nowrap">
+                          {Math.floor(s.duration / 60)}h{s.duration % 60 > 0 ? ` ${s.duration % 60}m` : ''}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {isModified && <span className="w-1.5 h-1.5 rounded-full bg-amber-500" title="Sin guardar" />}
+                    <button onClick={() => save(s.id)}
+                      className="bg-fide-700 hover:bg-fide-800 text-white px-3 py-2 rounded-lg text-xs font-medium transition">{t('schedule.save')}</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Summary + Export */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        {hasSchedules && (
+          <div className="text-xs text-gray-500 dark:text-fide-400">
+            {local.filter((s) => s.scheduled_at).length} rondas programadas
+            {startDate && <> · Inicia: {startDate.toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })} {startDate.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}</>}
+            {endDateCalc && <> · Termina: {endDateCalc.toLocaleDateString('es', { day: 'numeric', month: 'short' })} {endDateCalc.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}</>}
+          </div>
+        )}
+        <div className="flex gap-2 ml-auto">
+          {hasSchedules && (
+            <button onClick={() => {
+              let csv = 'Ronda,Fecha,Hora,Duración (min)\n';
+              for (const s of sortedByDate) {
+                const d = s.scheduled_at?.slice(0, 10) || '';
+                const t = s.scheduled_at?.slice(11, 16) || '';
+                csv += `${s.round_number},${d},${t},${s.duration || ''}\n`;
+              }
+              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a'); a.href = url;
+              a.download = `${tournament.name.replace(/\s+/g, '_')}_horario.csv`;
+              a.click(); URL.revokeObjectURL(url);
+            }}
+              className="text-xs border dark:border-fide-600 px-3 py-2 rounded-lg dark:text-fide-200 hover:bg-gray-50 dark:hover:bg-fide-700 transition">
+              📋 Exportar CSV
+            </button>
+          )}
+          {local.some((s) => s.scheduled_at !== (rounds.find((r) => r.id === s.id)?.scheduled_at || '') || s.duration !== (rounds.find((r) => r.id === s.id)?.duration || 0)) && (
+            <button onClick={saveAll}
+              className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg text-xs font-medium transition">
+              💾 Guardar todo
+            </button>
+          )}
+        </div>
+      </div>
+      <p className="text-xs text-gray-500 dark:text-fide-400">{t('schedule.saved')}</p>
     </div>
   );
 }
@@ -1089,7 +1610,18 @@ function ExportMenu({ tournament, rounds, standings, players, crosstab, onExport
     { label: `📋 CSV — ${t('playersTab.title', { n: '' })}`, action: () => { exportPlayersCSV(tournament, players); setOpen(false); } },
     { label: `📋 CSV — ${t('standings.title')}`, action: () => { exportStandingsCSV(tournament, standings); setOpen(false); }, disabled: !standings },
     { label: `📋 CSV — ${t('rounds.title')}`, action: () => { exportPairingsCSV(tournament, rounds); setOpen(false); }, disabled: !rounds || rounds.length === 0 },
+    { label: `📋 CSV — ${t('export.initialList')}`, action: () => { exportInitialListCSV(tournament, players); setOpen(false); } },
+    { type: 'separator' },
+    { label: `📊 XLSX — ${t('standings.title')}`, action: () => { exportStandingsXLSX(tournament, standings); setOpen(false); }, disabled: !standings },
+    { label: `📊 XLSX — ${t('playersTab.title', { n: '' })}`, action: () => { exportPlayersXLSX(tournament, players); setOpen(false); } },
+    { label: `📊 XLSX — ${t('rounds.title')}`, action: () => { exportPairingsXLSX(tournament, rounds); setOpen(false); }, disabled: !rounds || rounds.length === 0 },
+    { label: `📊 XLSX — ${t('tv.crosstab')}`, action: () => { exportCrosstableXLSX(tournament, crosstab); setOpen(false); }, disabled: !crosstab || !crosstab.players },
+    { label: `📊 XLSX — ${t('export.reportComplete')}`, action: () => { exportTournamentReportXLSX(tournament, standings, rounds, players, crosstab); setOpen(false); } },
+    { label: `📊 XLSX — ${t('export.initialList')}`, action: () => { exportInitialListXLSX(tournament, players); setOpen(false); } },
+    { type: 'separator' },
+    { label: `🖼️ PDF — ${t('export.initialList')}`, action: () => { exportInitialListPDF(tournament, players); setOpen(false); } },
     { label: `♟ PGN — ${t('rounds.title')}`, action: () => { exportPGN(tournament, rounds); setOpen(false); }, disabled: !rounds || rounds.length === 0 },
+    { label: `📱 ${t('export.qrDownload')}`, action: () => { downloadQR(`${window.location.origin}/public/tournament/${tournament.id}`, `${tournament.name.replace(/\s+/g, '_')}_qr.png`); setOpen(false); } },
     { type: 'separator' },
     { label: `📄 ${t('export.trf')} — FIDE`, action: () => { onExportTrf(); setOpen(false); } },
     { label: `📰 ${t('export.bulletin')}`, action: () => { onBulletin(); setOpen(false); } },

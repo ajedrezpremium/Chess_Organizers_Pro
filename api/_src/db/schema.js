@@ -55,7 +55,24 @@ CREATE TABLE IF NOT EXISTS tournaments (
   updated_at      TIMESTAMPTZ DEFAULT NOW()
 );`;
 
-const ALL_TABLES = [USERS_TABLE_SQL, TOURNAMENTS_TABLE_SQL];
+const GROUPS_TABLE_SQL = `
+CREATE TABLE IF NOT EXISTS tournament_groups (
+  id              SERIAL PRIMARY KEY,
+  tournament_id   INTEGER NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+  name            TEXT NOT NULL,
+  system          TEXT NOT NULL DEFAULT 'dutch'
+                          CHECK(system IN ('dutch','roundrobin','burstein','dubov')),
+  n_rounds        INTEGER NOT NULL DEFAULT 6,
+  time_control    TEXT DEFAULT '90+30',
+  tiebreaks       TEXT DEFAULT 'BH1,BH,SB,DE,PR',
+  status          TEXT DEFAULT 'pending'
+                          CHECK(status IN ('pending','active','finished','cancelled')),
+  sort_order      INTEGER DEFAULT 0,
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW()
+);`;
+
+const ALL_TABLES = [USERS_TABLE_SQL, TOURNAMENTS_TABLE_SQL, GROUPS_TABLE_SQL];
 
 export async function migrate() {
   const db = getDb();
@@ -70,6 +87,31 @@ export async function migrate() {
     await db.exec(`ALTER TABLE tournaments RENAME COLUMN organizer_id TO created_by`);
   } catch (e) {
     // Column may already be renamed or not exist
+  }
+  try {
+    await db.exec(`ALTER TABLE rounds ADD COLUMN group_id INTEGER REFERENCES tournament_groups(id) ON DELETE CASCADE`);
+  } catch (e) {
+    // Column may already exist
+  }
+  try {
+    await db.exec(`ALTER TABLE tournament_players ADD COLUMN group_id INTEGER REFERENCES tournament_groups(id) ON DELETE SET NULL`);
+  } catch (e) {
+    // Column may already exist
+  }
+  try {
+    await db.exec(`ALTER TABLE tournaments ADD COLUMN documents TEXT DEFAULT '[]'`);
+  } catch (e) {
+    // Column may already exist
+  }
+  try {
+    await db.exec(`ALTER TABLE tournaments ADD COLUMN links TEXT DEFAULT '{}'`);
+  } catch (e) {
+    // Column may already exist
+  }
+  try {
+    await db.exec(`ALTER TABLE rounds ADD COLUMN duration INTEGER DEFAULT NULL`);
+  } catch (e) {
+    // Column may already exist
   }
   return true;
 }
