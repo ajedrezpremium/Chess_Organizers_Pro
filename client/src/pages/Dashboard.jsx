@@ -207,7 +207,6 @@ export default function Dashboard() {
 
               {/* 3. 10 Torneos ACTIVOS — Efecto Llamada */}
               <ActiveTournamentsFeed
-                tournaments={activeTournaments}
                 title={`🔥 ${t('dashboard.activeFeedTitle')}`}
                 subtitle={t('dashboard.activeFeedSubtitle')}
                 linkTo="/catalog?status=active"
@@ -246,7 +245,6 @@ export default function Dashboard() {
  
               {/* 2. 10 Torneos PASADOS */}
               <PastTournamentsFeed
-                tournaments={pastTournaments}
                 title={`📜 ${t('dashboard.pastFeedTitle')}`}
                 subtitle={t('dashboard.pastFeedSubtitle')}
                 linkTo="/catalog?status=finished"
