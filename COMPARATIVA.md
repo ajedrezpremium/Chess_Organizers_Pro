@@ -1,55 +1,55 @@
 # 🏆 Chess Organizers Pro vs. La Competencia
 
-## Comparativa Visual — 29 Características Clave
+## Comparativa Visual — 39 Características Clave
 
-| # | Característica | Chess Organizers Pro | Swiss Manager | Vega | Chess Manager |
-|---|---------------|:---:|:---:|:---:|:---:|
-| | **🏁 PARING Y MOTOR** |
-| 1 | Sistema Suizo Holandés | ✅ | ✅ | ✅ | ✅ |
-| 2 | Round Robin | ✅ | ✅ | ✅ | ✅ |
-| 3 | Sistema Burstein | ✅ | ❌ | ❌ | ❌ |
-| 4 | Sistema Dubov | ✅ | ❌ | ❌ | ❌ |
-| 5 | Tiebreaks FIDE (BH/SB/DE/PR) | ✅ | ✅ | ✅ | ✅ |
-| 6 | Pairings manuales + swap colores | ✅ | ✅ | ✅ | ✅ |
-| 7 | **Detección violaciones FIDE C8-C17** | ✅ | ❌ | ❌ | ❌ |
-| 8 | **Sugerencias inteligentes de pairings** | ✅ | ❌ | ❌ | ❌ |
+| # | Característica | Chess Organizers Pro | Chess Organizers (Torneo v1.0) | Swiss Manager | Vega | Tornelo | Chess Manager |
+|---|---------------|:---:|:---:|:---:|:---:|:---:|:---:|
+| | **🏁 PAIRING Y MOTOR** |
+| 1 | Sistema Suizo Holandés | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 2 | Round Robin | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 3 | Sistema Burstein | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| 4 | Sistema Dubov | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| 5 | Tiebreaks FIDE (BH/SB/DE/PR) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 6 | Pairings manuales + swap colores | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 7 | **Detección violaciones FIDE C8-C17** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| 8 | **Sugerencias inteligentes de pairings** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | | **📋 REGISTRO Y JUGADORES** |
-| 9 | Base de datos de jugadores | ✅ | ✅ | ✅ | ✅ |
-|10 | **Formulario público de inscripción** | ✅ | ❌ | ❌ | ✅ |
-|11 | **Campos personalizados en registro** | ✅ | ❌ | ❌ | ❌ |
-|12 | Importación CSV/TRF/TSV (auto-mapeo) | ✅ | ✅ | ✅ | ✅ |
-|13 | Importación desde FIDE (búsqueda + lote) | ✅ | ✅ | ✅ | ✅ |
-|14 | **Categorías (U8/U10/Open)** | ✅ | ✅ | ❌ | ✅ |
+| 9 | Base de datos de jugadores | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+|10 | **Formulario público de inscripción** | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ |
+|11 | **Campos personalizados en registro** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+|12 | Importación CSV/TRF/TSV (auto-mapeo) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+|13 | Importación desde FIDE (búsqueda + lote) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+|14 | **Categorías (U8/U10/Open)** | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
 | | **📊 RESULTADOS Y CLASIFICACIÓN** |
-|15 | Clasificación en vivo con tiebreaks | ✅ | ✅ | ✅ | ✅ |
-|16 | Tabla cruzada (crosstab) | ✅ | ✅ | ✅ | ✅ |
-|17 | **Rendimiento (TPR + ΔR + K-factor)** | ✅ | ✅ | ❌ | ❌ |
-|18 | **Cálculo de cambio de rating FIDE** | ✅ | ✅ | ✅ | ❌ |
-|19 | **Reporte FIDE XML (formato C.02)** | ✅ | ✅ | ✅ | ✅ |
+|15 | Clasificación en vivo con tiebreaks | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+|16 | Tabla cruzada (crosstab) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+|17 | **Rendimiento (TPR + ΔR + K-factor)** | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ |
+|18 | **Cálculo de cambio de rating FIDE** | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ |
+|19 | **Reporte FIDE XML (formato C.02)** | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ |
 | | **🌐 PÁGINAS PÚBLICAS Y EN VIVO** |
-|20 | **Página pública del torneo** | ✅ | ❌ | ❌ | ✅ |
-|21 | **Vista TV en vivo** | ✅ | ❌ | ❌ | ❌ |
-|22 | **Widgets embeddables (clasificación/pairings)** | ✅ | ❌ | ❌ | ❌ |
-|23 | **Streaming en vivo integrado** | ✅ | ❌ | ❌ | ❌ |
-|24 | **Boletín HTML descargable** | ✅ | ✅ | ❌ | ❌ |
+|20 | **Página pública del torneo** | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ |
+|21 | **Vista TV en vivo** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+|22 | **Widgets embeddables (clasificación/pairings)** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+|23 | **Streaming en vivo integrado** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+|24 | **Boletín HTML descargable** | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ |
 | | **💰 PAGOS Y MEMBRESÍAS** |
-|25 | **Pago online integrado en inscripción** | ✅ | ❌ | ❌ | ✅ |
-|26 | **Planes de membresía (Free/Básico/Pro)** | ✅ | ❌ | ❌ | ❌ |
-|27 | **Portal de facturación (Customer Portal)** | ✅ | ❌ | ❌ | ❌ |
-| | **📱 MOVIL Y OFFLINE** |
-|28 | **PWA — Offline + cola de sincronización** | ✅ | ❌ | ❌ | ❌ |
-|29 | **App nativa (Expo + WebView + QR + Push)** | ✅ | ❌ | ❌ | ❌ |
+|25 | **Pago online integrado en inscripción** | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ |
+|26 | **Planes de membresía (Free/Básico/Pro)** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+|27 | **Portal de facturación (Customer Portal)** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| | **📱 MÓVIL Y OFFLINE** |
+|28 | **PWA — Offline + cola de sincronización** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+|29 | **App nativa (Expo + WebView + QR + Push)** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | | **🔌 INTEGRACIÓN Y API** |
-|30 | **API REST pública** | ✅ | ❌ | ❌ | ❌ |
-|31 | **Webhooks (eventos en tiempo real)** | ✅ | ❌ | ❌ | ❌ |
-|32 | **API Keys para desarrolladores** | ✅ | ❌ | ❌ | ❌ |
-|33 | **Multi-idioma (10+ idiomas)** | ✅ | ✅ | ❌ | ✅ |
-|34 | **Notificaciones multicanal (SMS/Email/Telegram)** | ✅ | ❌ | ❌ | ✅ |
-|35 | **Live Streaming (Twitch/YouTube/Custom)** | ✅ | ❌ | ❌ | ❌ |
-|36 | **Catálogo global de torneos** | ✅ | ❌ | ❌ | ❌ |
-|37 | **Panel de inteligencia de pairings** | ✅ | ❌ | ❌ | ❌ |
-|38 | **Análisis: HeatMap + Progresión + Head-to-Head** | ✅ | ❌ | ❌ | ❌ |
-|39 | **App nativa (Expo) con QR Scanner + Push** | ✅ | ❌ | ❌ | ❌ |
+|30 | **API REST pública** | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ |
+|31 | **Webhooks (eventos en tiempo real)** | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ |
+|32 | **API Keys para desarrolladores** | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ |
+|33 | **Multi-idioma (10+ idiomas)** | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+|34 | **Notificaciones multicanal (SMS/Email/Telegram)** | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ |
+|35 | **Live Streaming (Twitch/YouTube/Custom)** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+|36 | **Catálogo global de torneos** | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ |
+|37 | **Panel de inteligencia de pairings** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+|38 | **Análisis: HeatMap + Progresión + Head-to-Head** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+|39 | **App nativa (Expo) con QR Scanner + Push** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 ---
 
@@ -58,9 +58,11 @@
 | Software | Features cumplidas | Porcentaje |
 |----------|:---:|:---:|
 | **♛ Chess Organizers Pro** | **39/39** | **100%** 🥇 |
-| Swiss Manager | 18/39 | 46% 🥈 |
-| Vega | 15/39 | 38% 🥉 |
-| Chess Manager | 16/39 | 41% |
+| **Tornelo** | **22/39** | **56%** 🥈 |
+| **Chess Organizers (Torneo v1.0)** | **18/39** | **46%** |
+| **Swiss Manager** | **18/39** | **46%** |
+| **Chess Manager** | **16/39** | **41%** |
+| **Vega** | **15/39** | **38%** 🥉 |
 
 ---
 
@@ -94,10 +96,11 @@ Características
    30  ┤
    27  ┤
    24  ┤
-   21  ┤
-   18  ┤ ═══════════════════════ Swiss Manager
-   15  ┤ ═════════════════ Vega
-   12  ┤ ═══════════════════ Chess Manager
+   21  ┤ ═════════════════════════ Tornelo
+   18  ┤ ════════════════════════════ Swiss Manager
+   18  ┤ ════════════════════════════ Chess Organizers (Torneo v1.0)
+   15  ┤ ═══════════════════════ Chess Manager
+   12  ┤ ═════════════════ Vega
     9  ┤
     6  ┤
     3  ┤
@@ -119,4 +122,4 @@ Todo desde el navegador, sin instalación, con app nativa y soporte offline.
 
 ---
 
-*Generado el 25 de mayo de 2026 — Chess Organizers Pro v1.0*
+*Generado el 26 de agosto de 2026 — Chess Organizers Pro v1.0*
