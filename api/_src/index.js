@@ -37,6 +37,18 @@ const app = express();
 // ── Health check (PRIMERO de todo) ─────────────────────────────────
 app.get('/health', (req, res) => { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ status: 'ok', msg: 'no-db' })); });
 app.get('/health/readiness', (req, res) => { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ status: 'ready', msg: 'no-db' })); });
+app.get('/health/warm', async (req, res) => {
+  try {
+    const { getDb } = await import('./db/supabase.js');
+    const db = getDb();
+    await db.prepare('SELECT 1').get();
+    res.setHeader('content-type', 'application/json');
+    res.end(JSON.stringify({ status: 'warm', db: 'connected' }));
+  } catch (e) {
+    res.setHeader('content-type', 'application/json');
+    res.end(JSON.stringify({ status: 'warm', db: 'error', error: e.message }));
+  }
+});
 
 // ── Production security ────────────────────────────────────────────
 app.set('trust proxy', 1);

@@ -1,6 +1,9 @@
 {
   "buildCommand": "cd client && NODE_ENV=development npm install && npm run build",
   "outputDirectory": "client/dist",
+  "crons": [
+    { "path": "/health/warm", "schedule": "*/5 * * * *" }
+  ],
   "rewrites": [
     { "source": "/auth", "destination": "/api/index.js" },
     { "source": "/auth/(.*)", "destination": "/api/index.js" },
