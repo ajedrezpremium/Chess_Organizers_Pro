@@ -223,6 +223,7 @@ export default function Dashboard() {
                 tournaments={myTournaments}
                 onOpen={handleOpenTournament}
                 emptyMessage={t('dashboard.noTournaments')}
+                hideHeader
               />
 
               {/* 2. Torneos Demo Preconfigurados (3 modalidades) */}

@@ -6,7 +6,7 @@ import TournamentCard from './TournamentCard.jsx';
 import SectionHeader from './SectionHeader.jsx';
 import { CardSkeleton } from '../Skeleton.jsx';
 
-export default function MyTournamentsList({ tournaments: initialTournaments, onOpen, emptyMessage }) {
+export default function MyTournamentsList({ tournaments: initialTournaments, onOpen, emptyMessage, hideHeader }) {
   const { t } = useI18n();
   const [tournaments, setTournaments] = useState(initialTournaments || []);
   const [loading, setLoading] = useState(initialTournaments === undefined);
@@ -43,11 +43,13 @@ export default function MyTournamentsList({ tournaments: initialTournaments, onO
   if (loading) {
     return (
       <div className="space-y-3">
-        <SectionHeader
-          title={t('dashboard.myTournaments')}
-          subtitle={t('dashboard.tournamentsCount', { n: 0 })}
-          icon="📋"
-        />
+        {!hideHeader && (
+          <SectionHeader
+            title={t('dashboard.myTournaments')}
+            subtitle={t('dashboard.tournamentsCount', { n: 0 })}
+            icon="📋"
+          />
+        )}
         <div className="grid gap-3"><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>
       </div>
     );
@@ -56,12 +58,14 @@ export default function MyTournamentsList({ tournaments: initialTournaments, onO
   if (filtered.length === 0) {
     return (
       <div className="space-y-4">
-        <SectionHeader
-          title={t('dashboard.myTournaments')}
-          subtitle={t('dashboard.tournamentsCount', { n: counts.all })}
-          count={counts.all}
-          icon="📋"
-        />
+        {!hideHeader && (
+          <SectionHeader
+            title={t('dashboard.myTournaments')}
+            subtitle={t('dashboard.tournamentsCount', { n: counts.all })}
+            count={counts.all}
+            icon="📋"
+          />
+        )}
         <div className="text-center py-12">
           <div className="text-6xl mb-4 opacity-30">📋</div>
           <p className="text-xl text-gray-500 dark:text-fide-400 mb-2">{t('dashboard.noTournaments')}</p>
@@ -77,12 +81,14 @@ export default function MyTournamentsList({ tournaments: initialTournaments, onO
 
   return (
     <div className="space-y-4">
-      <SectionHeader
-        title={t('dashboard.myTournaments')}
-        subtitle={t('dashboard.tournamentsCount', { n: counts.all })}
-        count={counts.all}
-        icon="📋"
-      />
+      {!hideHeader && (
+        <SectionHeader
+          title={t('dashboard.myTournaments')}
+          subtitle={t('dashboard.tournamentsCount', { n: counts.all })}
+          count={counts.all}
+          icon="📋"
+        />
+      )}
 
       {/* Tab navigation */}
       <div className="flex gap-1 border-b border-fide-700/50 mb-4">
