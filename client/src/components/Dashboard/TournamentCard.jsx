@@ -53,9 +53,9 @@ export default function TournamentCard({
     }
   };
 
-  const baseClasses = 'group bg-white dark:bg-fide-800 border border-gray-200 dark:border-fide-700/50 rounded-xl shadow-sm hover:shadow-md transition-all duration-200';
+  const baseClasses = 'group bg-white dark:bg-fide-800 border border-gray-200 dark:border-fide-700/50 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden';
   const variantClasses = {
-    default: 'p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4',
+    default: 'p-0',
     compact: 'p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3',
     feed: 'p-4 hover:border-fide-300 dark:hover:border-fide-600',
     demo: 'p-4 border-2 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20',
@@ -64,79 +64,94 @@ export default function TournamentCard({
   const isFeed = variant === 'feed';
   const isDemo = tournament.is_demo;
 
+  // Ordered visual layout for 'default' — info left, photo right
+  if (variant === 'default') {
+    return (
+      <div className={`${baseClasses} ${variantClasses[variant]} ${className}`} onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
+        <div className="flex gap-4 p-4 sm:p-5">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Link
+                to={tournament.source_url || `/public/tournament/${tournament.id}`}
+                className="font-bold text-base sm:text-lg text-gray-900 dark:text-white hover:text-fide-600 dark:hover:text-amber-400 transition-colors line-clamp-1"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {tournament.name}
+              </Link>
+              <span className={`shrink-0 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${statusStyle}`}>
+                {statusLabel}
+              </span>
+              {isDemo && (
+                <span className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">DEMO</span>
+              )}
+              {showSource && tournament.source && tournament.source !== 'internal' && (
+                <span className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">{tournament.source}</span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-xs sm:text-sm text-gray-500 dark:text-fide-400">
+              <span className="inline-flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-fide-500" />{tournament.system === 'dutch' ? 'Suizo' : tournament.system === 'roundrobin' ? 'Round Robin' : tournament.system}</span>
+              <span className="inline-flex items-center gap-1"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>{tournament.n_rounds} rondas</span>
+              {tournament.federation && <span className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-fide-700 text-[11px]">{tournament.federation}</span>}
+              {tournament.city && <span>{tournament.city}</span>}
+              {tournament.start_date && <span>{formatDate(tournament.start_date)}</span>}
+            </div>
+            {tournament.description && (
+              <p className="mt-2 text-xs sm:text-sm text-gray-500 dark:text-fide-400 line-clamp-2">{tournament.description}</p>
+            )}
+            <div className="flex flex-wrap gap-2 mt-3">
+              {tournament.source_url && tournament.source !== 'internal' && (
+                <a href={tournament.source_url} target="_blank" rel="noopener noreferrer" title="Web oficial" className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-fide-700 border border-gray-200 dark:border-fide-600 text-gray-700 dark:text-fide-200 hover:bg-gray-50 dark:hover:bg-fide-600 transition" onClick={(e) => e.stopPropagation()}>🌐 Web oficial ↗</a>
+              )}
+              {!tournament.source_url && tournament.status === 'pending' && (
+                <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">📋 Borrador</span>
+              )}
+              <Link to={`/public/tournament/${tournament.id}`} target="_blank" className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-900 dark:bg-white text-white dark:text-black hover:opacity-90 transition" onClick={(e) => e.stopPropagation()}>👁 Ver</Link>
+              {tournament.source === 'internal' && (
+                <Link to={`/app/tournament/${tournament.id}`} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-black hover:bg-amber-400 transition" onClick={(e) => e.stopPropagation()}>⚙️ Gestionar</Link>
+              )}
+            </div>
+          </div>
+          <div className="shrink-0 hidden sm:block">
+            {tournament.logo_url || tournament.image_url ? (
+              <img src={tournament.logo_url || tournament.image_url} alt="" className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl object-cover border border-gray-200 dark:border-fide-700 shadow-sm" />
+            ) : (
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-gradient-to-br from-fide-100 to-amber-100 dark:from-fide-800 dark:to-amber-900/30 border border-gray-200 dark:border-fide-700 flex items-center justify-center text-2xl">♔</div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`${baseClasses} ${variantClasses[variant]} ${className}`} onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
       <div className="flex-1 min-w-0">
         <div className="flex items-start gap-3">
           {tournament.logo_url && (
-            <img
-              src={tournament.logo_url}
-              alt=""
-              className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover shrink-0"
-            />
+            <img src={tournament.logo_url} alt="" className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover shrink-0" />
           )}
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <Link
-                to={tournament.source_url || `/public/tournament/${tournament.id}`}
-                className="font-semibold text-lg text-gray-900 dark:text-white hover:text-fide-600 dark:hover:text-fide-300 transition-colors truncate"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {tournament.name}
-              </Link>
-              <span className={`shrink-0 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${statusStyle}`}>
-                {statusLabel}
-              </span>
-              {isDemo && (
-                <span className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-                  DEMO
-                </span>
-              )}
-              {showSource && tournament.source && tournament.source !== 'internal' && (
-                <span className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
-                  {tournament.source}
-                </span>
-              )}
+              <Link to={tournament.source_url || `/public/tournament/${tournament.id}`} className="font-semibold text-lg text-gray-900 dark:text-white hover:text-fide-600 dark:hover:text-fide-300 transition-colors truncate" onClick={(e) => e.stopPropagation()}>{tournament.name}</Link>
+              <span className={`shrink-0 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${statusStyle}`}>{statusLabel}</span>
+              {isDemo && (<span className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">DEMO</span>)}
+              {showSource && tournament.source && tournament.source !== 'internal' && (<span className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">{tournament.source}</span>)}
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-sm text-gray-500 dark:text-fide-400">
               <span>{tournament.system === 'dutch' ? 'Suizo' : tournament.system === 'roundrobin' ? 'Round Robin' : tournament.system}</span>
-              <span className="flex items-center gap-1">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                {tournament.n_rounds} rondas
-              </span>
+              <span className="flex items-center gap-1"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>{tournament.n_rounds} rondas</span>
               {tournament.federation && <span>{tournament.federation}</span>}
               {tournament.city && <span>{tournament.city}</span>}
               {tournament.start_date && <span className="text-xs text-gray-500 dark:text-fide-400">{formatDate(tournament.start_date)}</span>}
             </div>
-            {tournament.description && !isFeed && (
-              <p className="mt-2 text-sm text-gray-500 dark:text-fide-400 line-clamp-2">{tournament.description}</p>
-            )}
+            {tournament.description && !isFeed && (<p className="mt-2 text-sm text-gray-500 dark:text-fide-400 line-clamp-2">{tournament.description}</p>)}
           </div>
         </div>
       </div>
-
       {!isFeed && (
         <div className="flex gap-2 shrink-0">
-          {tournament.source_url && tournament.source !== 'internal' && (
-            <a
-              href={tournament.source_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 dark:bg-fide-700 text-gray-700 dark:text-fide-200 hover:bg-gray-200 dark:hover:bg-fide-600 transition"
-              onClick={(e) => e.stopPropagation()}
-            >
-              Ver origen
-            </a>
-          )}
-          {tournament.source === 'internal' && (
-            <Link
-              to={`/app/tournament/${tournament.id}`}
-              className="px-3 py-1.5 rounded-lg text-sm font-medium bg-fide-50 text-fide-700 hover:bg-fide-100 dark:bg-fide-700 dark:text-fide-200 dark:hover:bg-fide-600 transition"
-              onClick={(e) => e.stopPropagation()}
-            >
-              Abrir
-            </Link>
-          )}
+          {tournament.source_url && tournament.source !== 'internal' && (<a href={tournament.source_url} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 dark:bg-fide-700 text-gray-700 dark:text-fide-200 hover:bg-gray-200 dark:hover:bg-fide-600 transition" onClick={(e) => e.stopPropagation()}>Ver origen</a>)}
+          {tournament.source === 'internal' && (<Link to={`/app/tournament/${tournament.id}`} className="px-3 py-1.5 rounded-lg text-sm font-medium bg-fide-50 text-fide-700 hover:bg-fide-100 dark:bg-fide-700 dark:text-fide-200 dark:hover:bg-fide-600 transition" onClick={(e) => e.stopPropagation()}>Abrir</Link>)}
         </div>
       )}
     </div>
