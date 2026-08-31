@@ -157,12 +157,12 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Pro header — 3 colores LIVE / PRÓXIMOS / HISTORIAL + Sync plataforma madre */}
+      {/* Pro header — 3 botones coloreados enlazados + Sync plataforma madre */}
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-600 text-white text-xs font-bold tracking-widest"><span className="w-2 h-2 rounded-full bg-white animate-pulse" /> {t('dashboard.live')} <span className="bg-white text-emerald-700 px-1.5 py-0.5 rounded-full text-[10px]">{activeCount}</span></span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500 text-black text-xs font-bold tracking-widest"><span className="w-2 h-2 rounded-full bg-black" /> {t('dashboard.upcoming')} <span className="bg-black text-amber-400 px-1.5 py-0.5 rounded-full text-[10px]">{pendingCount}</span></span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-600 text-white text-xs font-bold tracking-widest"><span className="w-2 h-2 rounded-full bg-white" /> {t('dashboard.history')} <span className="bg-white text-sky-700 px-1.5 py-0.5 rounded-full text-[10px]">{finishedCount}</span></span>
+          <Link to="/catalog?status=active" title="En directo — torneos en juego" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-600 text-white text-xs font-bold tracking-widest hover:bg-emerald-500 transition shadow-sm hover:shadow-md active:scale-95"><span className="w-2 h-2 rounded-full bg-white animate-pulse" /> {t('dashboard.live')} <span className="bg-white text-emerald-700 px-1.5 py-0.5 rounded-full text-[10px]">{activeCount}</span></Link>
+          <Link to="/catalog?status=pending" title="Próximos — torneos pendientes" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500 text-black text-xs font-bold tracking-widest hover:bg-amber-400 transition shadow-sm hover:shadow-md active:scale-95"><span className="w-2 h-2 rounded-full bg-black" /> {t('dashboard.upcoming')} <span className="bg-black text-amber-400 px-1.5 py-0.5 rounded-full text-[10px]">{pendingCount}</span></Link>
+          <Link to="/catalog?status=finished" title="Historial — torneos finalizados" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-600 text-white text-xs font-bold tracking-widest hover:bg-sky-500 transition shadow-sm hover:shadow-md active:scale-95"><span className="w-2 h-2 rounded-full bg-white" /> {t('dashboard.history')} <span className="bg-white text-sky-700 px-1.5 py-0.5 rounded-full text-[10px]">{finishedCount}</span></Link>
         </div>
         <button onClick={handleSyncPlatform} disabled={syncing} className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-black text-xs font-bold border border-zinc-800 dark:border-zinc-200 hover:opacity-90 disabled:opacity-50">
           {syncing ? '…' : '⬆'} {t('dashboard.connectPlatform')}
