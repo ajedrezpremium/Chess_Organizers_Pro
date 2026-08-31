@@ -196,17 +196,8 @@ export default function Dashboard() {
         <NotificationSettings />
       ) : (
         <>
-          {/* Header con contador y botón nuevo */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">{t('dashboard.myTournaments')}</h1>
-              <p className="text-sm text-gray-600 dark:text-fide-400 mt-1">
-                {t('dashboard.tournamentsCount', { n: myTournaments.length })} &middot;
-                {activeCount > 0 && <span className="text-emerald-700 dark:text-emerald-400 ml-1">{activeCount} {t('dashboard.active')}</span>}
-                {pendingCount > 0 && <span className="text-amber-700 dark:text-amber-400 ml-1">{pendingCount} {t('dashboard.pending')}</span>}
-                {finishedCount > 0 && <span className="text-blue-700 dark:text-blue-400 ml-1">{finishedCount} {t('dashboard.finished')}</span>}
-              </p>
-            </div>
+          {/* Botón Nuevo — el header duplicado "Mis Torneos" se eliminó, queda solo en el card */}
+          <div className="flex justify-end mb-4">
             <Link to="/app/new"
               className="inline-flex items-center gap-2 bg-fide-700 hover:bg-fide-800 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.97]">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
@@ -223,7 +214,6 @@ export default function Dashboard() {
                 tournaments={myTournaments}
                 onOpen={handleOpenTournament}
                 emptyMessage={t('dashboard.noTournaments')}
-                hideHeader
               />
 
               {/* 2. Torneos Demo Preconfigurados (3 modalidades) */}
