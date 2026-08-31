@@ -1,9 +1,27 @@
 import pg from 'pg';
 
+const isProd = process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production';
+
+function getConnectionString() {
+  // Prefer explicit pooler URL in production
+  if (isProd && process.env.DATABASE_POOLER_URL) return process.env.DATABASE_POOLER_URL;
+  if (isProd && process.env.DATABASE_URL) {
+    // Auto-convert direct Supabase URL to pooler
+    const url = process.env.DATABASE_URL;
+    if (url.includes('supabase.co:5432')) {
+      return url
+        .replace('supabase.co:5432', 'pooler.supabase.com:6543')
+        .replace(/\?.*$/, '') + '?pgbouncer=true&connection_limit=1';
+    }
+    return url;
+  }
+  return process.env.DATABASE_URL;
+}
+
 const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: (process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production') ? { rejectUnauthorized: false } : false,
-  max: 10,
+  connectionString: getConnectionString(),
+  ssl: isProd ? { rejectUnauthorized: false } : false,
+  max: isProd ? 3 : 10,
   idleTimeoutMillis: 30000,
 });
 
