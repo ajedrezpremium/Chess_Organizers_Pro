@@ -174,6 +174,37 @@ const navLinks = [
                       <a href="https://www.tiktok.com/@sarahchess" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">25. Sarah El Barbry ✨</a>
                     </div>
                   </div>
+                  <div className="border-t dark:border-fide-700 p-3 bg-amber-50/50 dark:bg-amber-900/10">
+                    <p className="font-bold text-fide-700 dark:text-amber-400 mb-1 text-xs">🇪🇸 Top 25 Hispano (+100k)</p>
+                    <p className="text-[10px] opacity-50 mb-2">No hay lista oficial única — selección hispana YouTube/Twitch/TikTok</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] max-h-52 overflow-auto pr-1">
+                      <a href="https://www.youtube.com/@ReyEnigmaOficial" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">1. Rey Enigma — 2M YT / 3M TikTok 🎭</a>
+                      <a href="https://www.twitch.tv/annacramling" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">2. Anna Cramling (WFM) ✨</a>
+                      <a href="https://www.youtube.com/@PepeCuenca" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">3. Pepe Cuenca (GM) — chess24</a>
+                      <a href="https://www.youtube.com/@LuisFernandezSiles" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">4. Luis Fernández Siles — 420k YT</a>
+                      <a href="https://www.youtube.com/@ManuelMorsa" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">5. Manuel Morsa (MF) 🇲🇽</a>
+                      <a href="https://www.youtube.com/@chess24es" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">6. Chess24 en Español</a>
+                      <a href="https://www.youtube.com/@AleWang" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">7. Ale Wang 🇦🇷</a>
+                      <a href="https://www.youtube.com/@AjedrezMiPasatiempo" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">8. Ajenminutoscanal (MF)</a>
+                      <a href="https://www.youtube.com/@MiguelZaragoza" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">9. Miguel Zaragoza</a>
+                      <a href="https://www.youtube.com/@TiagoChessColombia" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">10. Tiagochesscolombia 🇨🇴</a>
+                      <a href="https://www.youtube.com/@RobertoMartinez" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">11. Roberto Martínez (Creativo)</a>
+                      <a href="https://www.twitch.tv/jelty" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">12. Jelty — 7M Fortnite → ajedrez</a>
+                      <a href="https://www.twitch.tv/manitodeplomo" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">13. Manitodeplomo (IM) — 100+ opens</a>
+                      <a href="https://www.twitch.tv/marcosdmarin" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">14. Marcos Daniel Marín 🇪🇸</a>
+                      <a href="https://www.twitch.tv/mochess97" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">15. Rodrigo Casares (Mochess97) ♟️</a>
+                      <a href="https://www.twitch.tv/casimate" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">16. casimate — #3 ajedrez ES Twitch</a>
+                      <a href="https://www.twitch.tv/chessmagis" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">17. ChessMagis — #14 ES</a>
+                      <a href="https://www.twitch.tv/berlychess" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">18. Kimberly Castillo (berlychess)</a>
+                      <a href="https://www.twitch.tv/javier_lever" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">19. Javier_Lever</a>
+                      <a href="https://www.twitch.tv/tatohaoe" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">20. Roberto Jiménez (TaToHAoE)</a>
+                      <a href="https://www.twitch.tv/elnonodeltablero" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">21. El Nono del Tablero — 85 años 👴</a>
+                      <a href="https://www.twitch.tv/franciscomarques" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">22. Francisco Marques</a>
+                      <a href="https://www.twitch.tv/davidmartinez" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">23. David Martínez (IM)</a>
+                      <a href="https://www.twitch.tv/marianoortega" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">24. Mariano Ortega Amarelle (IM)</a>
+                      <a href="https://www.youtube.com/@CirculoCapablanca" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">25. Círculo Capablanca — historia/táctica</a>
+                    </div>
+                  </div>
                   <div className="p-2 border-t dark:border-fide-700 bg-gray-50 dark:bg-fide-900/50 text-[10px] text-fide-500 text-center">TOP100 completo en <a href="https://chessorganizers.com/enlaces" target="_blank" rel="noreferrer" className="underline hover:text-amber-600">chessorganizers.com/enlaces</a></div>
                 </div>
               )}
