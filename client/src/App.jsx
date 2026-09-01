@@ -32,6 +32,7 @@ const ArbiterPanel = lazy(() => import('./pages/ArbiterPanel.jsx'));
 const TournamentCatalog = lazy(() => import('./pages/TournamentCatalog.jsx'));
 const ScannerPage = lazy(() => import('./pages/ScannerPage.jsx'));
 const EloDashboard = lazy(() => import('./pages/EloDashboard.jsx'));
+const Newsletters = lazy(() => import('./pages/Newsletters.jsx'));
 
 function Spinner() {
   return <div className="flex items-center justify-center h-64"><div className="animate-spin h-8 w-8 border-4 border-fide-500 border-t-transparent rounded-full" /></div>;
@@ -78,6 +79,8 @@ function App() {
               <Route path="/public/organizers/:id" element={<PublicOrganizerProfile />} />
               <Route path="/catalog" element={<TournamentCatalog />} />
               <Route path="/pricing" element={<PricingPage />} />
+              <Route path="/newsletter" element={<Newsletters />} />
+              <Route path="/newsletters" element={<Newsletters />} />
               <Route path="/legal/:page" element={<LegalPage />} />
               <Route path="/legal" element={<Navigate to="/legal/terms" replace />} />
               <Route path="/arbiter" element={<ProtectedRoute><ArbiterTournamentsList /></ProtectedRoute>} />
@@ -95,6 +98,8 @@ function App() {
                 <Route path="scan" element={<ScannerPage />} />
                 <Route path="tournament/:id/scan" element={<ScannerPage />} />
                 <Route path="elo" element={<EloDashboard />} />
+                <Route path="newsletter" element={<Newsletters />} />
+                <Route path="newsletters" element={<Newsletters />} />
               </Route>
             </Routes>
           </Suspense>
