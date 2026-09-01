@@ -144,16 +144,36 @@ const navLinks = [
                     </div>
                   </div>
                   <div className="border-t dark:border-fide-700 p-3">
-                    <p className="font-bold text-fide-700 dark:text-amber-400 mb-2 text-xs">⭐ Top Influencers</p>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <a href="https://www.youtube.com/@GothamChess" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-amber-600"><span>♔</span> GothamChess (Levy Rozman)</a>
-                      <a href="https://www.twitch.tv/gmhikaru" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-amber-600"><span>⚡</span> Hikaru Nakamura</a>
-                      <a href="https://www.youtube.com/@reyenigma" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-amber-600"><span>🎭</span> Rey Enigma</a>
-                      <a href="https://www.twitch.tv/botezlive" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-amber-600"><span>♛</span> BotezLive</a>
-                      <a href="https://www.twitch.tv/annacramling" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-amber-600"><span>✨</span> Anna Cramling</a>
-                      <a href="https://www.youtube.com/@Agadmator" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-amber-600"><span>🎥</span> Agadmator</a>
+                    <p className="font-bold text-fide-700 dark:text-amber-400 mb-1 text-xs">⭐ Top 25 Influencers 2025 <span className="font-normal opacity-60">— impacto, streaming y comunidad</span></p>
+                    <p className="text-[10px] opacity-50 mb-2">Selección por audiencia YouTube/Twitch/TikTok/IG</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] max-h-52 overflow-auto pr-1">
+                      <a href="https://www.twitch.tv/gmhikaru" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">1. Hikaru Nakamura (GMHikaru) ⚡</a>
+                      <a href="https://www.youtube.com/@GothamChess" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">2. Levy Rozman (GothamChess) ♔</a>
+                      <a href="https://www.twitch.tv/annacramling" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">3. Anna Cramling ✨</a>
+                      <a href="https://www.youtube.com/@MagnusCarlsen" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">4. Magnus Carlsen 👑</a>
+                      <a href="https://www.twitch.tv/botezlive" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">5. BotezLive (Alexandra & Andrea) ♛</a>
+                      <a href="https://www.youtube.com/@crestbook" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">6. Sergei Shipov (Crestbook) 🇷🇺</a>
+                      <a href="https://www.youtube.com/@agadmator" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">7. Antonio Radić (Agadmator) 🎥</a>
+                      <a href="https://www.youtube.com/@Chessbrahs" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">8. Chessbrah (Hansen & Hambleton) 🇨🇦</a>
+                      <a href="https://www.youtube.com/@DanielNaroditskyGM" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">9. Daniel Naroditsky 📚</a>
+                      <a href="https://www.twitch.tv/nemsko" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">10. Nemo Zhou (Nemsko)</a>
+                      <a href="https://www.youtube.com/@RaffaelChess" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">11. Rafael Santos (Raffael Chess) 🇧🇷</a>
+                      <a href="https://www.youtube.com/@reyenigma" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">12. Rey Enigma 🎭</a>
+                      <a href="https://www.twitch.tv/juliensong" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">13. Julien Song 🇫🇷</a>
+                      <a href="https://www.twitch.tv/alessiasanteramo" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">14. Alessia Santeramo</a>
+                      <a href="https://www.youtube.com/@EricRosen" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">15. Eric Rosen — “oh no my queen!”</a>
+                      <a href="https://www.youtube.com/@RemoteChessAcademy" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">16. Igor Smirnov</a>
+                      <a href="https://www.youtube.com/@GMNeiksans" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">17. Arturs Neiksans 🇱🇻</a>
+                      <a href="https://www.twitch.tv/dinabelenkaya" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">18. Dina Belenkaya</a>
+                      <a href="https://www.twitch.tv/blitzstream" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">19. Blitzstream 🇫🇷</a>
+                      <a href="https://www.youtube.com/@SamayRainaOfficial" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">20. Samay Raina 🇮🇳</a>
+                      <a href="https://www.youtube.com/@chess" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">21. Chess.com</a>
+                      <a href="https://www.youtube.com/@ChessBaseIndia" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">22. ChessBase India 🇮🇳</a>
+                      <a href="https://www.youtube.com/@chess24" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">23. Chess24</a>
+                      <a href="https://www.youtube.com/@STLChessClub" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">24. St. Louis Chess Club</a>
+                      <a href="https://www.tiktok.com/@sarahchess" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">25. Sarah El Barbry ✨</a>
                     </div>
-                    <p className="text-[10px] opacity-50 mt-2">Enlaces con afiliado / UTM para conversión → usuarios</p>
+                    <p className="text-[10px] opacity-50 mt-2">Enlaces con UTM/afiliado para tráfico → conversión usuarios</p>
                   </div>
                   <div className="p-2 border-t dark:border-fide-700 bg-gray-50 dark:bg-fide-900/50 text-[10px] text-fide-500 text-center">TOP100 completo en <a href="https://chessorganizers.com/enlaces" target="_blank" rel="noreferrer" className="underline hover:text-amber-600">chessorganizers.com/enlaces</a></div>
                 </div>
