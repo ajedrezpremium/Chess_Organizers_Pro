@@ -1,6 +1,6 @@
 export default {
   app: { title: 'CHESS ORGANIZERS PRO', tagline: 'Live-Ergebnisse', footer: 'Chess Organizers Pro · Live-Ergebnisse', allRights: 'Alle Rechte vorbehalten.' },
-  nav: { tournaments: 'Turniere', players: 'Spieler', searchPlayer: 'Spieler suchen', live: 'Live', finished: 'Beendet', newTournament: 'Neues', myProfile: 'Mein Profil', arbiter: 'Schiedsrichter', scanner: 'Scannen', elo: 'Elo Dashboard', logout: 'Abmelden', backToHome: 'Zurück zur Startseite', sitemap: 'Seitenübersicht', pricing: 'Tarife', leagues: 'Ligen', darkMode: 'Dunkelmodus', lightMode: 'Hellmodus', inbox: 'Posteingang', planMembership: 'Tarif & Mitgliedschaft' },
+  nav: { tournaments: 'Turniere', players: 'Spieler', searchPlayer: 'Spieler suchen', live: 'Live', finished: 'Beendet', newTournament: 'Neues', myProfile: 'Mein Profil', arbiter: 'Schiedsrichter', scanner: 'Scannen', elo: 'Elo Dashboard', logout: 'Abmelden', backToHome: 'Zurück zur Startseite', sitemap: 'Seitenübersicht', pricing: 'Tarife', leagues: 'Ligen', darkMode: 'Dunkelmodus', lightMode: 'Hellmodus', inbox: 'Posteingang', planMembership: 'Tarif & Mitgliedschaft', liveBroadcast: 'LIVE' },
   tournament: {
     title: 'Live-Turniere', subtitle: 'Verfolge Turnierergebnisse in Echtzeit',
     noResults: 'Keine Turniere gefunden', noActive: 'Keine aktiven öffentlichen Turniere',

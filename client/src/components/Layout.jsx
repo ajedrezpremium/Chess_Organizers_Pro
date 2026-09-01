@@ -38,11 +38,13 @@ export default function Layout() {
   elo: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
   arbiter: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2l7 4v5c0 5-3.5 9.5-7 10.5C8.5 20.5 5 16 5 11V6l7-4z" /></svg>,
   leagues: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 21h8m-4-3v3m0-3a5 5 0 005-5V5H7v8a5 5 0 005 5z" /></svg>,
+  live: <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-white animate-pulse" />EN DIRECTO</span>,
 };
 
 const navLinks = [
     { to: '/app/dashboard', label: t('nav.tournaments'), icon: 'tournaments', title: 'Torneos' },
     { to: '/app/new', label: t('nav.newTournament'), icon: 'newTournament', title: 'Nuevo' },
+    { to: 'https://lichess.org/broadcast', label: t('nav.liveBroadcast'), icon: 'live', title: 'En directo — Lichess Broadcast', external: true, red: true },
     { to: '/app/scan', label: t('nav.scanner'), icon: 'scan', title: 'Escanear' },
     { to: '/app/elo', label: t('nav.elo'), icon: 'elo', title: 'Dashboard Elo' },
     { to: '/arbiter', label: t('nav.arbiter'), icon: 'arbiter', title: 'Árbitro' },
@@ -63,6 +65,14 @@ const navLinks = [
             </Link>
               <div className="hidden sm:flex items-center gap-1">
               {navLinks.map((l) => {
+                if (l.external) {
+                  return (
+                    <a key={l.to} href={l.to} target="_blank" rel="noreferrer" title={l.title}
+                      className={`flex items-center justify-center px-3 py-2 rounded-full text-xs font-black tracking-widest transition-all duration-200 shadow-sm hover:shadow-md ${l.red ? 'bg-red-600 text-white hover:bg-red-500 animate-pulse border border-red-400' : 'text-fide-300 hover:text-white hover:bg-fide-700/50'}`}>
+                      {SVG_ICONS[l.icon] || <span className="text-xs">{l.label}</span>}
+                    </a>
+                  );
+                }
                 const isActive = location.pathname === l.to || (l.to !== '/' && location.pathname.startsWith(l.to));
                 return (
                   <Link key={l.to} to={l.to} title={l.title}
@@ -192,11 +202,19 @@ const navLinks = [
         {menuOpen && (
           <div className="sm:hidden border-t border-fide-700/50 px-4 py-3 space-y-1 bg-fide-800/95 backdrop-blur-sm animate-fadeIn">
             {navLinks.map((l) => (
-              <Link key={l.to} to={l.to} onClick={() => setMenuOpen(false)} title={l.title}
-                className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-fide-200 hover:text-white hover:bg-fide-700 text-sm transition-all duration-200">
-                {SVG_ICONS[l.icon] || <span className="text-xs">{l.icon}</span>}
-                {l.label}
-              </Link>
+              l.external ? (
+                <a key={l.to} href={l.to} target="_blank" rel="noreferrer" onClick={() => setMenuOpen(false)} title={l.title}
+                  className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 ${l.red ? 'bg-red-600 text-white animate-pulse' : 'text-fide-200 hover:text-white hover:bg-fide-700'}`}>
+                  {SVG_ICONS[l.icon] || <span className="text-xs">{l.icon}</span>}
+                  {l.label}
+                </a>
+              ) : (
+                <Link key={l.to} to={l.to} onClick={() => setMenuOpen(false)} title={l.title}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-fide-200 hover:text-white hover:bg-fide-700 text-sm transition-all duration-200">
+                  {SVG_ICONS[l.icon] || <span className="text-xs">{l.icon}</span>}
+                  {l.label}
+                </Link>
+              )
             ))}
             <div className="border-t border-fide-700/50 pt-2 mt-2 flex items-center gap-2 px-3 py-2 text-fide-400 text-sm">
               <div className="w-6 h-6 rounded-full bg-fide-600 flex items-center justify-center text-xs font-bold text-amber-400">{user?.name?.charAt(0).toUpperCase() || 'U'}</div>

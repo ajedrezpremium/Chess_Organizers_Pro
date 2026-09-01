@@ -11,7 +11,6 @@ import DemoTournamentsPanel from '../components/Dashboard/DemoTournamentsPanel.j
 import ActiveTournamentsFeed from '../components/Dashboard/ActiveTournamentsFeed.jsx';
 import PastTournamentsFeed from '../components/Dashboard/PastTournamentsFeed.jsx';
 import PendingTournamentsFeed from '../components/Dashboard/PendingTournamentsFeed.jsx';
-import LiveBroadcastPanel from '../components/Dashboard/LiveBroadcastPanel.jsx';
 import ArbiterControlCenter from '../components/ArbiterControlCenter.jsx';
 
 const STATUS_STYLES = {
@@ -261,10 +260,7 @@ export default function Dashboard() {
                   <span className="text-sm text-gray-200">{t('dashboard.scannerNote')}</span>
                 </div>
               </div>
- 
-              {/* 0. LIVE — En Directo desde Lichess Broadcast */}
-              <LiveBroadcastPanel />
- 
+
               {/* 1. 10 Torneos PENDIENTES — Próximos eventos */}
               <PendingTournamentsFeed
                 limit={10}
