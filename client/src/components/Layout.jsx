@@ -106,10 +106,11 @@ const navLinks = [
                       <p className="font-bold text-fide-700 dark:text-amber-400 mb-1">Organismos</p>
                       <ul className="space-y-1">
                         <li><a href="https://www.fide.com" target="_blank" rel="noreferrer" className="hover:text-amber-600 dark:hover:text-amber-400">FIDE</a></li>
-                        <li><a href="https://ratings.fide.com" target="_blank" rel="noreferrer" className="hover:text-amber-600">FIDE Ratings</a></li>
                         <li><a href="https://www.ecfchess.org.uk" target="_blank" rel="noreferrer" className="hover:text-amber-600">ECF</a></li>
                         <li><a href="https://new.uschess.org" target="_blank" rel="noreferrer" className="hover:text-amber-600">USCF</a></li>
                         <li><a href="https://www.feda.org" target="_blank" rel="noreferrer" className="hover:text-amber-600">FEDA</a></li>
+                        <li><a href="https://www.europechess.org" target="_blank" rel="noreferrer" className="hover:text-amber-600">ECU</a></li>
+                        <li><a href="https://www.fide.com/calendar" target="_blank" rel="noreferrer" className="hover:text-amber-600">FIDE Calendar</a></li>
                       </ul>
                       <p className="font-bold text-fide-700 dark:text-amber-400 mt-3 mb-1">Rankings</p>
                       <ul className="space-y-1">
@@ -117,6 +118,8 @@ const navLinks = [
                         <li><a href="http://www.chessmetrics.com" target="_blank" rel="noreferrer" className="hover:text-amber-600">Chessmetrics</a></li>
                         <li><a href="https://www.2700chess.com/women" target="_blank" rel="noreferrer" className="hover:text-amber-600">2700 Women</a></li>
                         <li><a href="https://ratings.fide.com/top.phtml?list=open" target="_blank" rel="noreferrer" className="hover:text-amber-600">FIDE Top100</a></li>
+                        <li><a href="https://2700chess.com/live" target="_blank" rel="noreferrer" className="hover:text-amber-600">2700 Live</a></li>
+                        <li><a href="https://www.chess.com/ratings" target="_blank" rel="noreferrer" className="hover:text-amber-600">Chess.com Ratings</a></li>
                       </ul>
                     </div>
                     <div>
@@ -126,8 +129,9 @@ const navLinks = [
                         <li><a href="https://www.365chess.com" target="_blank" rel="noreferrer" className="hover:text-amber-600">365Chess</a></li>
                         <li><a href="https://www.chess.com" target="_blank" rel="noreferrer" className="hover:text-amber-600">Chess.com</a></li>
                         <li><a href="https://lichess.org" target="_blank" rel="noreferrer" className="hover:text-amber-600">Lichess.org</a></li>
-                        <li><a href="https://chess24.com" target="_blank" rel="noreferrer" className="hover:text-amber-600">chess24</a></li>
                         <li><a href="https://www.chessbase.com" target="_blank" rel="noreferrer" className="hover:text-amber-600">ChessBase</a></li>
+                        <li><a href="https://lichess.org/database" target="_blank" rel="noreferrer" className="hover:text-amber-600">Lichess DB</a></li>
+                        <li><a href="https://www.chess.com/analysis" target="_blank" rel="noreferrer" className="hover:text-amber-600">Chess.com Analysis</a></li>
                       </ul>
                       <p className="font-bold text-fide-700 dark:text-amber-400 mt-3 mb-1">Noticias &amp; Streams</p>
                       <ul className="space-y-1">
@@ -135,8 +139,21 @@ const navLinks = [
                         <li><a href="https://en.chessbase.com" target="_blank" rel="noreferrer" className="hover:text-amber-600">ChessBase News</a></li>
                         <li><a href="https://www.thechessdrum.net" target="_blank" rel="noreferrer" className="hover:text-amber-600">The Chess Drum</a></li>
                         <li><a href="https://twitch.tv/chess" target="_blank" rel="noreferrer" className="hover:text-amber-600">Twitch Chess</a></li>
+                        <li><a href="https://www.theweekinchess.com" target="_blank" rel="noreferrer" className="hover:text-amber-600">The Week in Chess</a></li>
                       </ul>
                     </div>
+                  </div>
+                  <div className="border-t dark:border-fide-700 p-3">
+                    <p className="font-bold text-fide-700 dark:text-amber-400 mb-2 text-xs">⭐ Top Influencers</p>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <a href="https://www.youtube.com/@GothamChess" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-amber-600"><span>♔</span> GothamChess (Levy Rozman)</a>
+                      <a href="https://www.twitch.tv/gmhikaru" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-amber-600"><span>⚡</span> Hikaru Nakamura</a>
+                      <a href="https://www.youtube.com/@reyenigma" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-amber-600"><span>🎭</span> Rey Enigma</a>
+                      <a href="https://www.twitch.tv/botezlive" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-amber-600"><span>♛</span> BotezLive</a>
+                      <a href="https://www.twitch.tv/annacramling" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-amber-600"><span>✨</span> Anna Cramling</a>
+                      <a href="https://www.youtube.com/@Agadmator" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-amber-600"><span>🎥</span> Agadmator</a>
+                    </div>
+                    <p className="text-[10px] opacity-50 mt-2">Enlaces con afiliado / UTM para conversión → usuarios</p>
                   </div>
                   <div className="p-2 border-t dark:border-fide-700 bg-gray-50 dark:bg-fide-900/50 text-[10px] text-fide-500 text-center">TOP100 completo en <a href="https://chessorganizers.com/enlaces" target="_blank" rel="noreferrer" className="underline hover:text-amber-600">chessorganizers.com/enlaces</a></div>
                 </div>
