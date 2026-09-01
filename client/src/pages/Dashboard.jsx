@@ -9,8 +9,6 @@ import NotificationSettings from '../components/NotificationSettings.jsx';
 import MyTournamentsList from '../components/Dashboard/MyTournamentsList.jsx';
 import DemoTournamentsPanel from '../components/Dashboard/DemoTournamentsPanel.jsx';
 import ActiveTournamentsFeed from '../components/Dashboard/ActiveTournamentsFeed.jsx';
-import PastTournamentsFeed from '../components/Dashboard/PastTournamentsFeed.jsx';
-import PendingTournamentsFeed from '../components/Dashboard/PendingTournamentsFeed.jsx';
 import ArbiterControlCenter from '../components/ArbiterControlCenter.jsx';
 
 const STATUS_STYLES = {
@@ -218,10 +216,8 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* LAYOUT DE DOS COLUMNAS */}
-          <div className="grid gap-6 lg:grid-cols-12">
-            {/* COLUMNA IZQUIERDA (5/12): MI HISTORIAL → DEMOS → ACTIVOS (efecto llamada) */}
-            <div className="lg:col-span-5 space-y-6">
+          {/* LAYOUT LIMPIO — Sin columna derecha redundante (header ya tiene EN DIRECTO, Escanear y botones LIVE/PRÓXIMOS/HISTORIAL) */}
+          <div className="space-y-6 max-w-3xl mx-auto">
               {/* 1. Mis Torneos (MI HISTORIAL) */}
               <MyTournamentsList
                 tournaments={myTournaments}
@@ -241,42 +237,6 @@ export default function Dashboard() {
                 limit={10}
                 onOpen={handleOpenTournament}
               />
-            </div>
-
-            {/* COLUMNA DERECHA (7/12): PENDIENTES (enlaces externos) → PASADOS */}
-            <div className="lg:col-span-7 space-y-6">
-              <div className="bg-gradient-to-r from-fide-900/80 to-amber-900/80 border border-amber-700/30 rounded-3xl p-6 shadow-lg text-white">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="text-xl sm:text-2xl font-bold">{t('dashboard.scannerTitle')}</h2>
-                    <p className="mt-2 text-sm text-gray-200 max-w-2xl">{t('dashboard.scannerSubtitle')}</p>
-                  </div>
-                  <div className="text-4xl">📸</div>
-                </div>
-                <div className="mt-5 flex flex-col sm:flex-row sm:items-center gap-3">
-                  <Link to="/app/scan" className="inline-flex items-center justify-center rounded-xl bg-amber-400 text-fide-950 font-semibold px-5 py-3 text-sm transition hover:bg-amber-300">
-                    {t('dashboard.scannerButton')}
-                  </Link>
-                  <span className="text-sm text-gray-200">{t('dashboard.scannerNote')}</span>
-                </div>
-              </div>
-
-              {/* 1. 10 Torneos PENDIENTES — Próximos eventos */}
-              <PendingTournamentsFeed
-                limit={10}
-                onOpen={handleOpenTournament}
-              />
- 
-              {/* 2. 10 Torneos PASADOS */}
-              <PastTournamentsFeed
-                title={`📜 ${t('dashboard.pastFeedTitle')}`}
-                subtitle={t('dashboard.pastFeedSubtitle')}
-                linkTo="/catalog?status=finished"
-                linkText={t('dashboard.viewAllPast')}
-                limit={10}
-                onOpen={handleOpenTournament}
-              />
-            </div>
           </div>
         </>
       )}
