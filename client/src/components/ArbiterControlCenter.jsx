@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useI18n } from '../i18n/context.jsx';
+import { api } from '../api/client.js';
 
 // Centro de Control Arbitral — P1 imprescindible + P2 diferenciación
 // Filosofía: SEE → DECIDE → ACT → RECORD — Responde en 5s a las 7 preguntas
@@ -37,6 +38,13 @@ export default function ArbiterControlCenter({ tournament, rounds = [], players 
   const [activeRound, setActiveRound] = useState(0);
   const [search, setSearch] = useState('');
   const [alertFilter, setAlertFilter] = useState('all');
+  const [incidentsDb, setIncidentsDb] = useState(null); // null = not loaded yet
+
+  useEffect(() => {
+    if (!tournament?.id) return;
+    setIncidentsDb(null);
+    api.incidents.list(tournament.id).then((d) => setIncidentsDb(d.incidents || [])).catch(() => setIncidentsDb([]));
+  }, [tournament?.id]);
 
   const round = rounds[activeRound];
   const totalPlayers = players.length;
@@ -46,7 +54,28 @@ export default function ArbiterControlCenter({ tournament, rounds = [], players 
   const finishedGames = pairings.length - activeGames;
   const pending = activeGames;
   const incidents = useMemo(() => {
-    // mock incidents derived from pairings without result + overdue
+    // Real incidents from Supabase if loaded; fallback to derived mock
+    if (incidentsDb !== null) {
+      const levelFromPriority = (p) => p === 'critical' || p === 'high' ? 'critical' : p === 'medium' ? 'attention' : 'info';
+      const real = incidentsDb.map((inc) => ({
+        id: inc.id,
+        level: levelFromPriority(inc.priority),
+        title: inc.title || `Mesa ${inc.board || '—'} — ${inc.type}`,
+        desc: inc.description || `Estado: ${inc.status}`,
+        action: inc.status === 'open' ? 'Ver' : inc.status,
+        raw: inc,
+      }));
+      // Añadir alertas derivadas reales (bloqueo, bye) si no están en DB
+      const derived = [];
+      pairings.forEach((p) => {
+        if (!p.black_id) derived.push({ id: `bye-${p.board}`, level: 'info', title: `Mesa ${p.board} — Bye`, desc: `${p.white_name || '—'} descansa`, action: '—' });
+      });
+      if (pending > 5) derived.push({ id: 'pending-block', level: 'critical', title: `Bloqueo de ronda — ${pending} mesas pendientes`, desc: 'Resultados pendientes bloquean la siguiente ronda', action: 'Revisar' });
+      if (pairings.some((p) => !p.result || p.result === '' )) derived.push({ id: 'clock', level: 'attention', title: `Reloj detenido — Mesa ${pairings[0]?.board || 1}`, desc: 'Reclamo pendiente', action: 'Atender' });
+      if (round?.status === 'closed') derived.push({ id: 'round-done', level: 'info', title: 'Ronda terminada', desc: 'Emparejamientos generados', action: 'Publicar' });
+      return [...real, ...derived];
+    }
+    // Fallback mock si aún no cargó
     const list = [];
     pairings.forEach((p) => {
       if (!p.black_id) list.push({ id: `bye-${p.board}`, level: 'info', title: `Mesa ${p.board} — Bye`, desc: `${p.white_name || '—'} descansa`, action: '—' });
@@ -56,7 +85,7 @@ export default function ArbiterControlCenter({ tournament, rounds = [], players 
     if (pairings.some((p) => !p.result || p.result === '')) list.push({ id: 'clock', level: 'attention', title: `Reloj detenido — Mesa ${pairings[0]?.board || 1}`, desc: 'Reclamo pendiente', action: 'Atender' });
     if (round?.status === 'closed') list.push({ id: 'round-done', level: 'info', title: 'Ronda terminada', desc: 'Emparejamientos generados', action: 'Publicar' });
     return list;
-  }, [pairings, pending, round]);
+  }, [pairings, pending, round, incidentsDb]);
 
   const filteredAlerts = alertFilter === 'all' ? incidents : incidents.filter((a) => a.level === alertFilter);
   const healthScore = Math.max(0, 100 - incidents.filter((a) => a.level === 'critical').length * 15 - incidents.filter((a) => a.level === 'attention').length * 5 - pending * 1);

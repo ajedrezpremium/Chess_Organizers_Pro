@@ -226,4 +226,16 @@ export const api = {
     organizers: () => request('GET', '/public/organizers'),
     organizer: (id) => request('GET', `/public/organizers/${id}`),
   },
+
+  incidents: {
+    list: (tid) => request('GET', `/incidents?tournament_id=${tid}`),
+    create: (data) => request('POST', '/incidents', data),
+    update: (id, data) => request('PATCH', `/incidents/${id}`, data),
+    remove: (id) => request('DELETE', `/incidents/${id}`),
+  },
+
+  newsletter: {
+    subscribe: (email, locale) => request('POST', '/newsletter/subscribe', { email, locale }),
+    count: () => request('GET', '/newsletter/subscribers'),
+  },
 };

@@ -51,6 +51,10 @@
     { "source": "/pairings/(.*)", "destination": "/api/index.js" },
     { "source": "/webhooks", "destination": "/api/index.js" },
     { "source": "/webhooks/(.*)", "destination": "/api/index.js" },
+    { "source": "/incidents", "destination": "/api/index.js" },
+    { "source": "/incidents/(.*)", "destination": "/api/index.js" },
+    { "source": "/newsletter", "destination": "/api/index.js" },
+    { "source": "/newsletter/(.*)", "destination": "/api/index.js" },
     { "source": "/api/v1", "destination": "/api/index.js" },
     { "source": "/api/v1/(.*)", "destination": "/api/index.js" },
     { "source": "/(.*)", "destination": "/index.html" }

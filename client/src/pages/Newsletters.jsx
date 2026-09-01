@@ -1,15 +1,24 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { newsletters2026 } from '../data/newsletters2026.js';
+import { api } from '../api/client.js';
+import { useI18n } from '../i18n/context.jsx';
 
 export default function Newsletters() {
+  const { locale } = useI18n();
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
-  const handleSubscribe = (e) => {
+  const [error, setError] = useState('');
+  const handleSubscribe = async (e) => {
     e.preventDefault();
     if (!email) return;
-    setSent(true);
-    setTimeout(() => setSent(false), 3000);
+    setError('');
+    try {
+      await api.newsletter.subscribe(email, locale);
+      setSent(true);
+      setEmail('');
+      setTimeout(() => setSent(false), 3000);
+    } catch (err) { setError(err.message || 'Error'); }
   };
   return (
     <div className="max-w-4xl mx-auto">
@@ -29,7 +38,8 @@ export default function Newsletters() {
           <input value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="tu@email.com" className="px-3 py-2 rounded-lg text-sm text-black outline-none w-full sm:w-56" />
           <button type="submit" className="px-4 py-2 rounded-lg bg-black text-white text-sm font-bold hover:bg-zinc-800">Suscribir</button>
         </div>
-        {sent && <span className="text-xs bg-white text-amber-700 px-2 py-1 rounded-full font-bold">✓ ¡Suscrito!</span>}
+        {sent && <span className="text-xs bg-white text-amber-700 px-2 py-1 rounded-full font-bold">✓ ¡Suscrito! Guardado en Supabase</span>}
+        {error && <span className="text-xs bg-red-600 text-white px-2 py-1 rounded-full">{error}</span>}
       </form>
 
       {/* List */}

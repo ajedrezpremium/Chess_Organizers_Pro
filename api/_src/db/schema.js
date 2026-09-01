@@ -72,7 +72,32 @@ CREATE TABLE IF NOT EXISTS tournament_groups (
   updated_at      TIMESTAMPTZ DEFAULT NOW()
 );`;
 
-const ALL_TABLES = [USERS_TABLE_SQL, TOURNAMENTS_TABLE_SQL, GROUPS_TABLE_SQL];
+const INCIDENTS_TABLE_SQL = `
+CREATE TABLE IF NOT EXISTS incidents (
+  id SERIAL PRIMARY KEY,
+  tournament_id INTEGER NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+  round_id INTEGER REFERENCES rounds(id) ON DELETE SET NULL,
+  board INTEGER,
+  type TEXT NOT NULL CHECK(type IN ('clock','result','conduct','time','pairing','claim','other')),
+  priority TEXT NOT NULL DEFAULT 'medium' CHECK(priority IN ('low','medium','high','critical')),
+  status TEXT NOT NULL DEFAULT 'open' CHECK(status IN ('open','assigned','investigating','resolved','closed')),
+  title TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  arbiter_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);`;
+
+const NEWSLETTER_TABLE_SQL = `
+CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+  id SERIAL PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  locale TEXT DEFAULT 'es',
+  subscribed_at TIMESTAMPTZ DEFAULT NOW(),
+  active INTEGER DEFAULT 1
+);`;
+
+const ALL_TABLES = [USERS_TABLE_SQL, TOURNAMENTS_TABLE_SQL, GROUPS_TABLE_SQL, INCIDENTS_TABLE_SQL, NEWSLETTER_TABLE_SQL];
 
 export async function migrate() {
   const db = getDb();

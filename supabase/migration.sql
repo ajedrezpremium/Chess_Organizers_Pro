@@ -496,3 +496,34 @@ DROP TRIGGER IF EXISTS update_scan_jobs_updated_at ON scan_jobs;
 CREATE TRIGGER update_scan_jobs_updated_at
   BEFORE UPDATE ON scan_jobs
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================================
+-- INCIDENTS / ALERTS + NEWSLETTER
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS incidents (
+  id SERIAL PRIMARY KEY,
+  tournament_id INTEGER NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+  round_id INTEGER REFERENCES rounds(id) ON DELETE SET NULL,
+  board INTEGER,
+  player_id INTEGER REFERENCES tournament_players(id) ON DELETE SET NULL,
+  type TEXT NOT NULL CHECK(type IN ('clock','result','conduct','time','pairing','claim','other')),
+  priority TEXT NOT NULL DEFAULT 'medium' CHECK(priority IN ('low','medium','high','critical')),
+  status TEXT NOT NULL DEFAULT 'open' CHECK(status IN ('open','assigned','investigating','resolved','closed')),
+  title TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  arbiter_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_incidents_tournament ON incidents(tournament_id);
+CREATE INDEX IF NOT EXISTS idx_incidents_round ON incidents(round_id);
+CREATE INDEX IF NOT EXISTS idx_incidents_status ON incidents(status);
+
+CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+  id SERIAL PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  locale TEXT DEFAULT 'es',
+  subscribed_at TIMESTAMPTZ DEFAULT NOW(),
+  active INTEGER DEFAULT 1
+);
