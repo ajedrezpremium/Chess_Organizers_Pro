@@ -175,9 +175,9 @@ const navLinks = [
                     </div>
                   </div>
                   <div className="border-t dark:border-fide-700 p-3 bg-amber-50/50 dark:bg-amber-900/10">
-                    <p className="font-bold text-fide-700 dark:text-amber-400 mb-1 text-xs">🇪🇸 Top 25 Hispano (+100k)</p>
-                    <p className="text-[10px] opacity-50 mb-2">No hay lista oficial única — selección hispana YouTube/Twitch/TikTok</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] max-h-52 overflow-auto pr-1">
+                    <p className="font-bold text-fide-700 dark:text-amber-400 mb-1 text-xs">🇪🇸 Top 30 Hispano (+80k)</p>
+                    <p className="text-[10px] opacity-50 mb-2">No hay lista oficial única — ampliado a 30 para incluir +80k significativos</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] max-h-64 overflow-auto pr-1">
                       <a href="https://www.youtube.com/@ReyEnigmaOficial" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">1. Rey Enigma — 2M YT / 3M TikTok 🎭</a>
                       <a href="https://www.twitch.tv/annacramling" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">2. Anna Cramling (WFM) ✨</a>
                       <a href="https://www.youtube.com/@PepeCuenca" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">3. Pepe Cuenca (GM) — chess24</a>
@@ -203,6 +203,11 @@ const navLinks = [
                       <a href="https://www.twitch.tv/davidmartinez" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">23. David Martínez (IM)</a>
                       <a href="https://www.twitch.tv/marianoortega" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">24. Mariano Ortega Amarelle (IM)</a>
                       <a href="https://www.youtube.com/@CirculoCapablanca" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">25. Círculo Capablanca — historia/táctica</a>
+                      <a href="https://www.youtube.com/@MiguelSantos" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate font-semibold bg-amber-100 dark:bg-amber-900/20 px-1 rounded">26. Miguel Santos “Miguelito” (GM) ⭐</a>
+                      <a href="https://www.youtube.com/@SpiderIbarra" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate font-semibold bg-amber-100 dark:bg-amber-900/20 px-1 rounded">27. José C. Ibarra “Spider Ibarra” (GM) ⭐</a>
+                      <a href="https://www.youtube.com/@DavidAnton" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">28. David Antón Guijarro (GM)</a>
+                      <a href="https://www.youtube.com/@SabrinaVegaChess" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">29. Sabrina Vega (WGM)</a>
+                      <a href="https://www.youtube.com/@LeontxoGarcia" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">30. Leontxo García — periodista</a>
                     </div>
                   </div>
                   <div className="p-2 border-t dark:border-fide-700 bg-gray-50 dark:bg-fide-900/50 text-[10px] text-fide-500 text-center">TOP100 completo en <a href="https://chessorganizers.com/enlaces" target="_blank" rel="noreferrer" className="underline hover:text-amber-600">chessorganizers.com/enlaces</a></div>
