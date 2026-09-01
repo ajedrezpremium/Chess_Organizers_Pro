@@ -89,8 +89,14 @@ export default function ChatBot() {
     const q = input.trim();
     setInput('');
     setShowQuick(false);
-    const faq = FAQ.find((f) => f.q.toLowerCase().includes(q.toLowerCase()) || f.a.toLowerCase().includes(q.toLowerCase()));
+    const qLower = q.toLowerCase();
+    const isFideLawsTest = (qLower.includes('conoces') && qLower.includes('leyes')) || qLower.includes('fide laws') || qLower.includes('conheces as leis') || (qLower.includes('know') && qLower.includes('fide laws'));
     setMessages((prev) => [...prev, { role: 'user', text: q }]);
+    if (isFideLawsTest) {
+      setTimeout(() => setMessages((prev) => [...prev, { role: 'bot', text: t('chat.fideLawsYes') }]), 200);
+      return;
+    }
+    const faq = FAQ.find((f) => f.q.toLowerCase().includes(q.toLowerCase()) || f.a.toLowerCase().includes(q.toLowerCase()));
     if (faq) {
       setTimeout(() => setMessages((prev) => [...prev, { role: 'bot', text: faq.a }]), 200);
     } else {

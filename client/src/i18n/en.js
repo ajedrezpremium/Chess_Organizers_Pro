@@ -207,6 +207,7 @@ activeFeedTitle: 'Active Tournaments — Pending',
     faq9_a: 'In Settings → Arbiters, search by email and add.',
     faq10_q: 'What plans are available?',
     faq10_a: 'Free (2 tournaments, 30 players), Basic (10 tournaments, 100 players) and Pro (unlimited).',
+    fideLawsYes: 'Yes! I am an expert in FIDE Laws of Chess 2023 effective 01/01/2023 (handbook.fide.com). I can answer about illegal moves, castling, draws, penalties, mobile, 50 moves, j\'adoube and more. Ask anything and I will cite the applicable article.',
   },
   export: {
     title: 'Export', trf: 'TRF', pgn: 'PGN', bulletin: 'Bulletin',

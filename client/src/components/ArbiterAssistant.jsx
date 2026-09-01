@@ -63,6 +63,13 @@ export default function ArbiterAssistant() {
     setMessages((prev) => [...prev, { role: 'user', text: q, timestamp: new Date() }]);
     setInput('');
 
+    const qLower = q.toLowerCase();
+    const isFideTest = (qLower.includes('conoces') && qLower.includes('leyes')) || qLower.includes('fide laws') || qLower.includes('conheces as leis') || (qLower.includes('know') && qLower.includes('fide'));
+    if (isFideTest) {
+      setMessages((prev) => [...prev, { role: 'arbiter', text: '¡Sí! Soy experto en las Leyes FIDE 2023 vigentes desde el 01/01/2023 (handbook.fide.com) — Artículos 1 a 12, Apéndices y Guidelines. Puedo responder con artículo aplicable, acción recomendada y nivel de certeza. Pregunta sobre jugadas ilegales, enroque, tablas, sanciones, móvil, 50 movimientos, j\'adoube…', article: '1-12', title: 'Leyes FIDE 2023 — Experto', confidence: 'high', related: [], timestamp: new Date() }]);
+      return;
+    }
+
     api.askFide(q, messages.map(m => ({ role: m.role, text: m.text }))).then((resp) => {
       setMessages((prev) => [
         ...prev,

@@ -207,6 +207,7 @@ export default {
     faq9_a: 'Dans Configuration → Arbitres, cherchez par email et ajoutez.',
     faq10_q: 'Quels sont les forfaits ?',
     faq10_a: 'Gratuit (2 tournois, 30 joueurs), Basique (10 tournois, 100) et Pro (illimité).',
+    fideLawsYes: 'Oui ! Je suis expert des Lois FIDE 2023 en vigueur depuis le 01/01/2023 (handbook.fide.com). Je peux répondre sur les coups illégaux, le roque, les nulles, les sanctions, etc.',
   },
   export: {
     title: 'Exporter', trf: 'TRF', pgn: 'PGN', bulletin: 'Bulletin',

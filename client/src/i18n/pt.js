@@ -207,6 +207,7 @@ export default {
     faq9_a: 'Em Configurações → Árbitros, busque por email e adicione.',
     faq10_q: 'Quais planos existem?',
     faq10_a: 'Grátis (2 torneios, 30 jogadores), Básico (10 torneios, 100) e Pro (ilimitado).',
+    fideLawsYes: 'Sim! Sou especialista nas Leis FIDE 2023 vigentes desde 01/01/2023 (handbook.fide.com). Posso responder sobre lances ilegais, roque, empates, sanções, etc.',
   },
   export: {
     title: 'Exportar', trf: 'TRF', pgn: 'PGN', bulletin: 'Boletim',

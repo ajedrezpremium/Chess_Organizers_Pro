@@ -207,6 +207,7 @@ export default {
     faq9_a: 'In Einstellungen → Schiedsrichter, suche per E-Mail und füge hinzu.',
     faq10_q: 'Welche Tarife gibt es?',
     faq10_a: 'Kostenlos (2 Turniere, 30 Spieler), Basis (10 Turniere, 100) und Pro (unbegrenzt).',
+    fideLawsYes: 'Ja! Ich bin Experte für die FIDE-Regeln 2023 gültig seit 01.01.2023 (handbook.fide.com). Ich kann zu illegalen Zügen, Rochade, Remis, Strafen usw. antworten und den Artikel zitieren.',
   },
   export: {
     title: 'Exportieren', trf: 'TRF', pgn: 'PGN', bulletin: 'Bulletin',

@@ -16,10 +16,15 @@ export default function Layout() {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [enlacesOpen, setEnlacesOpen] = useState(false);
   const userMenuRef = useRef(null);
+  const enlacesRef = useRef(null);
 
   useEffect(() => {
-    function handleClick(e) { if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setUserMenuOpen(false); }
+    function handleClick(e) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setUserMenuOpen(false);
+      if (enlacesRef.current && !enlacesRef.current.contains(e.target)) setEnlacesOpen(false);
+    }
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
@@ -70,7 +75,68 @@ const navLinks = [
               })}
             </div>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1 sm:gap-2">
+            {/* Calendario */}
+            <Link to="/catalog?year=2026" title="Calendario 2026 — torneos por fecha" className="p-2 rounded-lg hover:bg-fide-700 text-fide-300 hover:text-white transition" aria-label="Calendario">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            </Link>
+            {/* Enlaces TOP100 */}
+            <div className="relative" ref={enlacesRef}>
+              <button onClick={() => setEnlacesOpen(!enlacesOpen)} title="Enlaces — TOP100 webs de ajedrez" className={`p-2 rounded-lg transition ${enlacesOpen ? 'bg-fide-700 text-white' : 'hover:bg-fide-700 text-fide-300 hover:text-white'}`} aria-label="Enlaces">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+              </button>
+              {enlacesOpen && (
+                <div className="absolute right-0 top-full mt-2 w-80 sm:w-[480px] bg-white dark:bg-fide-800 border dark:border-fide-700 rounded-xl shadow-2xl z-50 max-h-[70vh] overflow-auto">
+                  <div className="p-3 border-b dark:border-fide-700 flex items-center justify-between">
+                    <h4 className="text-xs font-bold text-fide-900 dark:text-white uppercase tracking-widest">🔗 TOP100 Webs Ajedrez</h4>
+                    <button onClick={() => setEnlacesOpen(false)} className="text-fide-400 hover:text-fide-600">✕</button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 p-3 text-xs">
+                    <div>
+                      <p className="font-bold text-fide-700 dark:text-amber-400 mb-1">Organismos</p>
+                      <ul className="space-y-1">
+                        <li><a href="https://www.fide.com" target="_blank" rel="noreferrer" className="hover:text-amber-600 dark:hover:text-amber-400">FIDE</a></li>
+                        <li><a href="https://ratings.fide.com" target="_blank" rel="noreferrer" className="hover:text-amber-600">FIDE Ratings</a></li>
+                        <li><a href="https://www.ecfchess.org.uk" target="_blank" rel="noreferrer" className="hover:text-amber-600">ECF</a></li>
+                        <li><a href="https://new.uschess.org" target="_blank" rel="noreferrer" className="hover:text-amber-600">USCF</a></li>
+                        <li><a href="https://www.feda.org" target="_blank" rel="noreferrer" className="hover:text-amber-600">FEDA</a></li>
+                      </ul>
+                      <p className="font-bold text-fide-700 dark:text-amber-400 mt-3 mb-1">Rankings</p>
+                      <ul className="space-y-1">
+                        <li><a href="https://2700chess.com" target="_blank" rel="noreferrer" className="hover:text-amber-600">2700chess.com</a></li>
+                        <li><a href="http://www.chessmetrics.com" target="_blank" rel="noreferrer" className="hover:text-amber-600">Chessmetrics</a></li>
+                        <li><a href="https://www.2700chess.com/women" target="_blank" rel="noreferrer" className="hover:text-amber-600">2700 Women</a></li>
+                        <li><a href="https://ratings.fide.com/top.phtml?list=open" target="_blank" rel="noreferrer" className="hover:text-amber-600">FIDE Top100</a></li>
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="font-bold text-fide-700 dark:text-amber-400 mb-1">Bases &amp; Partidas</p>
+                      <ul className="space-y-1">
+                        <li><a href="https://www.chessgames.com" target="_blank" rel="noreferrer" className="hover:text-amber-600">Chessgames.com</a></li>
+                        <li><a href="https://www.365chess.com" target="_blank" rel="noreferrer" className="hover:text-amber-600">365Chess</a></li>
+                        <li><a href="https://www.chess.com" target="_blank" rel="noreferrer" className="hover:text-amber-600">Chess.com</a></li>
+                        <li><a href="https://lichess.org" target="_blank" rel="noreferrer" className="hover:text-amber-600">Lichess.org</a></li>
+                        <li><a href="https://chess24.com" target="_blank" rel="noreferrer" className="hover:text-amber-600">chess24</a></li>
+                        <li><a href="https://www.chessbase.com" target="_blank" rel="noreferrer" className="hover:text-amber-600">ChessBase</a></li>
+                      </ul>
+                      <p className="font-bold text-fide-700 dark:text-amber-400 mt-3 mb-1">Noticias &amp; Streams</p>
+                      <ul className="space-y-1">
+                        <li><a href="https://www.chess.com/news" target="_blank" rel="noreferrer" className="hover:text-amber-600">Chess.com News</a></li>
+                        <li><a href="https://en.chessbase.com" target="_blank" rel="noreferrer" className="hover:text-amber-600">ChessBase News</a></li>
+                        <li><a href="https://www.thechessdrum.net" target="_blank" rel="noreferrer" className="hover:text-amber-600">The Chess Drum</a></li>
+                        <li><a href="https://twitch.tv/chess" target="_blank" rel="noreferrer" className="hover:text-amber-600">Twitch Chess</a></li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div className="p-2 border-t dark:border-fide-700 bg-gray-50 dark:bg-fide-900/50 text-[10px] text-fide-500 text-center">TOP100 completo en <a href="https://chessorganizers.com/enlaces" target="_blank" rel="noreferrer" className="underline hover:text-amber-600">chessorganizers.com/enlaces</a></div>
+                </div>
+              )}
+            </div>
+            {/* Newsletter */}
+            <a href="https://chessorganizers.com/newsletter" target="_blank" rel="noreferrer" title="Newsletter — suscríbete" className="p-2 rounded-lg hover:bg-fide-700 text-fide-300 hover:text-white transition" aria-label="Newsletter">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+            </a>
+            <div className="w-px h-6 bg-fide-700 mx-1 hidden sm:block" />
             <LangSwitcher />
             <SyncStatus />
             <NotificationDropdown />

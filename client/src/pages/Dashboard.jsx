@@ -12,6 +12,7 @@ import ActiveTournamentsFeed from '../components/Dashboard/ActiveTournamentsFeed
 import PastTournamentsFeed from '../components/Dashboard/PastTournamentsFeed.jsx';
 import PendingTournamentsFeed from '../components/Dashboard/PendingTournamentsFeed.jsx';
 import LiveBroadcastPanel from '../components/Dashboard/LiveBroadcastPanel.jsx';
+import ArbiterControlCenter from '../components/ArbiterControlCenter.jsx';
 
 const STATUS_STYLES = {
   active: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
@@ -29,6 +30,8 @@ export default function Dashboard() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [membership, setMembership] = useState(null);
   const [tab, setTab] = useState('tournaments');
+  const [selectedTournamentId, setSelectedTournamentId] = useState(null);
+  const [controlData, setControlData] = useState({ rounds: [], players: [] });
   const { toast } = useToast();
 
   const handleManageBilling = async () => {
@@ -59,6 +62,16 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => { fetchData(); }, [location.key]);
+
+  useEffect(() => {
+    if (myTournaments.length && !selectedTournamentId) setSelectedTournamentId(myTournaments[0].id);
+  }, [myTournaments, selectedTournamentId]);
+
+  useEffect(() => {
+    if (!selectedTournamentId) return;
+    api.listRounds(selectedTournamentId).then((d) => setControlData((prev) => ({ ...prev, rounds: d.rounds || d }))).catch(() => {});
+    api.listTournamentPlayers(selectedTournamentId).then((d) => setControlData((prev) => ({ ...prev, players: d.players || d }))).catch(() => {});
+  }, [selectedTournamentId]);
 
   useEffect(() => {
     const onShow = (e) => { if (e.persisted) fetchData(); };
@@ -190,6 +203,21 @@ export default function Dashboard() {
               {t('dashboard.newTournament')}
             </Link>
           </div>
+
+          {/* 🎯 CENTRO DE CONTROL ARBITRAL — P1 imprescindible */}
+          {myTournaments.length > 0 && selectedTournamentId && (
+            <div className="mb-6">
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <label className="text-xs font-bold tracking-widest opacity-60">🎯 Centro de Control — Torneo:</label>
+                <select value={selectedTournamentId} onChange={(e) => setSelectedTournamentId(e.target.value)} className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-fide-600 bg-white dark:bg-fide-800 text-sm min-w-[220px]">
+                  {myTournaments.map((m) => <option key={m.id} value={m.id}>{m.name} — {m.status}</option>)}
+                </select>
+                <Link to={`/app/tournament/${selectedTournamentId}`} className="text-xs text-amber-600 hover:underline">Abrir gestión →</Link>
+                <Link to={`/arbiter/tournament/${selectedTournamentId}`} className="text-xs bg-amber-500 text-black px-2 py-1 rounded-full font-bold hover:bg-amber-400">⚖️ Panel árbitro</Link>
+              </div>
+              <ArbiterControlCenter tournament={myTournaments.find((m) => m.id === selectedTournamentId)} rounds={controlData.rounds} players={controlData.players} />
+            </div>
+          )}
 
           {/* LAYOUT DE DOS COLUMNAS */}
           <div className="grid gap-6 lg:grid-cols-12">
