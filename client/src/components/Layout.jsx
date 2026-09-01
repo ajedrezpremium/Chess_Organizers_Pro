@@ -173,7 +173,6 @@ const navLinks = [
                       <a href="https://www.youtube.com/@STLChessClub" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">24. St. Louis Chess Club</a>
                       <a href="https://www.tiktok.com/@sarahchess" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">25. Sarah El Barbry ✨</a>
                     </div>
-                    <p className="text-[10px] opacity-50 mt-2">Enlaces con UTM/afiliado para tráfico → conversión usuarios</p>
                   </div>
                   <div className="p-2 border-t dark:border-fide-700 bg-gray-50 dark:bg-fide-900/50 text-[10px] text-fide-500 text-center">TOP100 completo en <a href="https://chessorganizers.com/enlaces" target="_blank" rel="noreferrer" className="underline hover:text-amber-600">chessorganizers.com/enlaces</a></div>
                 </div>
