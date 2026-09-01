@@ -207,7 +207,7 @@ const navLinks = [
                       <a href="https://www.youtube.com/@SpiderIbarra" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate font-semibold bg-amber-100 dark:bg-amber-900/20 px-1 rounded">27. José C. Ibarra “Spider Ibarra” (GM) ⭐</a>
                       <a href="https://www.youtube.com/@DavidAnton" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">28. David Antón Guijarro (GM)</a>
                       <a href="https://www.youtube.com/@SabrinaVegaChess" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">29. Sabrina Vega (WGM)</a>
-                      <a href="https://www.youtube.com/@LeontxoGarcia" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">30. Leontxo García — periodista</a>
+                      <a href="https://www.youtube.com/channel/UCV2tUQcjqXYHZ5mw4opOpWQ" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate font-semibold bg-amber-100 dark:bg-amber-900/20 px-1 rounded">30. Ajedrez Premium ⭐</a>
                     </div>
                   </div>
                   <div className="p-2 border-t dark:border-fide-700 bg-gray-50 dark:bg-fide-900/50 text-[10px] text-fide-500 text-center">TOP100 completo en <a href="https://chessorganizers.com/enlaces" target="_blank" rel="noreferrer" className="underline hover:text-amber-600">chessorganizers.com/enlaces</a></div>
