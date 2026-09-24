@@ -1,0 +1,460 @@
+.arbitro-portal {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(135°, #0f172a 0%, #1e293b 100%);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header del Portal */
+.portal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.portal-branding {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.portal-logo {
+  font-size: 2rem;
+}
+
+.portal-title {
+  display: flex;
+  flex-direction: column;
+}
+
+.portal-title h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(to right, #60a5fa, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.portal-subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.portal-user {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.user-role {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.user-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.user-btn {
+  background: rgba(30, 41, 59, 0.5);
+  border: none;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #cbd5e1;
+  font-size: 1.1rem;
+  transition: all 0.2s ease;
+}
+
+.user-btn:hover {
+  background: rgba(30, 41, 59, 0.7);
+  color: #f8fafc;
+  transform: scale(1.1);
+}
+
+.user-btn:active {
+  transform: scale(0.95);
+}
+
+/* Navegación Principal */
+.portal-nav {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  border: none;
+  border-radius: 12px;
+  background: rgba(30, 41, 59, 0.4);
+  color: #cbd5e1;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-btn:hover {
+  background: rgba(30, 41, 59, 0.6);
+  color: #f8fafc;
+  transform: translateY(-2px);
+}
+
+.nav-btn:active {
+  transform: translateY(0);
+}
+
+.nav-btn.active {
+  background: linear-gradient(135°, #3b82f6, #8b5cf6);
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.nav-btn.active::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, #fbbf24, #f59e0b);
+}
+
+.nav-icon {
+  font-size: 1.5rem;
+}
+
+.nav-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Contenido Principal */
+.portal-content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Footer del Portal */
+.portal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: rgba(0, 0, 0, 0.4);
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+  font-size: 0.85rem;
+  color: #94a3b8;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.footer-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.footer-links {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.footer-link {
+  color: #94a3b8;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.footer-link:hover {
+  color: #f8fafc;
+  text-decoration: underline;
+}
+
+.footer-separator {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* Adaptación Responsiva */
+@media (max-width: 1024px) {
+  .portal-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+  
+  .portal-branding,
+  .portal-user {
+    justify-content: center;
+    width: 100%;
+  }
+  
+  .portal-user {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .portal-nav {
+    justify-content: center;
+  }
+  
+  .nav-btn {
+    flex: 1;
+    min-width: 120px;
+    text-align: center;
+  }
+  
+  .nav-icon {
+    margin-bottom: 0.5rem;
+  }
+  
+  .portal-footer {
+    flex-direction: column;
+    text-align: center;
+    gap: 1.5rem;
+  }
+  
+  .footer-info,
+  .footer-links {
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .portal-header {
+    padding: 1rem;
+  }
+  
+  .portal-nav {
+    padding: 1rem;
+  }
+  
+  .portal-footer {
+    padding: 1rem;
+  }
+  
+  .nav-btn {
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+  }
+  
+  .nav-icon {
+    font-size: 1.25rem;
+  }
+  
+  .nav-label {
+    font-size: 0.8rem;
+  }
+  
+  .footer-info,
+  .footer-links {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .portal-header {
+    padding: 0.75rem;
+  }
+  
+  .portal-branding {
+    gap: 0.5rem;
+  }
+  
+  .portal-logo {
+    font-size: 1.5rem;
+  }
+  
+  .portal-title h1 {
+    font-size: 1.25rem;
+  }
+  
+  .portal-subtitle {
+    font-size: 0.75rem;
+  }
+  
+  .portal-nav {
+    gap: 0.5rem;
+  }
+  
+  .nav-btn {
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+  }
+  
+  .nav-icon {
+    font-size: 1rem;
+  }
+  
+  .nav-label {
+    font-size: 0.7rem;
+  }
+  
+  .portal-footer {
+    gap: 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  .footer-info,
+  .footer-links {
+    gap: 0.5rem;
+  }
+}
+
+/* Animaciones de entrada */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.portal-header,
+.portal-nav,
+.portal-content,
+.portal-footer {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.portal-nav {
+  animation-delay: 0.1s;
+}
+
+.portal-content {
+  animation-delay: 0.2s;
+}
+
+.portal-footer {
+  animation-delay: 0.3s;
+}
+
+/* Efecto de brillo sutil en elementos activos */
+@keyframes subtle-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+  }
+}
+
+.nav-btn.active {
+  animation: subtle-pulse 2s ease-in-out infinite;
+}
+
+/* Optimización para pantalla completa */
+.arbitro-portal.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+}
+
+/* Modo noche para condiciones de poca luz */
+.arbitro-portal.night-mode {
+  background: #000000;
+}
+
+.arbitro-portal.night-mode .portal-header,
+.arbitro-portal.night-mode .portal-nav {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.arbitro-portal.night-mode .portal-footer {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+/* Modo alto contraste para luz solar directa */
+.arbitro-portal.high-contrast {
+  background: #000000;
+  color: #ffffff;
+}
+
+.arbitro-portal.high-contrast .portal-header,
+.arbitro-portal.high-contrast .portal-nav {
+  background: #111111;
+}
+
+.arbitro-portal.high-contrast .portal-footer {
+  background: #111111;
+}
+
+.arbitro-portal.high-contrast .nav-btn {
+  background: #222222;
+  color: #ffffff;
+  border: 1px solid #333333;
+}
+
+.arbitro-portal.high-contrast .nav-btn:hover {
+  background: #333333;
+}
+
+.arbitro-portal.high-contrast .nav-btn.active {
+  background: #000000;
+  box-shadow: 0 0 0 2px #ffffff;
+}
+
+.arbitro-portal.high-contrast .portal-footer {
+  color: #ffffff;
+}
+
+.arbitro-portal.high-contrast .footer-link {
+  color: #ffffff;
+}
+
+.arbitro-portal.high-contrast .footer-link:hover {
+  text-decoration: underline;
+}

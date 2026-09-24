@@ -24,33 +24,60 @@ export const Color = {
 
 /** @enum {string} */
 export const Result = {
-  WHITE_WIN:  '1',   // 1-0
-  BLACK_WIN:  '0',   // 0-1
-  DRAW:       '=',   // ½-½
-  BYE:        'U',   // bye (½ punto)
-  FULL_BYE:   'F',   // full-point bye (1 punto, por incomparecencia rival)
-  HALF_BYE:   'H',   // half-point bye solicitado
-  ZERO_BYE:   'Z',   // cero-point bye
-  NOT_PLAYED: '-',   // no jugada (forfeit sin punto)
+  WHITE_WIN:    '1',   // 1-0
+  BLACK_WIN:    '0',   // 0-1
+  DRAW:         '=',   // ½-½
+  BYE:          'U',   // Pairing-Allocated Bye (PAB)
+  FULL_BYE:     'F',   // full-point bye (1 punto)
+  HALF_BYE:     'H',   // half-point bye solicitado
+  ZERO_BYE:     'Z',   // cero-point bye
+  NOT_PLAYED:   '-',   // no jugada
+  FORFEIT_WIN:  '+',   // 1F-0F (win by forfeit, TRF '+')
+  FORFEIT_LOSS: '-',   // 0F-1F (loss by forfeit, TRF '-' con contexto)
+  UNKNOWN:      '?',   // En curso / aplazada en ITDX (TRF-26)
+  // Resultados inusuales VCL4THP v13 (½-0, 0-½, 0-0). Internos; en TRF-26/ITDX se exportan como '?'
+  WHITE_HALF_WIN: 'A', // ½-0 (blancas reciben 0.5, negras 0)
+  BLACK_HALF_WIN: 'B', // 0-½ (negras reciben 0.5, blancas 0)
+  DOUBLE_FORFEIT: 'C', // 0-0 (doble incomparecencia)
 };
 
 /** Puntos que otorga cada resultado al jugador con color WHITE (o al jugador 1 en un bye) */
 export const RESULT_POINTS = {
-  [Result.WHITE_WIN]:  1.0,
-  [Result.BLACK_WIN]:  0.0,
-  [Result.DRAW]:       0.5,
-  [Result.BYE]:        0.5,
-  [Result.FULL_BYE]:   1.0,
-  [Result.HALF_BYE]:   0.5,
-  [Result.ZERO_BYE]:   0.0,
-  [Result.NOT_PLAYED]: 0.0,
+  [Result.WHITE_WIN]:    1.0,
+  [Result.BLACK_WIN]:    0.0,
+  [Result.DRAW]:         0.5,
+  [Result.BYE]:          1.0,
+  [Result.FULL_BYE]:     1.0,
+  [Result.HALF_BYE]:     0.5,
+  [Result.ZERO_BYE]:     0.0,
+  [Result.NOT_PLAYED]:   0.0,
+  [Result.FORFEIT_WIN]:  1.0,
+  [Result.FORFEIT_LOSS]: 0.0,
+  [Result.UNKNOWN]:      0.0,
+  [Result.WHITE_HALF_WIN]: 0.5,
+  [Result.BLACK_HALF_WIN]: 0.0,
+  [Result.DOUBLE_FORFEIT]: 0.0,
 };
 
 /** Puntos que otorga cada resultado al jugador con color BLACK */
 export const RESULT_POINTS_BLACK = {
-  [Result.WHITE_WIN]:  0.0,
-  [Result.BLACK_WIN]:  1.0,
-  [Result.DRAW]:       0.5,
+  [Result.WHITE_WIN]:    0.0,
+  [Result.BLACK_WIN]:    1.0,
+  [Result.DRAW]:         0.5,
+  [Result.FORFEIT_WIN]:  0.0,
+  [Result.FORFEIT_LOSS]: 1.0,
+  [Result.UNKNOWN]:      0.0,
+  [Result.WHITE_HALF_WIN]: 0.0,
+  [Result.BLACK_HALF_WIN]: 0.5,
+  [Result.DOUBLE_FORFEIT]: 0.0,
+};
+
+/** @enum {number} Niveles de aviso oficiales FIDE TEC (VCL4THP v13 / TEC Manual 2.0) */
+export const WarningLevel = {
+  LEVEL_1: 1, // Informativo
+  LEVEL_2: 2, // Severidad baja: partidas con resultado pendiente al emparejar, FPB concedido
+  LEVEL_3: 3, // Severidad media: intercambio de TPN, segundo HPB, resultado de partida aplazada introducido
+  LEVEL_4: 4, // Severidad alta: cambio de TPN tras ronda 4, modificación de lista de desempates en curso
 };
 
 // ── Jugador ───────────────────────────────────────────────────────────────────
@@ -172,30 +199,32 @@ export function createRound(data) {
 /** @enum {string} */
 export const Tiebreak = {
   BUCHHOLZ:            'BH',   // Buchholz completo
-  BUCHHOLZ_CUT1:       'BH1',  // Buchholz menos el peor resultado
+  BUCHHOLZ_CUT1:       'BH1',  // Buchholz menos el peor resultado (Cut 1)
   BUCHHOLZ_CUT2:       'BH2',
   MEDIAN_BUCHHOLZ:     'MB',   // Buchholz mediano (recorta mejor y peor)
   SONNEBORN_BERGER:    'SB',   // Sonneborn-Berger
   ARO:                 'AR',   // Average Rating of Opponents
   ARO_CUT1:            'AR1',
+  ARPO:                'AP',   // Average Rating Performance of Opponents (C.07)
   DIRECT_ENCOUNTER:    'DE',   // Resultado directo entre empatados
   PROGRESSIVE:         'PR',   // Puntuación progresiva (suma de puntos ronda a ronda)
   KOYA:                'KY',   // Sistema Koya
-  WINS:                'W',    // Número de victorias
+  WINS:                'W',    // Número de victorias totales (WIN)
+  GAMES_WON:           'WON',  // Número de partidas ganadas sobre el tablero (WON - sin forfeits ni byes)
   WINS_WITH_BLACK:     'WB',   // Victorias con negras
   GAMES_WITH_BLACK:    'GB',   // Partidas con negras
-  RATING_PERFORMANCE:  'RP',   // Rendimiento ELO
+  RATING_PERFORMANCE:  'RP',   // Rendimiento ELO (TPR)
 };
 
-// Orden de desempates por defecto según FIDE Handbook C.04 (2025)
+// Orden de desempates por defecto según FIDE Handbook C.07 / TRF-26
 export const DEFAULT_TIEBREAK_ORDER = [
+  Tiebreak.DIRECT_ENCOUNTER,
   Tiebreak.BUCHHOLZ_CUT1,
   Tiebreak.BUCHHOLZ,
   Tiebreak.SONNEBORN_BERGER,
-  Tiebreak.DIRECT_ENCOUNTER,
-  Tiebreak.PROGRESSIVE,
-  Tiebreak.KOYA,
   Tiebreak.ARO,
   Tiebreak.WINS,
+  Tiebreak.GAMES_WON,
   Tiebreak.WINS_WITH_BLACK,
 ];
+

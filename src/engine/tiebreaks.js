@@ -8,7 +8,7 @@
  * Testeable de forma aislada con cualquier runner (Jest, Node assert…).
  */
 
-import { Tiebreak, Result, RESULT_POINTS } from './types.js';
+import { Tiebreak, Result, RESULT_POINTS, RESULT_POINTS_BLACK } from './types.js';
 
 // ── Utilidades internas ───────────────────────────────────────────────────────
 
@@ -22,6 +22,8 @@ function pointsInRound(player, roundIndex) {
   if (pairing.isBye) return RESULT_POINTS[pairing.result] ?? 0.5;
   if (pairing.whiteId === player.id) return RESULT_POINTS[pairing.result] ?? 0;
   if (pairing.blackId === player.id) {
+    // Usar tabla BLACK para cubrir inusuales (A/B/C) y forfeits correctamente
+    if (pairing.result in RESULT_POINTS_BLACK) return RESULT_POINTS_BLACK[pairing.result] ?? 0;
     if (pairing.result === Result.WHITE_WIN)  return 0;
     if (pairing.result === Result.BLACK_WIN)  return 1;
     if (pairing.result === Result.DRAW)       return 0.5;
@@ -91,12 +93,13 @@ export function sonnebornBerger(player, playersById, totalRounds) {
 
     if (pairing.whiteId === player.id) {
       oppId = pairing.blackId;
-      personalResult = pairing.result === Result.WHITE_WIN ? 1
-        : pairing.result === Result.DRAW ? 0.5 : 0;
+      personalResult = RESULT_POINTS[pairing.result] ?? 0;
+      // Forfeits cuentan como victoria completa en SB (C.07); inusuales como 0.5/0
     } else {
       oppId = pairing.whiteId;
-      personalResult = pairing.result === Result.BLACK_WIN ? 1
-        : pairing.result === Result.DRAW ? 0.5 : 0;
+      personalResult = RESULT_POINTS_BLACK[pairing.result] ??
+        (pairing.result === Result.BLACK_WIN ? 1
+          : pairing.result === Result.DRAW ? 0.5 : 0);
     }
 
     const opp = playersById[oppId];
@@ -106,17 +109,59 @@ export function sonnebornBerger(player, playersById, totalRounds) {
   return sb;
 }
 
+// ── Ratings: soporte torneos >30 días (múltiples listas mensuales por ronda) ──
+// Un jugador puede traer: fideRating (base), ratingsByRound: number[],
+// ratingHistory: { [roundNumber]: number } o ratingsMonthly: number[].
+// getEffectiveRating resuelve el rating aplicable a una ronda concreta (1-based).
+export function getEffectiveRating(player, roundNumber = 1) {
+  if (!player) return 0;
+  if (Array.isArray(player.ratingsByRound) && player.ratingsByRound.length) {
+    const v = player.ratingsByRound[Math.min(roundNumber - 1, player.ratingsByRound.length - 1)];
+    if (Number.isFinite(v) && v > 0) return v;
+  }
+  if (player.ratingHistory && Number.isFinite(player.ratingHistory[roundNumber])) {
+    return player.ratingHistory[roundNumber];
+  }
+  if (Array.isArray(player.ratingsMonthly) && player.ratingsMonthly.length) {
+    // Aproximación: una lista mensual ≈ 4 rondas; redondear por bloque
+    const idx = Math.min(Math.floor((roundNumber - 1) / 4), player.ratingsMonthly.length - 1);
+    const v = player.ratingsMonthly[idx];
+    if (Number.isFinite(v) && v > 0) return v;
+  }
+  return player.fideRating ?? 0;
+}
+
 // ── Average Rating of Opponents (ARO) ────────────────────────────────────────
+// opts.unrated: 'exclude' (defecto C.07) | 'zero' | 'floor1400'
+//   - exclude: ignora rivales sin elo (0) en el promedio
+//   - zero: los cuenta como 0
+//   - floor1400: aplica suelo FIDE 1400 (Marzo 2024) a unrated
+export function aro(player, playersById, cut = 0, opts = {}) {
+  const unrated = opts.unrated ?? 'exclude';
+  let ratings = (player.opponents ?? [])
+    .map((id, idx) => getEffectiveRating(playersById[id], idx + 1));
 
-export function aro(player, playersById, cut = 0) {
-  const ratings = (player.opponents ?? [])
-    .map((id) => playersById[id]?.fideRating ?? 0)
-    .filter((r) => r > 0)
-    .sort((a, b) => a - b);
+  if (unrated === 'exclude') ratings = ratings.filter((r) => r > 0);
+  else if (unrated === 'floor1400') ratings = ratings.map((r) => (r > 0 ? r : 1400));
+  // 'zero' → se dejan como 0
 
+  ratings.sort((a, b) => a - b);
   const trimmed = ratings.slice(cut);
   if (trimmed.length === 0) return 0;
   return trimmed.reduce((s, r) => s + r, 0) / trimmed.length;
+}
+
+// ── ARPO: Average Rating Performance of Opponents (C.07) ────────────────────
+// Promedio del performance (TPR) de los rivales. Si un rival no tiene
+// suficientes datos, se usa su rating efectivo como fallback.
+export function arpo(player, playersById, totalRounds, opts = {}) {
+  const opps = (player.opponents ?? []).map((id) => playersById[id]).filter(Boolean);
+  if (!opps.length) return 0;
+  const perfs = opps.map((o) => {
+    const rp = ratingPerformance(o, playersById, opts);
+    return rp > 0 ? rp : getEffectiveRating(o, 1);
+  });
+  return perfs.reduce((s, v) => s + v, 0) / perfs.length;
 }
 
 // ── Encuentro directo ─────────────────────────────────────────────────────────
@@ -138,11 +183,11 @@ export function directEncounter(player, playersById, tiedPlayerIds) {
     if (!tiedSet.has(oppId)) continue;
 
     if (isWhite) {
-      if (pairing.result === Result.WHITE_WIN) points += 1;
-      if (pairing.result === Result.DRAW)      points += 0.5;
+      points += RESULT_POINTS[pairing.result] ?? 0;
     } else {
-      if (pairing.result === Result.BLACK_WIN) points += 1;
-      if (pairing.result === Result.DRAW)      points += 0.5;
+      points += RESULT_POINTS_BLACK[pairing.result] ??
+        (pairing.result === Result.BLACK_WIN ? 1
+          : pairing.result === Result.DRAW ? 0.5 : 0);
     }
   }
   return points;
@@ -171,9 +216,10 @@ export function progressive(player) {
     } else if (isWhite) {
       pts = RESULT_POINTS[pairing.result] ?? 0;
     } else {
-      if (pairing.result === Result.WHITE_WIN)  pts = 0;
-      else if (pairing.result === Result.BLACK_WIN) pts = 1;
-      else if (pairing.result === Result.DRAW)  pts = 0.5;
+      pts = RESULT_POINTS_BLACK[pairing.result] ??
+        (pairing.result === Result.WHITE_WIN ? 0
+          : pairing.result === Result.BLACK_WIN ? 1
+          : pairing.result === Result.DRAW ? 0.5 : 0);
     }
     cumulative += pts;
     total      += cumulative;
@@ -181,12 +227,39 @@ export function progressive(player) {
   return total;
 }
 
-// ── Victorias ─────────────────────────────────────────────────────────────────
+// ── Victorias (WIN / WON según FIDE C.07 y TRF-26 + Record-299 AAT) ──────────
+// opts.aatBonus: Map<playerId, number> o { [playerId]: number } con puntos AAT
+//   (Result-AAT/Blank-AAT del Record-299). WIN incluye el bono AAT como
+//   victorias equivalentes solo si opts.countAAT === true (defecto: false,
+//   para no inflar WIN salvo que el árbitro lo exija en configuración).
 
-export function wins(player) {
-  return (player._roundPairings ?? []).filter((p) => {
+/**
+ * WIN: Número de victorias totales (incluye victorias por incomparecencia y full byes reglamentarios).
+ */
+export function wins(player, opts = {}) {
+  const base = (player._roundPairings ?? []).filter((p) => {
     if (!p) return false;
-    if (p.isBye && p.result === Result.FULL_BYE) return true;
+    if (p.isBye && (p.result === Result.FULL_BYE || p.result === Result.FORFEIT_WIN)) return true;
+    if (p.whiteId === player.id && (p.result === Result.WHITE_WIN || p.result === Result.FORFEIT_WIN)) return true;
+    if (p.blackId === player.id && (p.result === Result.BLACK_WIN || p.result === Result.FORFEIT_WIN)) return true;
+    return false;
+  }).length;
+  if (opts.countAAT) {
+    const bonus = opts.aatBonus instanceof Map
+      ? (opts.aatBonus.get(player.id) ?? 0)
+      : (opts.aatBonus?.[player.id] ?? 0);
+    return base + bonus;
+  }
+  return base;
+}
+
+/**
+ * WON: Número de partidas ganadas sobre el tablero (excluye incomparecencias y byes).
+ * Los inusuales ½-0/0-½ NO cuentan como victoria completa (0.5).
+ */
+export function gamesWon(player) {
+  return (player._roundPairings ?? []).filter((p) => {
+    if (!p || p.isBye) return false;
     if (p.whiteId === player.id && p.result === Result.WHITE_WIN) return true;
     if (p.blackId === player.id && p.result === Result.BLACK_WIN) return true;
     return false;
@@ -195,7 +268,7 @@ export function wins(player) {
 
 export function winsWithBlack(player) {
   return (player._roundPairings ?? []).filter(
-    (p) => p && p.blackId === player.id && p.result === Result.BLACK_WIN
+    (p) => p && p.blackId === player.id && (p.result === Result.BLACK_WIN || p.result === Result.FORFEIT_WIN)
   ).length;
 }
 
@@ -205,17 +278,31 @@ export function gamesWithBlack(player) {
   ).length;
 }
 
+
 // ── Rating Performance ────────────────────────────────────────────────────────
 
 /**
  * Rendimiento ELO según tabla FIDE.
  * Performance = promedio ELO de rivales ± ajuste por porcentaje de puntos.
+ * opts.unrated: 'exclude' | 'zero' | 'floor1400' (igual que aro).
+ * Usa getEffectiveRating (torneos >30 días con múltiples listas).
  */
-export function ratingPerformance(player, playersById) {
+export function ratingPerformance(player, playersById, opts = {}) {
+  const unrated = opts.unrated ?? 'exclude';
   const opponents = (player.opponents ?? []).map((id) => playersById[id]).filter(Boolean);
-  if (opponents.length === 0) return player.fideRating ?? 0;
+  if (opponents.length === 0) return getEffectiveRating(player, 1);
 
-  const avgOppRating = opponents.reduce((s, o) => s + (o.fideRating ?? 0), 0) / opponents.length;
+  let ratings = opponents.map((o, i) => getEffectiveRating(o, i + 1));
+  if (unrated === 'exclude') {
+    const rated = opponents
+      .map((o, i) => ({ o, r: getEffectiveRating(o, i + 1) }))
+      .filter(({ r }) => r > 0);
+    if (!rated.length) return getEffectiveRating(player, 1);
+    ratings = rated.map(({ r }) => r);
+  } else if (unrated === 'floor1400') {
+    ratings = ratings.map((r) => (r > 0 ? r : 1400));
+  }
+  const avgOppRating = ratings.reduce((s, r) => s + r, 0) / ratings.length;
   const percentage   = opponents.length > 0
     ? (player.points ?? 0) / opponents.length
     : 0.5;
@@ -294,24 +381,104 @@ export function koya(player, playersById, totalRounds) {
  * @param {number}   totalRounds
  * @param {string[]} [tiedIds]     — Para directEncounter
  */
-export function calculateTiebreak(tiebreak, player, playersById, totalRounds, tiedIds = []) {
+export function calculateTiebreak(tiebreak, player, playersById, totalRounds, tiedIds = [], opts = {}) {
   switch (tiebreak) {
-    case Tiebreak.BUCHHOLZ:           return buchholz(player, playersById, totalRounds);
-    case Tiebreak.BUCHHOLZ_CUT1:      return buchholzCut(player, playersById, totalRounds, 1);
-    case Tiebreak.BUCHHOLZ_CUT2:      return buchholzCut(player, playersById, totalRounds, 2);
-    case Tiebreak.MEDIAN_BUCHHOLZ:    return medianBuchholz(player, playersById, totalRounds);
-    case Tiebreak.SONNEBORN_BERGER:   return sonnebornBerger(player, playersById, totalRounds);
-    case Tiebreak.ARO:                return aro(player, playersById, 0);
-    case Tiebreak.ARO_CUT1:           return aro(player, playersById, 1);
-    case Tiebreak.DIRECT_ENCOUNTER:   return directEncounter(player, playersById, tiedIds);
-    case Tiebreak.PROGRESSIVE:        return progressive(player);
-    case Tiebreak.WINS:               return wins(player);
-    case Tiebreak.WINS_WITH_BLACK:    return winsWithBlack(player);
-    case Tiebreak.GAMES_WITH_BLACK:   return gamesWithBlack(player);
-    case Tiebreak.RATING_PERFORMANCE: return ratingPerformance(player, playersById);
-    case Tiebreak.KOYA:               return koya(player, playersById, totalRounds);
+    case Tiebreak.BUCHHOLZ:
+    case 'BH':
+    case 'BUC':
+      return buchholz(player, playersById, totalRounds);
+    case Tiebreak.BUCHHOLZ_CUT1:
+    case 'BH1':
+    case 'MCH':
+      return buchholzCut(player, playersById, totalRounds, 1);
+    case Tiebreak.BUCHHOLZ_CUT2:
+    case 'BH2':
+      return buchholzCut(player, playersById, totalRounds, 2);
+    case Tiebreak.MEDIAN_BUCHHOLZ:
+    case 'MB':
+      return medianBuchholz(player, playersById, totalRounds);
+    case Tiebreak.SONNEBORN_BERGER:
+    case 'SB':
+    case 'SNE':
+      return sonnebornBerger(player, playersById, totalRounds);
+    case Tiebreak.ARO:
+    case 'AR':
+    case 'ARO':
+      return aro(player, playersById, 0, opts);
+    case Tiebreak.ARO_CUT1:
+    case 'AR1':
+      return aro(player, playersById, 1, opts);
+    case Tiebreak.ARPO:
+    case 'AP':
+    case 'ARPO':
+      return arpo(player, playersById, totalRounds, opts);
+    case Tiebreak.DIRECT_ENCOUNTER:
+    case 'DE':
+      return directEncounter(player, playersById, tiedIds);
+    case Tiebreak.PROGRESSIVE:
+    case 'PR':
+    case 'PRO':
+      return progressive(player);
+    case Tiebreak.WINS:
+    case 'W':
+    case 'WIN':
+      return wins(player, opts);
+    case Tiebreak.GAMES_WON:
+    case 'WON':
+      return gamesWon(player);
+    case Tiebreak.WINS_WITH_BLACK:
+    case 'WB':
+      return winsWithBlack(player);
+    case Tiebreak.GAMES_WITH_BLACK:
+    case 'GB':
+      return gamesWithBlack(player);
+    case Tiebreak.RATING_PERFORMANCE:
+    case 'RP':
+    case 'TPR':
+      return ratingPerformance(player, playersById, opts);
+    case Tiebreak.KOYA:
+    case 'KY':
+      return koya(player, playersById, totalRounds);
     default:
       console.warn(`[tiebreaks] Desempate desconocido: ${tiebreak}`);
       return 0;
   }
 }
+
+/**
+ * Ordenación manual de empates (C.07: el árbitro puede fijar el orden final
+ * tras agotar los desempates o tras sorteo). orderMap: { [playerId]: number }
+ * (menor número = mejor puesto). Los no listados conservan su orden relativo.
+ */
+export function applyManualOrder(standings, orderMap = {}) {
+  const rank = (id) => (orderMap[id] ?? Number.MAX_SAFE_INTEGER);
+  return [...standings].sort((a, b) => {
+    const ra = rank(a.id), rb = rank(b.id);
+    if (ra !== rb) return ra - rb;
+    return 0; // estable: conserva orden previo
+  });
+}
+
+/**
+ * Simulación de sorteo (drawing of lots) para resolver empates irreductibles
+ * según FIDE C.07 y VCL4THP v13.
+ *
+ * @param {Player[]} tiedPlayers — Lista de jugadores empatados
+ * @param {number|string} [seed] — Semilla para reproducibilidad
+ * @returns {Player[]} — Lista ordenada tras el sorteo
+ */
+export function drawLots(tiedPlayers, seed = Date.now()) {
+  let s = typeof seed === 'number' ? seed : String(seed).split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  const prng = () => {
+    s = (s * 9301 + 49297) % 233280;
+    return s / 233280;
+  };
+
+  const copy = [...tiedPlayers];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(prng() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+

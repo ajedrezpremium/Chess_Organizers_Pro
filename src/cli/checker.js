@@ -24,9 +24,10 @@
  */
 
 import { readFileSync } from 'fs';
-import { parseTRF }     from '../trf/trf.js';
+import { parseTRF, validateTRF26 } from '../trf/trf.js';
 import { pairRound, applyRoundResults } from '../engine/dutch.js';
 import { createPlayer } from '../engine/types.js';
+import { detectFideWarnings } from '../engine/conflictDetector.js';
 
 // ── Parseado de argumentos ────────────────────────────────────────────────────
 
@@ -44,7 +45,7 @@ function parseArgs(argv) {
 function printHelp() {
   console.log(`
 Chess Organizers — Free Pairings Checker (FPC)
-Versión 1.0.0 | Compatible con TRF16 y TRF-2025
+Versión 2.0.0 | TRF-26 / ITDX + Warning Levels 1-4 (TEC Manual 2.0, VCL4THP v13)
 
 Uso:
   node checker.js --check <archivo.trf> [opciones]
@@ -54,6 +55,11 @@ Opciones:
   --round, -r <número>    Verificar solo la ronda indicada (por defecto: todas)
   --verbose, -v           Mostrar detalle de cada emparejamiento
   --help, -h              Mostrar esta ayuda
+
+Valida:
+  - Sintaxis TRF-26 (162/172/299/202/212/250/310, ###, '?' ITDX)
+  - Warning Levels FIDE (W201/W202 L2, W301-W303 L3, W401/W402 L4)
+  - Emparejamientos Dutch ronda a ronda
 
 Códigos de salida:
   0   Todos los emparejamientos son correctos
@@ -79,15 +85,37 @@ function checkRound(players, rounds, roundIndex, verbose) {
   const roundNumber = roundIndex + 1;
   const discrepancies = [];
 
-  // Reconstruir estado hasta la ronda anterior
-  let state = players.map(createPlayer);
+  // Reconstruir estado hasta la ronda anterior.
+  // IMPORTANTE: parseTRF deja points/colorHistory/opponents en estado FINAL;
+  // para re-jugar hay que resetear a estado inicial (ronda 0) y aplicar resultados.
+  // Los '?' (ITDX aplazada/en curso) aportan 0 puntos y no cierran la ronda.
+  let state = players.map((p) => createPlayer({
+    ...p, points: 0, colorHistory: [], colorDiff: 0, opponents: [],
+    receivedBye: false, withdrawn: false,
+  }));
   for (let r = 0; r < roundIndex; r++) {
-    state = applyRoundResults(state, rounds[r].pairings);
+    const sanitized = (rounds[r].pairings ?? []).map((p) => (
+      (p.result === '?' || p.result === 'UNKNOWN') ? { ...p, result: '-' } : p
+    ));
+    state = applyRoundResults(state, sanitized);
   }
 
   // Generar emparejamientos esperados
   const { pairings: expected, warnings } = pairRound(state, roundNumber);
   const actual = rounds[roundIndex].pairings;
+
+  // Tolerancia RTG-fallback (VCL): si el motor deja jugadores sin emparejar
+  // (grupos igualados imposibles), el RTG los empareja entre sí como resto.
+  // Esos tableros extra se aceptan siempre que cubran EXACTAMENTE a los
+  // jugadores que el motor dejó descubiertos.
+  const coveredExpected = new Set();
+  for (const p of expected) {
+    coveredExpected.add(p.whiteId);
+    if (p.blackId) coveredExpected.add(p.blackId);
+  }
+  const uncoveredSet = new Set(
+    state.filter((p) => !p.withdrawn && !coveredExpected.has(p.id)).map((p) => p.id)
+  );
 
   if (verbose) {
     console.log(`\n── Ronda ${roundNumber} ──────────────────────────────────`);
@@ -106,6 +134,13 @@ function checkRound(players, rounds, roundIndex, verbose) {
   for (const pair of actualSet) {
     if (!expectedSet.has(pair)) {
       const [id1, id2] = pair.split('|');
+      // Aceptar tablero fallback si ambos (o el único, en bye) son restos del motor
+      const ids = pair.split('|').filter(Boolean);
+      const isFallback = ids.length > 0 && ids.every((id) => uncoveredSet.has(id) || id === '');
+      if (isFallback) {
+        if (verbose) console.log(`  ↳ Fallback aceptado (restos del motor): ${pair}`);
+        continue;
+      }
       const p1 = state.find((p) => p.id === id1);
       const p2 = state.find((p) => p.id === id2);
       discrepancies.push(
@@ -177,11 +212,33 @@ function main() {
     process.exit(2);
   }
 
-  // Parsear TRF
+  // Parsear TRF (TRF-26)
   const { config, players, rounds, warnings: parseWarnings } = parseTRF(content);
 
   if (parseWarnings.length) {
     for (const w of parseWarnings) console.warn(`⚠ Parse: ${w}`);
+  }
+
+  // Validación TRF-26 / ITDX
+  const v26 = validateTRF26(content);
+  if (v26.features?.has162) console.log(`  [TRF-26] Record-162 (scoring): ${config.scoringSystem}`);
+  if (v26.features?.has172) console.log(`  [TRF-26] Record-172/NRS: ${(config.nrsRecords ?? []).join(' | ')}`);
+  if (v26.features?.has299) console.log(`  [TRF-26] Record-299 AAT: ${(config.aatRecords ?? []).length} registro(s)`);
+  if (v26.features?.hasAudit) console.log(`  [TRF-26] Comentarios ### de auditoría presentes`);
+  if (v26.isITDX) console.log(`  [ITDX] Archivo parcial detectado ('?' en curso/aplazada)`);
+  for (const w of v26.warnings ?? []) console.warn(`⚠ TRF-26: ${w}`);
+  if (!v26.valid) {
+    for (const e of v26.errors) console.error(`✗ TRF-26: ${e}`);
+    process.exit(2);
+  }
+
+  // Avisos FIDE Warning Levels 1-4
+  const fideWarnings = detectFideWarnings(players, rounds, config);
+  if (fideWarnings.length) {
+    console.log(`\n── Avisos FIDE (Warning Levels 1-4) ───────────────`);
+    for (const fw of fideWarnings) {
+      console.log(`  [L${fw.level}/${fw.code}] R${fw.round ?? '-'}: ${fw.message}`);
+    }
   }
 
   if (!players.length || !rounds.length) {

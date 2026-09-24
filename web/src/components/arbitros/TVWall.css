@@ -1,0 +1,921 @@
+.tv-wall {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  background: linear-gradient(135°, #0f172a 0%, #1e293b 100%);
+  color: #f8fafc;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Prevenir selecciones y menús contextuales en modo TV */
+.tv-wall,
+.tv-wall * {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Header del Torneo */
+.tournament-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.tournament-info {
+  flex: 1;
+}
+
+.tournament-name {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin: 0;
+  background: linear-gradient(to right, #60a5fa, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+
+.tournament-meta {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 0.5rem;
+  font-size: 1rem;
+  color: #cbd5e1;
+}
+
+.tournament-location,
+.tournament-date {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.tournament-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.round-info,
+.time-control,
+.arbiter-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.round-label,
+.tc-label,
+.arbiter-label {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.round-number,
+.tc-value,
+.arbiter-name {
+  font-weight: 700;
+  color: #f8fafc;
+  font-size: 1.1rem;
+}
+
+/* Reloj y Controles Superiores */
+.tv-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.current-time {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 1.1rem;
+}
+
+.time-label,
+.date-label {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.time-value,
+.date-value {
+  font-weight: 700;
+  color: #f8fafc;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.tv-controls-right {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.update-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+  font-size: 0.85rem;
+}
+
+.update-label {
+  color: #94a3b8;
+}
+
+.update-time {
+  font-weight: 600;
+  color: #e2e8f0;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.control-btn {
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #cbd5e1;
+  font-size: 1.1rem;
+}
+
+.control-btn:hover {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(148, 163, 184, 0.3);
+  color: #f8fafc;
+  transform: translateY(-2px);
+}
+
+.control-btn.active {
+  background: linear-gradient(135°, #3b82f6, #8b5cf6);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: white;
+  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+}
+
+/* Contenido Principal */
+.tv-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  padding: 0 2rem;
+}
+
+/* Secciones de Contenido */
+.tv-section {
+  flex: 1;
+  min-width: 0;
+  margin: 1.5rem 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-title::before {
+  content: "▸";
+  color: #60a5fa;
+}
+
+/* Tabla de Emparejamientos */
+.pairings-section .pairings-container {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.pairings-table-header,
+.pairings-table-body .pairing-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 120px 120px;
+  gap: 0;
+  padding: 1rem;
+  align-items: center;
+}
+
+.pairings-table-header {
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #94a3b8;
+}
+
+.pairing-row {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.05);
+  transition: background-color 0.2s ease;
+}
+
+.pairing-row:hover {
+  background: rgba(30, 41, 59, 0.2);
+}
+
+.pairing-row:last-child {
+  border-bottom: none;
+}
+
+.pairing-row.pending {
+  border-left: 3px solid #3b82f6;
+}
+
+.pairing-row.played {
+  border-left: 3px solid #10b981;
+  opacity: 0.9;
+}
+
+.pairing-row.disputed {
+  border-left: 3px solid #f59e0b;
+  background: rgba(245, 155, 11, 0.1);
+}
+
+.table-col,
+.players-col,
+.result-col,
+.rating-col {
+  display: flex;
+  align-items: center;
+}
+
+.table-col {
+  justify-content: center;
+  font-weight: 600;
+  color: #e2e8f0;
+  font-size: 1.1rem;
+}
+
+.players-col {
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.player-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.player-name {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #f8fafc;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-title {
+  font-size: 0.75rem;
+  background: rgba(59, 130, 246, 0.2);
+  color: #bfdbfe;
+  padding: 0.15rem 0.4rem;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.player-federation {
+  font-size: 0.7rem;
+  background: rgba(16, 185, 129, 0.2);
+  color: #a7f3d0;
+  padding: 0.15rem 0.3rem;
+  border-radius: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.player-vs {
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: #94a3b8;
+}
+
+.result-col {
+  justify-content: center;
+}
+
+.result-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.result-badge.result-pending {
+  background: rgba(100, 116, 139, 0.2);
+  color: #94a3b8;
+}
+
+.result-badge.result-white-win {
+  background: #10b981;
+  color: white;
+}
+
+.result-badge.result-black-win {
+  background: #3b82f6;
+  color: white;
+}
+
+.result-badge.result-draw {
+  background: #f59e0b;
+  color: white;
+}
+
+.rating-col {
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.rating-pair {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.rating-value {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #fbbf24;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.rating-label {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Clasificación */
+.standings-section .standings-container {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.standings-table-header,
+.standings-table-body .standings-row {
+  display: grid;
+  grid-template-columns: 50px 1fr 80px 80px 80px 80px;
+  gap: 0;
+  padding: 1rem;
+  align-items: center;
+}
+
+.standings-table-header {
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #94a3b8;
+}
+
+.standings-row {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.05);
+  transition: background-color 0.2s ease;
+  cursor: default;
+}
+
+.standings-row:hover {
+  background: rgba(30, 41, 59, 0.15);
+}
+
+.standings-row:last-child {
+  border-bottom: none;
+}
+
+.standings-row.top-1 {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.2), rgba(255, 193, 7, 0.1));
+  border-left: 3px solid #f59e0b;
+}
+
+.standings-row.top-2 {
+  background: linear-gradient(90deg, rgba(147, 197, 253, 0.15), rgba(96, 165, 250, 0.1));
+  border-left: 3px solid #3b82f6;
+}
+
+.standings-row.top-3 {
+  background: linear-gradient(90deg, rgba(229, 231, 235, 0.15), rgba(209, 213, 219, 0.1));
+  border-left: 3px solid #64748b;
+}
+
+.pos-col,
+.player-col,
+.country-col,
+.score-col,
+.rating-col,
+.perf-col {
+  display: flex;
+  align-items: center;
+}
+
+.pos-col {
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #fbbf24;
+}
+
+.position-number {
+  font-weight: 800;
+}
+
+.position-crown,
+.position-medal {
+  font-size: 0.9rem;
+  margin-left: 0.25rem;
+}
+
+.player-col {
+  flex-direction: column;
+  gap: 0.15rem;
+  align-items: flex-start;
+}
+
+.player-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #f8fafc;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-title {
+  font-size: 0.7rem;
+  background: rgba(59, 130, 246, 0.2);
+  color: #bfdbfe;
+  padding: 0.15rem 0.35rem;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.player-federation {
+  font-size: 0.65rem;
+  background: rgba(16, 185, 129, 0.2);
+  color: #a7f3d0;
+  padding: 0.15rem 0.35rem;
+  border-radius: 8px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.country-col {
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.country-flag {
+  font-size: 1.1rem;
+}
+
+.score-col {
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #f8fafc;
+}
+
+.score-value {
+  font-weight: 800;
+}
+
+.rating-col,
+.perf-col {
+  justify-content: center;
+}
+
+.rating-value,
+.perf-value {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #fbbf24;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.perf-value {
+  color: #a78bfa;
+}
+
+/* Panel de Información */
+.info-panel .info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.05);
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.info-value {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #f8fafc;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+/* Footer */
+.tv-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: rgba(0, 0, 0, 0.4);
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.footer-left,
+.footer-center,
+.footer-right {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.footer-text {
+  font-weight: 500;
+}
+
+/* Efectos de pulso para indicadores en vivo */
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
+/* Animaciones de entrada */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tv-section {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.tv-section:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.tv-section:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+/* Modo Oscuro Mejorado para Condiciones de Baja Luz */
+.tv-wall.night-mode {
+  background: linear-gradient(135°, #000000 0%, #0a0a0a 100%);
+}
+
+.tv-wall.night-mode .tournament-header,
+.tv-wall.night-mode .tv-controls {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.tv-wall.night-mode .pairings-section .pairings-container,
+.tv-wall.night-mode .standings-section .standings-container,
+.tv-wall.night-mode .info-panel .info-grid {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Modo Alto Contraste para Luz Solar Directa */
+.tv-wall.high-contrast {
+  background: #000000;
+  color: #ffffff;
+}
+
+.tv-wall.high-contrast .tournament-header,
+.tv-wall.high-contrast .tv-controls {
+  background: #111111;
+  border-color: #333333;
+}
+
+.tv-wall.high-contrast .tournament-name {
+  -webkit-text-fill-color: #ffffff;
+  background: none;
+}
+
+.tv-wall.high-contrast .pairings-section .pairings-container,
+.tv-wall.high-contrast .standings-section .standings-container,
+.tv-wall.high-contrast .info-panel .info-grid {
+  background: #111111;
+  border-color: #333333;
+}
+
+.tv-wall.high-contrast .pairings-table-header,
+.tv-wall.high-contrast .standings-table-header {
+  background: #222222;
+}
+
+.tv-wall.high-contrast .pairing-row {
+  border-color: #333333;
+}
+
+.tv-wall.high-contrast .pairing-row:hover {
+  background: #222222;
+}
+
+.tv-wall.high-contrast .standings-row:hover {
+  background: #222222;
+}
+
+.tv-wall.high-contrast .info-item {
+  border-color: #333333;
+}
+
+/* Responsive Design para diferentes tamaños de pantalla */
+@media (max-width: 1920px) {
+  .tournament-name {
+    font-size: 2rem;
+  }
+  
+  .section-title {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 1600px) {
+  .tv-content {
+    padding: 0 1.5rem;
+  }
+  
+  .tournament-header,
+  .tv-controls,
+  .tv-footer {
+    padding: 1rem 1.5rem;
+  }
+  
+  .tournament-name {
+    font-size: 1.8rem;
+  }
+  
+  .section-title {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 1280px) {
+  .tv-content {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .tv-section {
+    min-height: auto;
+    margin: 1rem 0;
+  }
+  
+  .pairings-section .pairings-container,
+  .standings-section .standings-container,
+  .info-panel .info-grid {
+    margin-bottom: 1rem;
+  }
+  
+  .tournament-name {
+    font-size: 1.6rem;
+  }
+  
+  .tournament-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .tv-controls {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+  
+  .current-time {
+    order: -1;
+  }
+  
+  .tv-controls-right {
+    align-self: flex-end;
+  }
+  
+  .footer-left,
+  .footer-center,
+  .footer-right {
+    justify-content: center;
+    width: 100%;
+  }
+  
+  .footer-left,
+  .footer-center,
+  .footer-right {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  .tournament-name {
+    font-size: 1.4rem;
+  }
+  
+  .tournament-meta {
+    font-size: 0.9rem;
+    gap: 1rem;
+  }
+  
+  .round-info,
+  .time-control,
+  .arbiter-info {
+    font-size: 0.85rem;
+  }
+  
+  .section-title {
+    font-size: 1.1rem;
+  }
+  
+  .pairings-table-header,
+  .pairings-table-body .pairing-row,
+  .standings-table-header,
+  .standings-table-body .standings-row,
+  .info-item {
+    padding: 0.75rem;
+  }
+  
+  .player-name,
+  .player-title {
+    max-width: 120px;
+  }
+  
+  .info-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .tournament-name {
+    font-size: 1.2rem;
+  }
+  
+  .tournament-header {
+    padding: 1rem;
+  }
+  
+  .tv-controls {
+    padding: 1rem;
+  }
+  
+  .tv-footer {
+    padding: 1rem;
+  }
+  
+  .section-title {
+    font-size: 1rem;
+  }
+  
+  .pairings-table-header,
+  .pairings-table-body .pairing-row,
+  .standings-table-header,
+  .standings-table-body .standings-row,
+  .info-item {
+    padding: 0.6rem;
+  }
+  
+  .player-name {
+    max-width: 100px;
+    font-size: 0.85rem;
+  }
+  
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .controls-row {
+    flex-wrap: wrap;
+  }
+}
+
+/* Optimización para televisores y pantallas grandes */
+@media (min-width: 2560px) {
+  .tournament-name {
+    font-size: 3rem;
+  }
+  
+  .section-title {
+    font-size: 2rem;
+  }
+  
+  .tournament-meta,
+  .round-info,
+  .time-control,
+  .arbiter-info {
+    font-size: 1.2rem;
+  }
+  
+  .current-time {
+    font-size: 1.5rem;
+  }
+  
+  .info-label,
+  .info-value {
+    font-size: 1.2rem;
+  }
+  
+  .footer-text {
+    font-size: 1rem;
+  }
+}
+
+/* Impresión (para capturar pantallas) */
+@media print {
+  .tv-wall {
+    background: white !important;
+    color: black !important;
+  }
+  
+  .tournament-name {
+    -webkit-text-fill-color: black !important;
+  }
+  
+  .control-btn,
+  .tv-footer {
+    display: none !important;
+  }
+}

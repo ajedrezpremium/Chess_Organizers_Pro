@@ -72,7 +72,7 @@ const FIRSTNAMES = ['Carlos','Ana','Luis','María','Juan','Elena','Pedro','Laura
                     'Miguel','Sara','David','Paula','Jorge','Carmen','Roberto',
                     'Erik','Lars','Anna','Johan','Emma','John','Mary','James'];
 
-function generatePlayers(count, rng) {
+function generatePlayers(count, rng, minRating = 1200, maxRating = 2700) {
   const players = [];
   const usedNames = new Set();
 
@@ -86,7 +86,7 @@ function generatePlayers(count, rng) {
     usedNames.add(lastName);
 
     const firstName = rng.pick(FIRSTNAMES);
-    const rating    = rng.int(1200, 2700);
+    const rating    = rng.int(minRating, maxRating);
     const titleIdx  = rating > 2500 ? 8 : rating > 2400 ? 7 : rating > 2300 ? 6
                     : rating > 2200 ? 5 : rating > 2100 ? 4 : rng.int(0, 3);
 
@@ -115,7 +115,23 @@ function winProbability(rating1, rating2) {
   return 1 / (1 + Math.pow(10, -diff / 400));
 }
 
-function simulateResult(p1Rating, p2Rating, rng) {
+function simulateResult(p1Rating, p2Rating, rng, opts = {}) {
+  // Opciones de incomparecencias y resultados especiales (VCL4THP v13 Q7-Q8)
+  const forfeitRate = opts.forfeits ?? 0.01;
+  const unusualRate = opts.unusual  ?? 0.005;
+
+  const rSpecial = rng.next();
+  if (rSpecial < forfeitRate) {
+    return rng.next() > 0.5 ? Result.FORFEIT_WIN : Result.FORFEIT_LOSS;
+  }
+  if (rSpecial < forfeitRate + unusualRate) {
+    // Inusuales: ½-0 (A), 0-½ (B), 0-0 (C). Se exportan a TRF-26 como '?' + ### audit.
+    const u = rng.next();
+    if (u < 0.4) return Result.WHITE_HALF_WIN;
+    if (u < 0.8) return Result.BLACK_HALF_WIN;
+    return Result.DOUBLE_FORFEIT;
+  }
+
   const prob = winProbability(p1Rating, p2Rating);
   const r    = rng.next();
   if (r < prob * 0.7)             return Result.WHITE_WIN;
@@ -134,9 +150,9 @@ function recommendedRounds(playerCount) {
   return 9;
 }
 
-// ── Generar un torneo completo ────────────────────────────────────────────────
+// ── Generar un torneo completo (API Programática y CLI) ─────────────────────
 
-function generateTournament(opts, rng) {
+export function generateTournament(opts = {}, rng = createRNG()) {
   const system      = opts.system ?? 'dutch';
   const playerCount = opts.players ?? rng.int(8, 32);
   const nRounds     = opts.rounds  ?? (system === 'roundrobin' ? (playerCount % 2 === 0 ? playerCount - 1 : playerCount) : recommendedRounds(playerCount));
@@ -144,6 +160,10 @@ function generateTournament(opts, rng) {
 
   const typeCodes = { roundrobin: 'R', burstein: 'S-A', dubov: 'S-X', dutch: 'S' };
   const extTypes  = { roundrobin: `IND RR ${nRounds}R`, burstein: `IND SWISS-A ${nRounds}R`, dubov: `IND SWISS-X ${nRounds}R`, dutch: `IND SWISS ${nRounds}R` };
+
+  const tiebreaks = opts.tiebreaks && Array.isArray(opts.tiebreaks) ? opts.tiebreaks
+    : typeof opts.tiebreaks === 'string' ? opts.tiebreaks.split(',').map((s) => s.trim())
+    : DEFAULT_TIEBREAK_ORDER;
 
   const config = {
     name:              `RTG Tournament ${tournId}`,
@@ -153,14 +173,25 @@ function generateTournament(opts, rng) {
     endDate:           new Date().toISOString().split('T')[0],
     timeControl:       '90+30',
     tournamentTypeCode: typeCodes[system] ?? 'S',
-    chiefArbiter:      'Auto-generated',
+    chiefArbiter:      'Auto-generated RTG',
     nRounds,
     system,
-    tiebreaks:         DEFAULT_TIEBREAK_ORDER,
+    tiebreaks,
     extendedType:      extTypes[system] ?? `IND SWISS ${nRounds}R`,
+    comments:          ['FIDE TEC VCL4THP v13 Compliant Random Tournament Generation'],
   };
 
-  let players = generatePlayers(playerCount, rng);
+  // Configuración de Aceleración Baku
+  if (opts.baku || opts.acceleration === 'baku') {
+    config.acceleration = [
+      { round: 1, threshold: Math.floor(playerCount / 2) },
+      { round: 2, threshold: Math.floor(playerCount / 4) },
+    ];
+  }
+
+  const minRating = opts.minRating ?? 1200;
+  const maxRating = opts.maxRating ?? 2700;
+  let players = generatePlayers(playerCount, rng, minRating, maxRating);
   const rounds = [];
   let bandA = [];
 
@@ -169,16 +200,63 @@ function generateTournament(opts, rng) {
                  : system === 'burstein'   ? (p, rn) => bursteinPairRound(p, rn, bandA)
                  : system === 'dubov'      ? dubovPairRound
                  : dutchPairRound;
-    const result = pairFn(players, r + 1);
-    const { pairings, warnings } = result;
+    const result = pairFn(players.filter((p) => !p.withdrawn), r + 1);
+    let { pairings, warnings } = result;
 
     if (system === 'burstein' && r === 0) {
       bandA = getBandA(players);
     }
 
-    // Simular resultados
+    // Red de seguridad VCL: el motor puede dejar jugadores sin emparejar
+    // (grupos igualados / floats imposibles). Emparejar restos entre sí y,
+    // si queda uno impar, asignarle bye reglamentario. Garantiza rondas completas.
+    {
+      const covered = new Set();
+      for (const p of pairings) {
+        covered.add(p.whiteId);
+        if (p.blackId) covered.add(p.blackId);
+      }
+      const uncovered = players.filter((p) => !p.withdrawn && !covered.has(p.id));
+      // Evitar repetir enfrentamientos ya jugados al emparejar restos
+      const playedPairs = new Set();
+      for (const pl of players) {
+        for (const opp of pl.opponents ?? []) {
+          playedPairs.add([pl.id, opp].sort().join('|'));
+        }
+      }
+      for (let i = 0; i + 1 < uncovered.length; i += 2) {
+        const a = uncovered[i], b = uncovered[i + 1];
+        const aWhite = (a.colorDiff ?? 0) <= (b.colorDiff ?? 0);
+        pairings.push({
+          board: pairings.length + 1,
+          whiteId: aWhite ? a.id : b.id,
+          blackId: aWhite ? b.id : a.id,
+          result: Result.NOT_PLAYED,
+          isBye: false,
+        });
+        warnings = [...(warnings ?? []), `RTG fallback: ${a.id} vs ${b.id} (resto sin emparejar, ronda ${r + 1})`];
+      }
+      if (uncovered.length % 2 === 1) {
+        const lone = uncovered[uncovered.length - 1];
+        pairings.push({
+          board: pairings.length + 1,
+          whiteId: lone.id, blackId: '', result: Result.FULL_BYE, isBye: true,
+        });
+        warnings = [...(warnings ?? []), `RTG fallback: bye FPB para ${lone.id} (resto impar, ronda ${r + 1})`];
+      }
+    }
+
+    // Simular resultados (incluyendo byes solicitados configurables)
+    const hpbRate = opts.hpb ?? 0.02;
+    const fpbRate = opts.fpb ?? 0.01;
+    const zpbRate = opts.zpb ?? 0.01;
+
     const completedPairings = pairings.map((pairing) => {
-      if (pairing.isBye) return pairing;
+      if (pairing.isBye) {
+        const rBye = rng.next();
+        const byeResult = rBye < zpbRate ? Result.ZERO_BYE : (rBye < zpbRate + hpbRate ? Result.HALF_BYE : Result.FULL_BYE);
+        return { ...pairing, result: byeResult };
+      }
       const white = players.find((p) => p.id === pairing.whiteId);
       const black = players.find((p) => p.id === pairing.blackId);
       return {
@@ -186,7 +264,8 @@ function generateTournament(opts, rng) {
         result: simulateResult(
           white?.fideRating ?? 1500,
           black?.fideRating ?? 1500,
-          rng
+          rng,
+          opts
         ),
       };
     });
@@ -216,22 +295,33 @@ function generateTournament(opts, rng) {
   return { config, players: standings, rounds };
 }
 
-// ── Parseado de argumentos ────────────────────────────────────────────────────
+// ── Parseado de argumentos CLI ───────────────────────────────────────────────
 
 function parseArgs(argv) {
   const args = {
     count: 1, players: null, rounds: null, system: 'dutch',
+    minRating: null, maxRating: null, fpb: null, hpb: null, zpb: null,
+    forfeits: null, unusual: null, baku: false, tiebreaks: null,
     seed: null, output: './rtg-output', stdout: false, help: false,
   };
   for (let i = 2; i < argv.length; i++) {
     if (argv[i] === '--help' || argv[i] === '-h') { args.help = true; break; }
-    if (argv[i] === '--count')   { args.count   = parseInt(argv[++i], 10); continue; }
-    if (argv[i] === '--players') { args.players = parseInt(argv[++i], 10); continue; }
-    if (argv[i] === '--rounds')  { args.rounds  = parseInt(argv[++i], 10); continue; }
-    if (argv[i] === '--system')  { args.system  = argv[++i]; continue; }
-    if (argv[i] === '--seed')    { args.seed    = parseInt(argv[++i], 10); continue; }
-    if (argv[i] === '--output')  { args.output  = argv[++i]; continue; }
-    if (argv[i] === '--stdout')  { args.stdout  = true; continue; }
+    if (argv[i] === '--count')       { args.count   = parseInt(argv[++i], 10); continue; }
+    if (argv[i] === '--players')     { args.players = parseInt(argv[++i], 10); continue; }
+    if (argv[i] === '--rounds')      { args.rounds  = parseInt(argv[++i], 10); continue; }
+    if (argv[i] === '--system')      { args.system  = argv[++i]; continue; }
+    if (argv[i] === '--min-rating')  { args.minRating = parseInt(argv[++i], 10); continue; }
+    if (argv[i] === '--max-rating')  { args.maxRating = parseInt(argv[++i], 10); continue; }
+    if (argv[i] === '--fpb')         { args.fpb = parseFloat(argv[++i]); continue; }
+    if (argv[i] === '--hpb')         { args.hpb = parseFloat(argv[++i]); continue; }
+    if (argv[i] === '--zpb')         { args.zpb = parseFloat(argv[++i]); continue; }
+    if (argv[i] === '--forfeits')    { args.forfeits = parseFloat(argv[++i]); continue; }
+    if (argv[i] === '--unusual')     { args.unusual = parseFloat(argv[++i]); continue; }
+    if (argv[i] === '--baku')        { args.baku = true; continue; }
+    if (argv[i] === '--tiebreaks')   { args.tiebreaks = argv[++i]; continue; }
+    if (argv[i] === '--seed')        { args.seed    = parseInt(argv[++i], 10); continue; }
+    if (argv[i] === '--output')      { args.output  = argv[++i]; continue; }
+    if (argv[i] === '--stdout')      { args.stdout  = true; continue; }
   }
   return args;
 }
@@ -239,20 +329,29 @@ function parseArgs(argv) {
 function printHelp() {
   console.log(`
 Chess Organizers — Random Tournament Generator (RTG)
-Versión 2.1.0 | Formato TRF-2025 | Sistemas: dutch, roundrobin, burstein, dubov
+Versión 2.3.0 | Conforme a FIDE TEC Manual 2.0 y VCL4THP v13
 
 Uso:
   node rtg.js [opciones]
 
 Opciones:
-  --count   <n>     Torneos a generar (por defecto: 1)
-  --players <n>     Jugadores por torneo (por defecto: aleatorio 8-32)
-  --rounds  <n>     Rondas por torneo (por defecto: fórmula FIDE)
-  --system  <s>     Sistema: dutch, roundrobin, burstein, dubov (por defecto: dutch)
-  --seed    <n>     Semilla aleatoria para reproducibilidad
-  --output  <dir>   Directorio de salida (por defecto: ./rtg-output/)
-  --stdout          Imprimir en stdout (solo con --count 1)
-  --help            Esta ayuda
+  --count       <n>     Torneos a generar (por defecto: 1)
+  --players     <n>     Jugadores por torneo (por defecto: aleatorio 8-32)
+  --rounds      <n>     Rondas por torneo (por defecto: fórmula FIDE)
+  --system      <s>     Sistema: dutch, roundrobin, burstein, dubov (por defecto: dutch)
+  --min-rating  <n>     Rating mínimo de jugadores (por defecto: 1200)
+  --max-rating  <n>     Rating máximo de jugadores (por defecto: 2700)
+  --fpb         <pct>   Cuota de Full-Point Byes 0/1 (por defecto: 0.01) [VCL Q6]
+  --hpb         <pct>   Cuota de Half-Point Byes ½ (por defecto: 0.02) [VCL Q6]
+  --zpb         <pct>   Cuota de Zero-Point Byes 0 (por defecto: 0.01) [VCL Q6]
+  --forfeits    <pct>   Cuota de incomparecencias +/- (por defecto: 0.01) [VCL Q7]
+  --unusual     <pct>   Cuota de resultados inusuales ½-0/0-½/0-0 (por defecto: 0.005) [VCL Q8]
+  --baku                Activar método de aceleración Baku (Record-250) [VCL Q9]
+  --tiebreaks   <list>  Lista de desempates separada por comas (ej: DE,BH1,BH,SB,AR,AP,W,WON) [VCL Q10]
+  --seed        <n>     Semilla aleatoria para reproducibilidad
+  --output      <dir>   Directorio de salida (por defecto: ./rtg-output/)
+  --stdout              Imprimir en stdout (solo con --count 1)
+  --help                Esta ayuda
 
 Ejemplo para el proceso FIDE (5000 torneos):
   node rtg.js --count 5000 --output ./fide-verification/
@@ -281,7 +380,13 @@ function main() {
   for (let i = 0; i < args.count; i++) {
     try {
       const tournament = generateTournament(
-        { players: args.players, rounds: args.rounds, system: args.system },
+        {
+          players: args.players, rounds: args.rounds, system: args.system,
+          minRating: args.minRating, maxRating: args.maxRating,
+          fpb: args.fpb, hpb: args.hpb, zpb: args.zpb,
+          forfeits: args.forfeits, unusual: args.unusual,
+          baku: args.baku, tiebreaks: args.tiebreaks,
+        },
         rng
       );
       const trf = serializeTRF(tournament.config, tournament.players, tournament.rounds);
@@ -310,4 +415,7 @@ function main() {
   process.exit(errors > 0 ? 1 : 0);
 }
 
-main();
+// Solo auto-ejecutar como CLI, no al importar generateTournament() como API
+const _isCli = typeof process !== 'undefined' && Array.isArray(process.argv) &&
+  process.argv[1] != null && /rtg\.js$/.test(process.argv[1].replace(/\\/g, '/'));
+if (_isCli) main();

@@ -38,17 +38,84 @@ const LINE_LENGTH = 89; // Ancho mínimo de línea TRF16
 const TRF_COLOR_MAP = { w: Color.WHITE, b: Color.BLACK, '-': Color.NONE, '': Color.NONE };
 const COLOR_TO_TRF  = { [Color.WHITE]: 'w', [Color.BLACK]: 'b', [Color.NONE]: '-' };
 
-// Mapa de resultados TRF → Result enum
+// Mapa de resultados TRF → Result enum (TRF-26 / ITDX)
+// Nota TRF-26: '-' es ambiguo (NOT_PLAYED o FORFEIT_LOSS según contexto del oponente).
+// Los inusuales VCL (½-0, 0-½, 0-0) no tienen carácter TRF estándar: se transportan
+// en ITDX como '?' + comentario ###, y en interno como A/B/C.
 const TRF_RESULT_MAP = {
   '1': Result.WHITE_WIN, '0': Result.BLACK_WIN, '=': Result.DRAW,
+  'W': Result.WHITE_WIN, 'L': Result.BLACK_WIN, 'D': Result.DRAW,
   'U': Result.BYE,       'F': Result.FULL_BYE,  'H': Result.HALF_BYE,
-  'Z': Result.ZERO_BYE,  '-': Result.NOT_PLAYED, '+': Result.FULL_BYE,
+  'Z': Result.ZERO_BYE,  '-': Result.NOT_PLAYED, '+': Result.FORFEIT_WIN,
+  '?': Result.UNKNOWN,
+  'A': Result.WHITE_HALF_WIN, 'B': Result.BLACK_HALF_WIN, 'C': Result.DOUBLE_FORFEIT,
 };
 const RESULT_TO_TRF = {
-  [Result.WHITE_WIN]:  '1', [Result.BLACK_WIN]:  '0', [Result.DRAW]:       '=',
-  [Result.BYE]:        'U', [Result.FULL_BYE]:   'F', [Result.HALF_BYE]:   'H',
-  [Result.ZERO_BYE]:   'Z', [Result.NOT_PLAYED]: '-',
+  [Result.WHITE_WIN]:    '1', [Result.BLACK_WIN]:    '0', [Result.DRAW]:         '=',
+  [Result.BYE]:          'U', [Result.FULL_BYE]:     'F', [Result.HALF_BYE]:     'H',
+  [Result.ZERO_BYE]:     'Z', [Result.NOT_PLAYED]:   '-', [Result.FORFEIT_WIN]:  '+',
+  [Result.FORFEIT_LOSS]: '-', [Result.UNKNOWN]:      '?',
+  // Inusuales → '?' en TRF-26/ITDX (detalle preservado en ### audit). Ver serializeTRF.
+  [Result.WHITE_HALF_WIN]: '?', [Result.BLACK_HALF_WIN]: '?', [Result.DOUBLE_FORFEIT]: '?',
 };
+
+// ── Parsers estructurados TRF-26 (162 / 172 / 299) ────────────────────────────
+
+/**
+ * Record-162: sistema de puntuación no estándar.
+ * Formatos aceptados: "3-2-1", "W3 D1 L0", "WIN=3 DRAW=1 LOSS=0", o cadena libre.
+ * @returns {{ raw: string, win?: number, draw?: number, loss?: number }}
+ */
+export function parseScoringSystem(data) {
+  const raw = String(data ?? '').trim();
+  const out = { raw };
+  const m1 = raw.match(/^(\d+(?:\.\d+)?)\s*[-/]\s*(\d+(?:\.\d+)?)\s*[-/]\s*(\d+(?:\.\d+)?)$/);
+  if (m1) { out.win = Number(m1[1]); out.draw = Number(m1[2]); out.loss = Number(m1[3]); return out; }
+  const mW = raw.match(/W(?:IN)?\s*=\s*(\d+(?:\.\d+)?)/i);
+  const mD = raw.match(/D(?:RAW)?\s*=\s*(\d+(?:\.\d+)?)/i);
+  const mL = raw.match(/L(?:OSS)?\s*=\s*(\d+(?:\.\d+)?)/i);
+  if (mW) out.win = Number(mW[1]);
+  if (mD) out.draw = Number(mD[1]);
+  if (mL) out.loss = Number(mL[1]);
+  return out;
+}
+
+/**
+ * Record-172: National Rating Support / método de ranking + FIDON.
+ * Formatos: "NRS ITA", "FIDON ITA 1800", "RANKING: NRS", o cadena libre.
+ * @returns {{ raw: string, method?: string, federation?: string }}
+ */
+export function parseNRSRecord(data) {
+  const raw = String(data ?? '').trim();
+  const out = { raw };
+  const m = raw.match(/^(NRS|FIDON|ELO|RANKING)\b\s*([A-Z]{3})?/i);
+  if (m) { out.method = m[1].toUpperCase(); if (m[2]) out.federation = m[2].toUpperCase(); }
+  return out;
+}
+
+/**
+ * Record-299: Result-AAT y Blank-AAT (bonificaciones/penalizaciones).
+ * Formato canónico: "<STARTidual> <ROUNDS> <POINTS> <TYPE>" donde TYPE ∈ {R,B}.
+ *  R = Result-AAT (ligado a un resultado concreto), B = Blank-AAT (bye ciego).
+ * Ejemplos: "001 R1 0.5 R", "005 R1-R9 1.0 B".
+ * @returns {{ raw: string, startRank?: number, rounds?: string, points?: number, kind?: 'R'|'B' }}
+ */
+export function parseAATRecord(data) {
+  const raw = String(data ?? '').trim();
+  const out = { raw };
+  const m = raw.match(/^(\d+)\s+([A-Z0-9\-,\s]+?)\s+([+-]?\d+(?:\.\d+)?)\s*([RB])?$/i);
+  if (m) {
+    out.startRank = parseInt(m[1], 10);
+    out.rounds = m[2].trim();
+    out.points = Number(m[3]);
+    if (m[4]) out.kind = m[4].toUpperCase();
+  } else {
+    // Heurística: si menciona BLANK → B, si menciona RESULT → R
+    if (/BLANK/i.test(raw)) out.kind = 'B';
+    else if (/RESULT/i.test(raw)) out.kind = 'R';
+  }
+  return out;
+}
 
 // ── Utilidades de texto ───────────────────────────────────────────────────────
 
@@ -65,20 +132,27 @@ function parseField(line, start, length) {
 // ── Parse TRF → modelo interno ────────────────────────────────────────────────
 
 /**
- * Parsea un archivo TRF completo (string) y retorna el modelo interno.
+ * Parsea un archivo TRF completo (string) y retorna el modelo interno según TRF-26.
  *
  * @param {string} content — Contenido del archivo TRF
- * @returns {{ config: object, players: Player[], rounds: Round[], warnings: string[] }}
+ * @returns {{ config: object, players: Player[], rounds: Round[], comments: string[], warnings: string[] }}
  */
 export function parseTRF(content) {
-  const lines    = content.split(/\r?\n/);
-  const config   = {};
-  const warnings = [];
-  const playerMap = new Map();   // startRank → datos parciales
-  let   nRounds  = 0;
+  const lines       = content.split(/\r?\n/);
+  const config      = { comments: [], nrsRecords: [], aatRecords: [] };
+  const warnings    = [];
+  const playerMap   = new Map();   // startRank → datos parciales
+  let   nRounds     = 0;
 
   for (const rawLine of lines) {
     if (!rawLine.trim()) continue;
+
+    // Soporte para comentarios oficiales de auditoría TRF (###)
+    if (rawLine.startsWith('###')) {
+      config.comments.push(rawLine.substring(3).trim());
+      continue;
+    }
+
     const code = rawLine.substring(0, 3).trim();
     const data = rawLine.substring(4).trimEnd();
 
@@ -89,13 +163,30 @@ export function parseTRF(content) {
       case '042': config.startDate   = data; break;
       case '052': config.endDate     = data; break;
       case '062': config.playerCount = parseInt(data, 10); break;
+      case '072': config.ratedCount  = parseInt(data, 10); break;
       case '082': config.timeControl = data; break;
-      case '092': config.tournamentTypeCode = data.trim(); break;  // TRF-2025
+      case '092': config.tournamentTypeCode = data.trim(); break;  // TRF-26
       case '102': config.chiefArbiter      = data; break;
       case '112': config.deputyArbiter     = data; break;
+      case '122': config.allottedTime      = data; break;
       case '132': nRounds = parseInt(data, 10); config.nRounds = nRounds; break;
 
-      // TRF-2025: lista de desempates
+      // TRF-26: Sistema de puntuación no estándar (Record 162)
+      case '162': {
+        const raw = data.trim();
+        config.scoringSystem = raw;
+        config.scoringParsed = parseScoringSystem(raw);
+        break;
+      }
+
+      // TRF-26: National Rating Support / Ranking method (Record 172) + FIDON
+      case '172':
+        config.nrsRecords.push(data.trim());
+        config.nrsParsed = config.nrsParsed ?? [];
+        config.nrsParsed.push(parseNRSRecord(data.trim()));
+        break;
+
+      // TRF-26: lista de desempates oficiales
       case '202':
         config.tiebreaks = data.trim().split(/\s+/).filter(Boolean);
         break;
@@ -103,12 +194,22 @@ export function parseTRF(content) {
         config.altTiebreaks = data.trim().split(/\s+/).filter(Boolean);
         break;
 
-      // TRF-2025: aceleración Baku
+      // TRF-26: aceleración Baku
       case '250':
         config.acceleration = parseAcceleration(data);
         break;
 
-      // TRF-2025: tipo de torneo extendido
+      // TRF-26: Asignación y ajuste de puntos AAT (Record 299)
+      // Result-AAT (kind R) y Blank-AAT (kind B): afectan emparejamiento y desempate.
+      case '299': {
+        const raw = data.trim();
+        config.aatRecords.push(raw);
+        config.aatParsed = config.aatParsed ?? [];
+        config.aatParsed.push(parseAATRecord(raw));
+        break;
+      }
+
+      // TRF-26: tipo de torneo extendido
       case '310':
         config.extendedType = data.trim();
         break;
@@ -121,10 +222,51 @@ export function parseTRF(content) {
       }
 
       default:
-        if (/^\d{3}$/.test(code)) {
+        // FIDON explícito: "FIDON <startRank> <rating>" o "FIDON <fed> ..."
+        if (code === 'FID') {
+          const m = rawLine.match(/^FIDON\s+(\d+)\s+(\d+)/i) ?? rawLine.match(/^FID\w*\s+(\d+)\s+(\d+)/);
+          if (m) {
+            const pRank = parseInt(m[1], 10);
+            const nRating = parseInt(m[2], 10);
+            const p = playerMap.get(pRank);
+            if (p) {
+              if (!p.nationalRatings) p.nationalRatings = {};
+              p.nationalRatings.FIDON = nRating;
+            }
+          } else {
+            warnings.push(`Línea FIDON no reconocida: ${rawLine.slice(0, 40)}`);
+          }
+        // Soporte pseudo-NRS (ej. RRR, BBB, MMM, ITA con rating nacional)
+        } else if (/^[A-Z]{3}$/.test(code)) {
+          const pRank = parseInt(rawLine.substring(4, 8).trim(), 10);
+          const nRating = parseInt(rawLine.substring(48, 52).trim(), 10);
+          if (pRank && playerMap.has(pRank)) {
+            const p = playerMap.get(pRank);
+            if (!p.nationalRatings) p.nationalRatings = {};
+            p.nationalRatings[code] = nRating;
+          } else if (pRank && !playerMap.has(pRank)) {
+            // NRS huérfano (jugador aún no parseado): guardar para reconciliar al final
+            config._pendingNRS = config._pendingNRS ?? [];
+            config._pendingNRS.push({ code, pRank, nRating });
+          }
+        } else if (/^\d{3}$/.test(code)) {
           warnings.push(`Código TRF desconocido: ${code}`);
         }
     }
+  }
+
+  // Reconciliar NRS huérfanos (aparecen antes que su 001)
+  if (config._pendingNRS?.length) {
+    for (const { code, pRank, nRating } of config._pendingNRS) {
+      const p = playerMap.get(pRank);
+      if (p && Number.isFinite(nRating)) {
+        if (!p.nationalRatings) p.nationalRatings = {};
+        p.nationalRatings[code] = nRating;
+      } else {
+        warnings.push(`NRS huérfano sin jugador: ${code} ${pRank}`);
+      }
+    }
+    delete config._pendingNRS;
   }
 
   // Reconstruir rondas desde los datos de jugador
@@ -134,7 +276,7 @@ export function parseTRF(content) {
   // Limpiar campo interno
   for (const p of players) delete p._startRank;
 
-  return { config, players, rounds, warnings };
+  return { config, players, rounds, warnings, comments: config.comments };
 }
 
 // ── Parse de línea de jugador ─────────────────────────────────────────────────
@@ -173,18 +315,30 @@ function parsePlayerLine(line, warnings) {
   const points     = parseFloat(parseField(line, 80, 4)) || 0;
 
   // Resultados de rondas (a partir de col 91, grupos de 8 columnas)
+  // ITDX estricto: partida aplazada/en curso DEBE ser '?' (nunca blanco).
       const roundResults = [];
       let col = 90; // índice 0-based (col 91 1-based según TRF16)
+      let roundIdx = 0;
       while (col + 9 <= line.length) {
         const chunk     = line.substring(col, col + 9);
         const oppRank   = parseInt(chunk.substring(1, 5).trim(), 10) || null;
         const colorChar = chunk[6]?.toLowerCase() ?? '-';
-        const resultChar = chunk[8] ?? '-';
+        const resultChar = chunk[8] ?? ' ';
+        roundIdx++;
+
+        // Blanco/ausencia en ITDX → aviso (debe ser '?')
+        if (resultChar === ' ' || resultChar === '') {
+          warnings?.push(`ITDX: resultado en blanco en jugador ${startRank} ronda ${roundIdx} — debe ser '?' (TRF-26)`);
+        }
+        const mapped = TRF_RESULT_MAP[resultChar] ?? (resultChar.trim() === '' ? Result.UNKNOWN : Result.NOT_PLAYED);
+        if (!(resultChar in TRF_RESULT_MAP) && resultChar.trim() !== '') {
+          warnings?.push(`Resultado TRF desconocido '${resultChar}' en jugador ${startRank} ronda ${roundIdx}`);
+        }
 
         roundResults.push({
           opponentStartRank: oppRank,
           color:  TRF_COLOR_MAP[colorChar]  ?? Color.NONE,
-          result: TRF_RESULT_MAP[resultChar] ?? Result.NOT_PLAYED,
+          result: mapped,
         });
         col += 9;
       }
@@ -301,37 +455,59 @@ function parseAcceleration(data) {
 // ── Serializar → TRF ─────────────────────────────────────────────────────────
 
 /**
- * Serializa el modelo interno a formato TRF-2025.
+ * Serializa el modelo interno a formato TRF-26.
  *
- * @param {object}   config    — TournamentConfig
+ * @param {object}   config    — TournamentConfig (con comments, 162, 172, 299 opcionales)
  * @param {Player[]} players   — Jugadores con historial completo
- * @param {Round[]}  rounds    — Rondas completadas
- * @returns {string}           — Contenido del archivo TRF
+ * @param {Round[]}  rounds    — Rondas completadas o en curso
+ * @returns {string}           — Contenido del archivo TRF-26
  */
 export function serializeTRF(config, players, rounds) {
   const lines = [];
 
-  // ── Cabecera ─────────────────────────────────────────────────────
+  // ── Comentarios de auditoría iniciales (###) ──────────────────────
+  if (config.comments?.length) {
+    for (const c of config.comments) {
+      lines.push(`### ${c}`);
+    }
+  }
+
+  // ── Cabecera TRF-26 ──────────────────────────────────────────────
   if (config.name)         lines.push(`012 ${config.name}`);
   if (config.city)         lines.push(`022 ${config.city}`);
   if (config.federation)   lines.push(`032 ${config.federation}`);
   if (config.startDate)    lines.push(`042 ${config.startDate}`);
   if (config.endDate)      lines.push(`052 ${config.endDate}`);
   lines.push(`062 ${players.length}`);
+  const ratedCount = players.filter((p) => (p.fideRating ?? 0) > 0).length;
+  lines.push(`072 ${config.ratedCount ?? ratedCount}`);
   if (config.timeControl)  lines.push(`082 ${config.timeControl}`);
 
-  // TRF-2025: código de tipo de torneo
+  // TRF-26: código de tipo de torneo
   if (config.tournamentTypeCode) lines.push(`092 ${config.tournamentTypeCode}`);
 
   if (config.chiefArbiter)  lines.push(`102 ${config.chiefArbiter}`);
   if (config.deputyArbiter) lines.push(`112 ${config.deputyArbiter}`);
   if (config.deputyArbiter2) lines.push(`118 ${config.deputyArbiter2}`);
+  if (config.allottedTime)  lines.push(`122 ${config.allottedTime}`);
   if (config.tournamentDirector) lines.push(`125 ${config.tournamentDirector}`);
   if (config.address) lines.push(`128 ${config.address}`);
   if (config.roundTime) lines.push(`138 ${config.roundTime}`);
   lines.push(`132 ${rounds.length}`);
 
-  // TRF-2025: desempates (obligatorio si se solicita endorsement)
+  // TRF-26: Record-162 (Sistema de puntuación especial)
+  if (config.scoringSystem) {
+    lines.push(`162 ${config.scoringSystem}`);
+  }
+
+  // TRF-26: Record-172 (National Rating Support / Ranking Method)
+  if (config.nrsRecords?.length) {
+    for (const nrs of config.nrsRecords) {
+      lines.push(`172 ${nrs}`);
+    }
+  }
+
+  // TRF-26: desempates oficiales (Record-202 / 212)
   if (config.tiebreaks?.length) {
     lines.push(`202 ${config.tiebreaks.join(' ')}`);
   }
@@ -339,7 +515,7 @@ export function serializeTRF(config, players, rounds) {
     lines.push(`212 ${config.altTiebreaks.join(' ')}`);
   }
 
-  // TRF-2025: aceleración Baku
+  // TRF-26: aceleración Baku (Record-250)
   if (config.acceleration?.length) {
     const accStr = config.acceleration
       .map((a) => `${a.round}:${a.threshold}`)
@@ -347,12 +523,19 @@ export function serializeTRF(config, players, rounds) {
     lines.push(`250 ${accStr}`);
   }
 
-  // TRF-2025: tipo extendido
+  // TRF-26: Record-299 (AATs: Result-AAT / Blank-AAT)
+  if (config.aatRecords?.length) {
+    for (const aat of config.aatRecords) {
+      lines.push(`299 ${aat}`);
+    }
+  }
+
+  // TRF-26: tipo extendido (Record-310)
   if (config.extendedType) {
     lines.push(`310 ${config.extendedType}`);
   }
 
-  // ── Líneas de jugadores ───────────────────────────────────────────
+  // ── Líneas de jugadores (Record-001) ──────────────────────────────
   // Construir mapa startRank: ordenados por ELO desc para asignar ranks
   const sortedPlayers = [...players].sort(
     (a, b) => (b.fideRating ?? 0) - (a.fideRating ?? 0)
@@ -374,11 +557,18 @@ export function serializeTRF(config, players, rounds) {
         oppId: pairing.blackId, isBye: pairing.isBye,
       };
       if (!pairing.isBye) {
+        let bRes = pairing.result;
+        if (pairing.result === Result.WHITE_WIN) bRes = Result.BLACK_WIN;
+        else if (pairing.result === Result.BLACK_WIN) bRes = Result.WHITE_WIN;
+        else if (pairing.result === Result.FORFEIT_WIN) bRes = Result.FORFEIT_LOSS;
+        else if (pairing.result === Result.FORFEIT_LOSS) bRes = Result.FORFEIT_WIN;
+        else if (pairing.result === Result.WHITE_HALF_WIN) bRes = Result.BLACK_HALF_WIN;
+        else if (pairing.result === Result.BLACK_HALF_WIN) bRes = Result.WHITE_HALF_WIN;
+        // DOUBLE_FORFEIT es simétrico
+
         resultsByPlayerRound.get(pairing.blackId)[ri] = {
           color: Color.BLACK,
-          result: pairing.result === Result.WHITE_WIN ? Result.BLACK_WIN
-                : pairing.result === Result.BLACK_WIN ? Result.WHITE_WIN
-                : pairing.result,
+          result: bRes,
           oppId: pairing.whiteId, isBye: false,
         };
       }
@@ -402,17 +592,23 @@ export function serializeTRF(config, players, rounds) {
     for (let ri = 0; ri < rounds.length; ri++) {
       const rr = playerResults[ri];
       if (!rr) {
-        roundStr += '         '; // 9 espacios = ronda no jugada
+        // En ITDX, si la ronda está abierta o no jugada, se emite según configuración
+        roundStr += config.isITDX ? ' 0000 - ?' : '         ';
         continue;
       }
       const oppRank = rr.isBye ? '0000' : pad(startRankMap.get(rr.oppId) ?? 0, 4, 'right');
       const colorC  = COLOR_TO_TRF[rr.color] ?? '-';
-      const resultC = RESULT_TO_TRF[rr.result] ?? '-';
+      let resultC = RESULT_TO_TRF[rr.result] ?? (config.isITDX ? '?' : '-');
+      // Inusuales VCL (A/B/C): exportar '?' + traza de auditoría ### (TRF-26 no tiene carácter)
+      if ([Result.WHITE_HALF_WIN, Result.BLACK_HALF_WIN, Result.DOUBLE_FORFEIT].includes(rr.result)) {
+        resultC = '?';
+        lines.push(`### UNUSUAL ${rank} R${ri + 1} ${rr.result} (½-0/0-½/0-0 VCL4THP)`);
+      }
       // Formato: " RRRR c R" (space + 4 rank + space + color + space + result)
       roundStr += ` ${oppRank} ${colorC} ${resultC}`;
     }
 
-    // Línea TRF16 completa (columnas 1-based según standard FIDE)
+    // Línea TRF-26 / 001 completa (columnas 1-based según standard FIDE)
     const line = [
       '001',                     // col 1-3
       ' ',                       // col 4
@@ -438,7 +634,79 @@ export function serializeTRF(config, players, rounds) {
     ].join('');
 
     lines.push(line);
+
+    // Si el jugador tiene ratings nacionales pseudo-NRS (ej. RRR, BBB, MMM, ITA)
+    if (player.nationalRatings) {
+      for (const [natCode, natVal] of Object.entries(player.nationalRatings)) {
+        const natLine = [
+          pad(natCode, 3),
+          ' ',
+          pad(rank, 4, 'right'),
+          pad('', 40),
+          pad(natVal, 4, 'right'),
+        ].join('');
+        lines.push(natLine);
+      }
+    }
   }
 
   return lines.join('\n') + '\n';
 }
+
+/**
+ * Valida si un string TRF corresponde a un archivo parcial ITDX (con '?' o partidas sin finalizar)
+ * o a un reporte final de torneo.
+ * @param {string} content
+ * @returns {{ isITDX: boolean, valid: boolean, errors: string[] }}
+ */
+export function validateTRF26(content) {
+  const errors = [];
+  const warnings = [];
+  const lines = content.split(/\r?\n/);
+  let hasUnknown = false;
+  let has162 = false, has172 = false, has299 = false, hasAudit = false;
+
+  for (const [idx, line] of lines.entries()) {
+    if (!line.trim()) continue;
+    if (line.startsWith('###')) { hasAudit = true; continue; }
+    const code = line.substring(0, 3).trim();
+    if (code === '162') has162 = true;
+    if (code === '172') has172 = true;
+    if (code === '299') {
+      has299 = true;
+      const parsed = parseAATRecord(line.substring(4).trim());
+      if (parsed.startRank == null || parsed.points == null) {
+        warnings.push(`L${idx + 1}: 299 con formato no canónico: ${line.slice(0, 60)}`);
+      }
+    }
+    if (line.startsWith('001')) {
+      const resultsPart = line.substring(90);
+      if (resultsPart.includes('?')) hasUnknown = true;
+      // Detectar grupos de 9 con resultado en blanco (ITDX inválido: debe ser '?')
+      for (let c = 0; c + 9 <= resultsPart.length; c += 9) {
+        const chunk = resultsPart.substring(c, c + 9);
+        if (chunk.trim() === '') continue; // ronda no jugada futura (padding) — OK si no es ITDX
+        const rc = chunk[8];
+        if (rc === ' ' || rc === undefined) {
+          errors.push(`L${idx + 1}: resultado en blanco — usar '?' en ITDX (TRF-26)`);
+        } else if (!('1234567890=+UDWHFZ?-ABC'.includes(rc) || '1=0+UHFZ?-'.includes(rc))) {
+          // validación laxa: aceptar chars conocidos
+          if (!('1' === rc || '0' === rc || '=' === rc || '+' === rc || '-' === rc ||
+                'U' === rc || 'H' === rc || 'F' === rc || 'Z' === rc || '?' === rc ||
+                'A' === rc || 'B' === rc || 'C' === rc || 'W' === rc || 'L' === rc || 'D' === rc)) {
+            errors.push(`L${idx + 1}: carácter de resultado inválido '${rc}'`);
+          }
+        }
+      }
+    }
+  }
+
+  return {
+    isITDX: hasUnknown,
+    valid: errors.length === 0,
+    errors,
+    warnings,
+    features: { has162, has172, has299, hasAudit },
+  };
+}
+
