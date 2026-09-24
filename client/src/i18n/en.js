@@ -353,6 +353,7 @@ activeFeedTitle: 'Active Tournaments — Pending',
     colResult: 'Result',
     colMoves: 'Moves',
     colConfidence: 'Confidence',
+    planNoScans: 'Your plan does not include scans. Upgrade to Basic or Pro.',
   },
   newsletters: {
     title: 'Newsletter 2026',

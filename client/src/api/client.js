@@ -196,7 +196,7 @@ export const api = {
   updateMatchPairingResult: (mid, pid, result) => request('PUT', `/matches/${mid}/pairings/${pid}`, { result }),
   removeMatchPairing: (mid, pid) => request('DELETE', `/matches/${mid}/pairings/${pid}`),
 
-  askFide: (question, history) => request('POST', '/ai/fide', { question, history }),
+  askFide: (question, history, lang) => request('POST', '/ai/fide', { question, history, lang }),
 
   // ── External / Catalog ───────────────────────────────────────────
   external: {

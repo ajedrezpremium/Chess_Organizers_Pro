@@ -45,7 +45,9 @@ export function I18nProvider({ children }) {
   const msgs = getMessages(locale);
 
   const t = useCallback((key, vars) => {
-    const msg = msgs[key];
+    // Cadena de fallback: idioma activo → inglés → español → clave cruda.
+    // Así jamás se muestra "scanner.title" en pantalla aunque falte una traducción.
+    const msg = msgs[key] ?? getMessages('en')[key] ?? getMessages('es')[key];
     return msg !== undefined ? interpolate(msg, vars) : key;
   }, [locale]);
 

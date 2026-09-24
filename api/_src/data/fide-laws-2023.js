@@ -385,10 +385,23 @@ export function searchFideLaws(query) {
     }
   }
 
-  // Buscar en FAQs
-  const faqResults = FIDE_LAWS_2023.faq.filter(
-    (f) => f.q.toLowerCase().includes(q) || f.a.toLowerCase().includes(q)
-  );
+  // Buscar en FAQs: coincidencia directa o por solape de palabras significativas
+  // (la pregunta del usuario rara vez es idéntica al enunciado de la FAQ).
+  const qWords = significantWords(q);
+  const scoredFaqs = FIDE_LAWS_2023.faq
+    .map((f) => {
+      const fq = f.q.toLowerCase();
+      const fa = f.a.toLowerCase();
+      let score = 0;
+      if (fq.includes(q) || q.includes(fq)) score += 10;
+      else if (fa.includes(q)) score += 5;
+      const fWords = new Set([...significantWords(fq), ...significantWords(fa)]);
+      for (const w of qWords) if (fWords.has(w)) score += 1;
+      return { f, score };
+    })
+    .filter((s) => s.score >= 2)
+    .sort((a, b) => b.score - a.score);
+  const faqResults = scoredFaqs.slice(0, 3).map((s) => s.f);
 
   // Buscar en reglas de artículos
   if (results.length === 0) {
@@ -399,6 +412,26 @@ export function searchFideLaws(query) {
   }
 
   return { articles: results.slice(0, 3), faqs: faqResults.slice(0, 3) };
+}
+
+/**
+ * Palabras significativas de un texto: minúsculas, sin tildes,
+ * longitud > 4 y sin palabras vacías. Para el matching de FAQs.
+ */
+const STOP_WORDS = new Set([
+  'para', 'como', 'cuando', 'donde', 'porque', 'entre', 'sobre',
+  'esta', 'este', 'esto', 'estos', 'estas', 'tiene', 'tienen',
+  'puede', 'pueden', 'hace', 'hacen', 'cada', 'otro', 'otra',
+  'mismo', 'misma', 'estan', 'estaba', 'toda', 'todo',
+]);
+
+function significantWords(s) {
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w.length > 4 && !STOP_WORDS.has(w));
 }
 
 /**

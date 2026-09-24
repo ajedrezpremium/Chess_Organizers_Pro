@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { FIDE_LAWS_2023 } from '../data/fide-laws-2023.js';
 import { api } from '../api/client.js';
+import { useI18n } from '../i18n/context.jsx';
 
 const QUICK_QUESTIONS = [
   '¿Qué pasa si hago un movimiento ilegal?',
@@ -40,6 +41,7 @@ function ArticleCard({ article }) {
 }
 
 export default function ArbiterAssistant() {
+  const { locale } = useI18n();
   const [messages, setMessages] = useState([
     {
       role: 'arbiter',
@@ -70,7 +72,7 @@ export default function ArbiterAssistant() {
       return;
     }
 
-    api.askFide(q, messages.map(m => ({ role: m.role, text: m.text }))).then((resp) => {
+    api.askFide(q, messages.map(m => ({ role: m.role, text: m.text })), locale).then((resp) => {
       setMessages((prev) => [
         ...prev,
         {
