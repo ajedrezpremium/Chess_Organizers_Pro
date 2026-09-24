@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { useI18n } from '../i18n/context.jsx';
 import NotificationDropdown from './NotificationDropdown.jsx';
+import GlobalSearch from './GlobalSearch.jsx';
 import LangSwitcher from './LangSwitcher.jsx';
 import SyncStatus from './SyncStatus.jsx';
 import SWUpdatePrompt from './SWUpdatePrompt.jsx';
@@ -37,12 +38,16 @@ export default function Layout() {
   scan: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
   elo: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
   arbiter: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2l7 4v5c0 5-3.5 9.5-7 10.5C8.5 20.5 5 16 5 11V6l7-4z" /></svg>,
+  search: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" /></svg>,
+  directory: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-4h6v4M9 10h.01M15 10h.01M9 14h.01M15 14h.01" /></svg>,
   leagues: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 21h8m-4-3v3m0-3a5 5 0 005-5V5H7v8a5 5 0 005 5z" /></svg>,
   live: <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-white animate-pulse" />EN DIRECTO</span>,
 };
 
 const navLinks = [
-    { to: '/app/dashboard', label: t('nav.tournaments'), icon: 'tournaments', title: 'Torneos' },
+    { to: '/app/dashboard-pro', label: 'Panel de control', icon: 'tournaments', title: 'Panel de control' },
+    { to: '/app/search', label: 'Buscar', icon: 'search', title: 'Buscador universal (país, fecha, nombre)' },
+    { to: '/app/directory', label: 'Directorio', icon: 'directory', title: 'Directorio federaciones, clubes y escuelas' },
     { to: '/app/new', label: t('nav.newTournament'), icon: 'newTournament', title: 'Nuevo' },
     { to: 'https://lichess.org/broadcast', label: t('nav.liveBroadcast'), icon: 'live', title: 'En directo — Lichess Broadcast', external: true, red: true },
     { to: '/app/scan', label: t('nav.scanner'), icon: 'scan', title: 'Escanear' },
@@ -222,6 +227,8 @@ const navLinks = [
             <LangSwitcher />
             <SyncStatus />
             <NotificationDropdown />
+            <Link to="/app/notifications" title="Centro de notificaciones — urgentes y pendientes del evento" className="hidden md:inline px-2 py-2 rounded-lg hover:bg-fide-700 text-fide-300 hover:text-white transition text-[11px] font-semibold" aria-label="Todas las notificaciones">Ver todas</Link>
+            <GlobalSearch myTournaments={[]} />
             <button onClick={toggle} className="p-2 rounded-lg hover:bg-fide-700 transition-all duration-200" title={dark ? t('nav.lightMode') : t('nav.darkMode')}>
               {dark ? (
                 <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>

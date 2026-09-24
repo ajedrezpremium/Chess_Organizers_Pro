@@ -148,6 +148,13 @@ export const api = {
 
   getNotifications: (params) => request('GET', `/notifications?${new URLSearchParams(params)}`),
   markAllRead: () => request('PATCH', '/notifications/read-all'),
+  markOneRead: (id) => request('PATCH', `/notifications/${id}/read`),
+
+  // ── Discover / Directorio (V2 — con fallback local si el backend no los sirve) ──
+  discover: () => request('GET', '/discover'),
+  searchTournaments: (params = {}) => request('GET', `/tournaments/search?${new URLSearchParams(params)}`),
+  getDirectory: (params = {}) => request('GET', `/directory?${new URLSearchParams(params)}`),
+  followEntity: (kind, id) => request('POST', '/directory/follow', { kind, entity_id: id }),
   getNotifySettings: () => request('GET', '/notifications/settings'),
   updateNotifySettings: (data) => request('PATCH', '/notifications/settings', data),
   testTelegram: (token, chatId) => request('POST', '/notifications/test-telegram', { token, chatId }),

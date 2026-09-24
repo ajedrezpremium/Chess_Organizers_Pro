@@ -34,6 +34,11 @@ const ScannerPage = lazy(() => import('./pages/ScannerPage.jsx'));
 const EloDashboard = lazy(() => import('./pages/EloDashboard.jsx'));
 const Newsletters = lazy(() => import('./pages/Newsletters.jsx'));
 const EmbedTournament = lazy(() => import('./pages/EmbedTournament.jsx'));
+const DashboardPro = lazy(() => import('./pages/DashboardPro.jsx'));
+const SearchPage = lazy(() => import('./pages/SearchPage.jsx'));
+const DirectoryPage = lazy(() => import('./pages/DirectoryPage.jsx'));
+const NotificationsPage = lazy(() => import('./pages/NotificationsPage.jsx'));
+const EventPage = lazy(() => import('./pages/EventPage.jsx'));
 
 function Spinner() {
   return <div className="flex items-center justify-center h-64"><div className="animate-spin h-8 w-8 border-4 border-fide-500 border-t-transparent rounded-full" /></div>;
@@ -79,6 +84,9 @@ function App() {
               <Route path="/public/organizers" element={<PublicOrganizersList />} />
               <Route path="/public/organizers/:id" element={<PublicOrganizerProfile />} />
               <Route path="/catalog" element={<TournamentCatalog />} />
+              <Route path="/search" element={<SearchPage />} />
+              <Route path="/directory" element={<DirectoryPage />} />
+              <Route path="/t/:slug" element={<EventPage mode="public" />} />
               <Route path="/pricing" element={<PricingPage />} />
               <Route path="/newsletter" element={<Newsletters />} />
               <Route path="/newsletters" element={<Newsletters />} />
@@ -90,8 +98,13 @@ function App() {
               <Route path="/app" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
                 <Route index element={<Navigate to="/app/dashboard" replace />} />
                 <Route path="dashboard" element={<Dashboard />} />
+                <Route path="dashboard-pro" element={<DashboardPro />} />
                 <Route path="new" element={<TournamentNew />} />
                 <Route path="tournament/:id" element={<TournamentDetail />} />
+                <Route path="events/:id" element={<EventPage mode="private" />} />
+                <Route path="search" element={<SearchPage />} />
+                <Route path="directory" element={<DirectoryPage />} />
+                <Route path="notifications" element={<NotificationsPage />} />
                 <Route path="player" element={<PlayerDashboard />} />
                 <Route path="leagues" element={<LeaguesPage />} />
                 <Route path="leagues/:id" element={<LeagueDetailPage />} />
