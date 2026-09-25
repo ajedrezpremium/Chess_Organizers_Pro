@@ -43,6 +43,8 @@
     { "source": "/api-keys/(.*)", "destination": "/api/index.js" },
     { "source": "/ai", "destination": "/api/index.js" },
     { "source": "/ai/(.*)", "destination": "/api/index.js" },
+    { "source": "/discover", "destination": "/api/index.js" },
+    { "source": "/discover/(.*)", "destination": "/api/index.js" },
     { "source": "/scan", "destination": "/api/index.js" },
     { "source": "/scan/(.*)", "destination": "/api/index.js" },
     { "source": "/rounds", "destination": "/api/index.js" },

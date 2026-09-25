@@ -26,7 +26,7 @@ export default function DashboardPro() {
   const [mine, setMine] = useState([]);
   const [alerts, setAlerts] = useState(0);
   const [tab, setTab] = useState('active');
-  const { live, upcoming, finished, loading: discLoading } = useDiscover();
+  const { live, upcoming, finished, loading: discLoading, source: discSource } = useDiscover();
 
   useEffect(() => {
     api.listTournaments().then((d) => setMine(d.tournaments || d || [])).catch(() => {});
@@ -101,9 +101,9 @@ export default function DashboardPro() {
 
         {/* ── DERECHA: descubrimiento ── */}
         <div className="space-y-4 min-w-0">
-          <LiveBar items={live} />
-          <UpcomingPanel items={upcoming} />
-          <FinishedTable items={finished} />
+          <LiveBar items={live} live={discSource === 'api'} />
+          <UpcomingPanel items={upcoming} live={discSource === 'api'} />
+          <FinishedTable items={finished} live={discSource === 'api'} />
           <NewsLinks />
           {discLoading && <p className="text-[11px] text-gray-400">Sincronizando fuentes externas…</p>}
         </div>

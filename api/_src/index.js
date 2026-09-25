@@ -30,6 +30,7 @@ import importRoutes from './routes/import.js';
 import notificationRoutes from './routes/notifications.js';
 import aiRoutes from './routes/ai.js';
 import scanRoutes from './routes/scan.js';
+import discoverRoutes from './routes/discover.js';
 import groupRoutes from './routes/groups.js';
 import incidentsRoutes from './routes/incidents.js';
 import newsletterRoutes from './routes/newsletter.js';
@@ -95,13 +96,14 @@ app.use('/import', importRoutes);
 app.use('/notifications', notificationRoutes);
 app.use('/ai', aiRoutes);
 app.use('/scan', scanRoutes);
+app.use('/discover', discoverRoutes);
 app.use('/', groupRoutes);
 app.use('/incidents', incidentsRoutes);
 app.use('/newsletter', newsletterRoutes);
 app.use('/public', publicRoutes);
 
 // ── Static assets + SPA fallback ────────────────────────────────────
-const API_PREFIXES = ['/auth/', '/public/', '/tournaments/', '/players/', '/fide/', '/stats/', '/health', '/pairings/', '/rounds/', '/membership/', '/validation/', '/stripe/', '/api/v1/', '/external/', '/webhooks/', '/api-keys/', '/import/', '/notifications/', '/leagues/', '/matches/', '/teams/', '/team_members/', '/groups/', '/incidents/', '/newsletter/'];
+const API_PREFIXES = ['/auth/', '/public/', '/tournaments/', '/players/', '/fide/', '/stats/', '/health', '/pairings/', '/rounds/', '/membership/', '/validation/', '/stripe/', '/api/v1/', '/external/', '/webhooks/', '/api-keys/', '/import/', '/notifications/', '/leagues/', '/matches/', '/teams/', '/team_members/', '/groups/', '/incidents/', '/newsletter/', '/discover/', '/ai/'];
 app.use(express.static(config.clientDist));
 app.use((req, res, next) => {
   if (req.method === 'GET' && !API_PREFIXES.some((p) => req.path.startsWith(p))) {

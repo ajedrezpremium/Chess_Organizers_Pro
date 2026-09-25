@@ -45,25 +45,15 @@ export const SOURCE_CATS = [
 ];
 
 // — Seeds de respaldo (si el backend /discover no responde) —
+// Solo eventos REALES con enlaces oficiales/técnicos. Nunca inventar torneos.
 export const LIVE_SEED = [
-  { id: 'lv1', name: 'Open Internacional Madrid', city: 'Madrid', country: 'ESP', round: 'R3/9', system: 'Suizo', source: '2700chess', board1: 'Carlsen – Caruana ½–½ (en juego)' },
-  { id: 'lv2', name: 'Biel Chess Festival — Masters', city: 'Biel', country: 'SUI', round: 'R5/10', system: 'Round Robin', source: 'ChessBase', board1: 'Firouzja – Giri (en juego)' },
-  { id: 'lv3', name: 'FIDE Online Arena — Titled Tuesday', city: 'Online', country: 'INT', round: 'R2/7', system: 'Suizo', source: 'FIDE Online Arena', board1: '128 tableros en juego' },
+  { id: 'feat-olympiad-2026-open', name: '46th FIDE Chess Olympiad Samarkand 2026 — Open', city: 'Samarkand, Uzbekistan', country: 'UZB', round: 'Round 9', system: '11-round Swiss for teams', source: 'lichess', board1: 'Caruana, Sindarov, So, Keymer, Abdusattorov, Praggnanandhaa', officialUrl: 'https://chessolympiad2026.fide.com/', broadcastUrl: 'https://lichess.org/broadcast', technicalUrl: 'https://s3.chess-results.com/tnr1469895.aspx?lan=2&art=2&rd=9&turdet=YES&flag=30&SNode=S0' },
+  { id: 'feat-2700-live', name: '2700 Live — Top events in play', city: 'Online', country: 'INT', round: 'Live', system: 'Super-tournaments', source: '2700live', board1: 'Follow live ratings and games', officialUrl: 'https://2700chess.com/live', broadcastUrl: 'https://2700chess.com/live', technicalUrl: 'https://2700chess.com' },
 ];
 
-export const UPCOMING_SEED = [
-  { id: 'up1', name: 'Campeonato de Europa Individual', city: 'Batumi', country: 'GEO', date: '2026-10-04', system: 'Suizo 11R', rhythm: '90+30', source: 'ECU', level: '2400+' },
-  { id: 'up2', name: 'Chess.com Global Championship — Clasificatorio', city: 'Online', country: 'INT', date: '2026-09-28', system: 'Suizo 9R', rhythm: '10+0', source: 'Chess.com Events', level: 'Abierto' },
-  { id: 'up3', name: 'Open de Barcelona — Memorial', city: 'Barcelona', country: 'ESP', date: '2026-10-10', system: 'Suizo 9R', rhythm: '90+30', source: 'Chess-Results.com', level: 'Abierto' },
-  { id: 'up4', name: 'Lichess SuperBlitz Arena', city: 'Online', country: 'INT', date: '2026-09-26', system: 'Arena 2h', rhythm: '3+0', source: 'Lichess Tournaments', level: 'Abierto' },
-  { id: 'up5', name: 'Bundesliga — Jornada 3', city: 'Berlín', country: 'GER', date: '2026-10-18', system: 'Liga', rhythm: '100+30', source: 'Chess-Calendar.eu', level: 'Equipos' },
-];
+export const UPCOMING_SEED = [];
 
-export const FINISHED_SEED = [
-  { id: 'f1', name: 'Open Internacional Madrid 2026', system: 'Suizo 9R', winner: 'M. Carlsen', winnerElo: 2830, date: '2026-09-22', trf: true },
-  { id: 'f2', name: 'Biel Masters 2026', system: 'Round Robin 10j', winner: 'F. Caruana', winnerElo: 2805, date: '2026-08-30', trf: true },
-  { id: 'f3', name: 'Titled Tuesday — Semana 38', system: 'Suizo 11R', winner: 'H. Nakamura', winnerElo: 2802, date: '2026-09-16', trf: false },
-];
+export const FINISHED_SEED = [];
 
 export function sourceUrl(id) {
   return CHESS_SOURCES.find((s) => s.id === id)?.url || '#';

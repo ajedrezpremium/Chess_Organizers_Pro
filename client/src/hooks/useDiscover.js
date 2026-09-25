@@ -7,6 +7,7 @@ export function useDiscover() {
   const [data, setData] = useState({ live: LIVE_SEED, upcoming: UPCOMING_SEED, finished: FINISHED_SEED });
   const [loading, setLoading] = useState(true);
   const [source, setSource] = useState('local');
+  const [meta, setMeta] = useState({ updatedAt: null, feed: null });
 
   useEffect(() => {
     let alive = true;
@@ -22,6 +23,7 @@ export function useDiscover() {
               finished: d.finished?.length ? d.finished : FINISHED_SEED,
             });
             setSource('api');
+            setMeta({ updatedAt: d.updatedAt || null, feed: d.source || null });
           }
         }
       } catch { /* fallback local */ }
@@ -30,5 +32,5 @@ export function useDiscover() {
     return () => { alive = false; };
   }, []);
 
-  return { ...data, loading, source };
+  return { ...data, loading, source, updatedAt: meta.updatedAt, feed: meta.feed };
 }
