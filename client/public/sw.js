@@ -1,4 +1,4 @@
-const CACHE = 'chessorg-v4';
+const CACHE = 'chessorg-v5';
 const API_CACHE = 'chessorg-api-v3';
 const SHELL = ['/', '/index.html', '/manifest.json', '/icon.svg'];
 const AUTH_API_PREFIXES = ['/auth/', '/tournaments/', '/players/', '/rounds/', '/pairings/', '/arbiters/', '/stats/', '/membership/', '/notifications/', '/fide/', '/validation/', '/teams/', '/stripe/', '/import/', '/api-keys/', '/webhooks/', '/api/', '/external/'];
@@ -100,7 +100,8 @@ self.addEventListener('notificationclick', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   const api = isApiRequest(url);
-  const isShell = e.request.mode === 'navigate' || SHELL.includes(url.pathname) || url.pathname.startsWith('/assets/');
+  const isNavigation = e.request.mode === 'navigate';
+  const isHashedAsset = url.pathname.startsWith('/assets/') || url.pathname.startsWith('/_expo/');
 
   // API requests
   if (api && e.request.method === 'GET') {
@@ -114,8 +115,22 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Shell/assets
-  if (isShell) {
+  // Navigations (SPA shell / index.html): network-first so a new deploy is
+  // picked up immediately instead of serving a stale cached HTML that points
+  // to deleted hashed chunks ("Failed to fetch dynamically imported module").
+  if (isNavigation) {
+    e.respondWith(networkFirstNavigation(e.request));
+    return;
+  }
+
+  // Versioned hashed assets are immutable: cache-first is safe and fast.
+  if (isHashedAsset) {
+    e.respondWith(cacheFirst(e.request));
+    return;
+  }
+
+  // Static shell files (icon, manifest)
+  if (SHELL.includes(url.pathname)) {
     e.respondWith(cacheFirst(e.request));
     return;
   }
@@ -129,6 +144,21 @@ self.addEventListener('fetch', (e) => {
 async function cacheFirst(req) {
   const cached = await caches.match(req);
   return cached || fetchAndCache(req, CACHE);
+}
+
+async function networkFirstNavigation(req) {
+  try {
+    const res = await fetch(req);
+    if (res.ok) {
+      const clone = res.clone();
+      caches.open(CACHE).then((c) => c.put(req, clone));
+    }
+    return res;
+  } catch {
+    const cached = await caches.match(req);
+    if (cached) return cached;
+    return caches.match('/index.html');
+  }
 }
 
 async function networkFirst(req, cacheName) {

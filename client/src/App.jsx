@@ -7,38 +7,69 @@ import ErrorBoundary from './components/ErrorBoundary.jsx';
 import Layout from './components/Layout.jsx';
 import ChatBot from './components/ChatBot.jsx';
 
-const Landing = lazy(() => import('./pages/Landing.jsx'));
-const Login = lazy(() => import('./pages/Login.jsx'));
-const Register = lazy(() => import('./pages/Register.jsx'));
-const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
-const TournamentNew = lazy(() => import('./pages/TournamentNew.jsx'));
-const TournamentDetail = lazy(() => import('./pages/TournamentDetail.jsx'));
-const PublicTournament = lazy(() => import('./pages/PublicTournament.jsx'));
-const PublicTournamentsList = lazy(() => import('./pages/PublicTournamentsList.jsx'));
-const PublicRegister = lazy(() => import('./pages/PublicRegister.jsx'));
-const PublicTV = lazy(() => import('./pages/PublicTV.jsx'));
-const PublicPlayersSearch = lazy(() => import('./pages/PublicPlayersSearch.jsx'));
-const PublicPlayerProfile = lazy(() => import('./pages/PublicPlayerProfile.jsx'));
-const PublicOrganizersList = lazy(() => import('./pages/PublicOrganizersList.jsx'));
-const PublicOrganizerProfile = lazy(() => import('./pages/PublicOrganizerProfile.jsx'));
-const PricingPage = lazy(() => import('./pages/PricingPage.jsx'));
-const LegalPage = lazy(() => import('./pages/LegalPage.jsx'));
-const PlayerDashboard = lazy(() => import('./pages/PlayerDashboard.jsx'));
-const LeaguesPage = lazy(() => import('./pages/LeaguesPage.jsx'));
-const InboxPage = lazy(() => import('./pages/InboxPage.jsx'));
-const LeagueDetailPage = lazy(() => import('./pages/LeagueDetailPage.jsx'));
-const ArbiterTournamentsList = lazy(() => import('./pages/ArbiterTournamentsList.jsx'));
-const ArbiterPanel = lazy(() => import('./pages/ArbiterPanel.jsx'));
-const TournamentCatalog = lazy(() => import('./pages/TournamentCatalog.jsx'));
-const ScannerPage = lazy(() => import('./pages/ScannerPage.jsx'));
-const EloDashboard = lazy(() => import('./pages/EloDashboard.jsx'));
-const Newsletters = lazy(() => import('./pages/Newsletters.jsx'));
-const EmbedTournament = lazy(() => import('./pages/EmbedTournament.jsx'));
-const DashboardPro = lazy(() => import('./pages/DashboardPro.jsx'));
-const SearchPage = lazy(() => import('./pages/SearchPage.jsx'));
-const DirectoryPage = lazy(() => import('./pages/DirectoryPage.jsx'));
-const NotificationsPage = lazy(() => import('./pages/NotificationsPage.jsx'));
-const EventPage = lazy(() => import('./pages/EventPage.jsx'));
+// Wraps React.lazy so a stale deploy (old index-*.js referencing a deleted
+// hashed chunk like Register-*.js) triggers a single hard reload to fetch the
+// fresh HTML/bundle instead of a blank "Failed to fetch dynamically imported
+// module" page. Safe to retry only once (sessionStorage flag) to avoid loops.
+function lazyWithReload(importer) {
+  return lazy(async () => {
+    try {
+      const mod = await importer();
+      sessionStorage.removeItem('chunk-reload');
+      return mod;
+    } catch (err) {
+      const msg = String(err?.message || err);
+      const isChunkError =
+        /failed to fetch dynamically imported module|loading chunk \d+ failed|importing a module script failed/i.test(msg);
+      if (isChunkError && !sessionStorage.getItem('chunk-reload')) {
+        sessionStorage.setItem('chunk-reload', '1');
+        window.location.reload();
+      }
+      throw err;
+    }
+  });
+}
+
+// Vite fires this when a <link rel="modulepreload"> fails (same stale-chunk cause).
+window.addEventListener('vite:preloadError', () => {
+  if (!sessionStorage.getItem('chunk-reload')) {
+    sessionStorage.setItem('chunk-reload', '1');
+    window.location.reload();
+  }
+});
+
+const Landing = lazyWithReload(() => import('./pages/Landing.jsx'));
+const Login = lazyWithReload(() => import('./pages/Login.jsx'));
+const Register = lazyWithReload(() => import('./pages/Register.jsx'));
+const Dashboard = lazyWithReload(() => import('./pages/Dashboard.jsx'));
+const TournamentNew = lazyWithReload(() => import('./pages/TournamentNew.jsx'));
+const TournamentDetail = lazyWithReload(() => import('./pages/TournamentDetail.jsx'));
+const PublicTournament = lazyWithReload(() => import('./pages/PublicTournament.jsx'));
+const PublicTournamentsList = lazyWithReload(() => import('./pages/PublicTournamentsList.jsx'));
+const PublicRegister = lazyWithReload(() => import('./pages/PublicRegister.jsx'));
+const PublicTV = lazyWithReload(() => import('./pages/PublicTV.jsx'));
+const PublicPlayersSearch = lazyWithReload(() => import('./pages/PublicPlayersSearch.jsx'));
+const PublicPlayerProfile = lazyWithReload(() => import('./pages/PublicPlayerProfile.jsx'));
+const PublicOrganizersList = lazyWithReload(() => import('./pages/PublicOrganizersList.jsx'));
+const PublicOrganizerProfile = lazyWithReload(() => import('./pages/PublicOrganizerProfile.jsx'));
+const PricingPage = lazyWithReload(() => import('./pages/PricingPage.jsx'));
+const LegalPage = lazyWithReload(() => import('./pages/LegalPage.jsx'));
+const PlayerDashboard = lazyWithReload(() => import('./pages/PlayerDashboard.jsx'));
+const LeaguesPage = lazyWithReload(() => import('./pages/LeaguesPage.jsx'));
+const InboxPage = lazyWithReload(() => import('./pages/InboxPage.jsx'));
+const LeagueDetailPage = lazyWithReload(() => import('./pages/LeagueDetailPage.jsx'));
+const ArbiterTournamentsList = lazyWithReload(() => import('./pages/ArbiterTournamentsList.jsx'));
+const ArbiterPanel = lazyWithReload(() => import('./pages/ArbiterPanel.jsx'));
+const TournamentCatalog = lazyWithReload(() => import('./pages/TournamentCatalog.jsx'));
+const ScannerPage = lazyWithReload(() => import('./pages/ScannerPage.jsx'));
+const EloDashboard = lazyWithReload(() => import('./pages/EloDashboard.jsx'));
+const Newsletters = lazyWithReload(() => import('./pages/Newsletters.jsx'));
+const EmbedTournament = lazyWithReload(() => import('./pages/EmbedTournament.jsx'));
+const DashboardPro = lazyWithReload(() => import('./pages/DashboardPro.jsx'));
+const SearchPage = lazyWithReload(() => import('./pages/SearchPage.jsx'));
+const DirectoryPage = lazyWithReload(() => import('./pages/DirectoryPage.jsx'));
+const NotificationsPage = lazyWithReload(() => import('./pages/NotificationsPage.jsx'));
+const EventPage = lazyWithReload(() => import('./pages/EventPage.jsx'));
 
 function Spinner() {
   return <div className="flex items-center justify-center h-64"><div className="animate-spin h-8 w-8 border-4 border-fide-500 border-t-transparent rounded-full" /></div>;
