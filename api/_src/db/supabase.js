@@ -3,18 +3,14 @@ import pg from 'pg';
 const isProd = process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production';
 
 function getConnectionString() {
-  // Prefer explicit pooler URL in production
-  if (isProd && process.env.DATABASE_POOLER_URL) return process.env.DATABASE_POOLER_URL;
-  if (isProd && process.env.DATABASE_URL) {
-    // Auto-convert direct Supabase URL to pooler
-    const url = process.env.DATABASE_URL;
-    if (url.includes('supabase.co:5432')) {
-      return url
-        .replace('supabase.co:5432', 'pooler.supabase.com:6543')
-        .replace(/\?.*$/, '') + '?pgbouncer=true&connection_limit=1';
-    }
-    return url;
-  }
+  // Use the explicit pooler URL verbatim when set (copy it from
+  // Supabase dashboard → Connect → Transaction pooler, it already
+  // includes the region-specific host and pgbouncer params).
+  if (process.env.DATABASE_POOLER_URL) return process.env.DATABASE_POOLER_URL;
+  // Otherwise use DATABASE_URL as-is (direct connection). Do NOT rewrite
+  // the host: Supabase pooler hosts are region-specific, so a naive
+  // supabase.co → pooler.supabase.com replacement makes Supavisor answer
+  // "(ENOTFOUND) tenant/user ... not found" and breaks all DB access.
   return process.env.DATABASE_URL;
 }
 
