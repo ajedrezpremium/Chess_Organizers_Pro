@@ -1,18 +1,38 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Card, CardHeader, Tabs, TextInput, SelectInput, Badge, EmptyState } from '../design-system/ui.jsx';
 import { DIRECTORY_SEED, DIRECTORY_KINDS } from '../data/directorySeed.js';
 import { HARVESTED_CLUBS } from '../data/directoryHarvest.js';
+import { DIRECTORY_ES } from '../data/directoryES.js';
+import { DIRECTORY_FR } from '../data/directoryFR.js';
+import { DIRECTORY_IT } from '../data/directoryIT.js';
+import { DIRECTORY_PT } from '../data/directoryPT.js';
 
-// Merge seed + cosecha Chess-Results (deduplica por nombre+país, gana el seed curado).
+// Merge seed curado + ficheros por país + cosecha Chess-Results
+// (deduplica por nombre+país; gana la primera fuente en este orden).
 function normKey(d) {
   return `${(d.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim()}|${d.country}`;
 }
 const ALL_ENTRIES = (() => {
-  const seen = new Set(DIRECTORY_SEED.map(normKey));
-  const extra = (HARVESTED_CLUBS || []).filter((d) => !seen.has(normKey(d)));
-  return [...DIRECTORY_SEED, ...extra];
+  const seen = new Set();
+  const out = [];
+  for (const d of [...DIRECTORY_SEED, ...DIRECTORY_ES, ...DIRECTORY_FR, ...DIRECTORY_IT, ...DIRECTORY_PT, ...(HARVESTED_CLUBS || [])]) {
+    const k = normKey(d);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(d);
+  }
+  return out;
 })();
+
+const FOCUS_COUNTRIES = [
+  { key: 'all', label: '🌍 Todos' },
+  { key: 'ESP', label: '🇪🇸 España' },
+  { key: 'POR', label: '🇵🇹 Portugal' },
+  { key: 'FRA', label: '🇫🇷 Francia' },
+  { key: 'ITA', label: '🇮🇹 Italia' },
+];
 
 function useFollowed() {
   const [followed, setFollowed] = useState(() => {
@@ -46,7 +66,7 @@ export default function DirectoryPage() {
       (kind === 'all' || d.kind === kind) &&
       (country === 'all' || d.country === country) &&
       (!q.trim() || `${d.name} ${d.city} ${d.country}`.toLowerCase().includes(q.trim().toLowerCase())))
-    .sort((a, b) => Number(b.featured || false) - Number(a.featured || false));
+    .sort((a, b) => (Number(b.featured || false) - Number(a.featured || false)) || (a.name || '').localeCompare(b.name || ''));
 
   const kindLabel = (k) => k === 'federation' ? 'Federación' : k === 'club' ? 'Club' : 'Escuela';
 
@@ -55,7 +75,14 @@ export default function DirectoryPage() {
       <Helmet><title>Directorio — Federaciones, Clubes y Escuelas</title></Helmet>
       <Card className="p-4 mb-4">
         <h1 className="font-extrabold text-lg dark:text-white">🏢 Directorio de Federaciones, Clubes y Escuelas</h1>
-        <p className="text-xs text-gray-500 dark:text-fide-400 mb-3">{counts.federation} federaciones · {counts.club} clubes ({harvestedCount} verificados en Chess-Results) · {counts.school} escuelas — sigue sus torneos y contacta directamente.</p>
+        <p className="text-xs text-gray-500 dark:text-fide-400 mb-3">{counts.all} entidades · {counts.federation} federaciones · {counts.club} clubes · {counts.school} escuelas ({harvestedCount} verificados en Chess-Results) — sigue sus torneos y contacta directamente.</p>
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {FOCUS_COUNTRIES.map((c) => (
+            <button key={c.key} onClick={() => setCountry(c.key)} className={`text-[11px] font-bold rounded-full px-3 py-1.5 border transition ${country === c.key ? 'bg-fide-800 text-white border-fide-800' : 'border-gray-200 dark:border-fide-700 dark:text-fide-200 hover:border-fide-500'}`}>
+              {c.label}
+            </button>
+          ))}
+        </div>
         <div className="flex flex-wrap gap-2">
           <Tabs tabs={DIRECTORY_KINDS.map((k) => ({ key: k.key, label: `${k.label} (${counts[k.key]})` }))} value={kind} onChange={setKind} />
           <div className="flex gap-2 ml-auto">
@@ -66,6 +93,15 @@ export default function DirectoryPage() {
           </div>
         </div>
       </Card>
+
+      <div className="rounded-xl p-4 mb-4 bg-gradient-to-r from-amber-500 to-fide-700 text-white flex flex-wrap items-center gap-3">
+        <div className="flex-1 min-w-[200px]">
+          <p className="font-extrabold text-sm">📣 ¿Tu club o escuela no aparece? ¿Los datos están desactualizados?</p>
+          <p className="text-[11px] opacity-90">Date de alta gratis, reclama tu ficha y publica tus torneos: saldrás destacado y verificado.</p>
+        </div>
+        <Link to="/register" className="text-[11px] font-bold bg-white text-fide-800 rounded-lg px-3 py-2">＋ Añadir mi club gratis</Link>
+        <a href="mailto:info@chessorganizers.com?subject=Reclamar%20ficha%20de%20club" className="text-[11px] font-bold border border-white/60 rounded-lg px-3 py-2">Reclamar ficha</a>
+      </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {list.map((d) => (
