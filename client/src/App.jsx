@@ -70,6 +70,7 @@ const SearchPage = lazyWithReload(() => import('./pages/SearchPage.jsx'));
 const DirectoryPage = lazyWithReload(() => import('./pages/DirectoryPage.jsx'));
 const NotificationsPage = lazyWithReload(() => import('./pages/NotificationsPage.jsx'));
 const EventPage = lazyWithReload(() => import('./pages/EventPage.jsx'));
+const EnlacesPage = lazyWithReload(() => import('./pages/EnlacesPage.jsx'));
 
 function Spinner() {
   return <div className="flex items-center justify-center h-64"><div className="animate-spin h-8 w-8 border-4 border-fide-500 border-t-transparent rounded-full" /></div>;
@@ -119,6 +120,7 @@ function App() {
               <Route path="/directory" element={<DirectoryPage />} />
               <Route path="/t/:slug" element={<EventPage mode="public" />} />
               <Route path="/pricing" element={<PricingPage />} />
+              <Route path="/enlaces" element={<EnlacesPage />} />
               <Route path="/newsletter" element={<Newsletters />} />
               <Route path="/newsletters" element={<Newsletters />} />
               <Route path="/embed/tournament/:id" element={<EmbedTournament />} />

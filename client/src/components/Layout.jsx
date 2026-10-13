@@ -59,7 +59,6 @@ const mainLinks = [
     { to: '/app/scan', label: t('nav.scanner'), icon: 'scan', title: 'Escanear planillas' },
     { to: '/app/elo', label: t('nav.elo'), icon: 'elo', title: 'Dashboard Elo' },
     { to: '/app/directory', label: 'Directorio', icon: 'directory', title: 'Directorio federaciones, clubes y escuelas' },
-    { to: '/app/search', label: 'Buscar', icon: 'search', title: 'Buscador universal (país, fecha, nombre)' },
     { to: `/catalog?year=${currentYear}`, label: 'Calendario', icon: 'calendar', title: 'Calendario — torneos por fecha' },
     { to: 'https://calendar.fide.com/calendar.php', label: 'Calendario FIDE', icon: 'calendar', title: 'Calendario oficial FIDE', external: true },
   ];
@@ -275,7 +274,7 @@ const mainLinks = [
                 <li><Link to="/app/leagues" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('nav.leagues')}</Link></li>
                 <li><a href="/public" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('register.viewTournaments')}</a></li>
                 <li><a href="/pricing" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('nav.pricing') || 'Planes'}</a></li>
-                <li><a href="https://chessorganizers.com/enlaces" target="_blank" rel="noreferrer" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">🔗 TOP100 Enlaces</a></li>
+                <li><Link to="/enlaces" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">🔗 TOP100 Enlaces</Link></li>
                 <li><Link to="/newsletter" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">Newsletter</Link></li>
               </ul>
             </div>
