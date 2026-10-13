@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { CHESS_SOURCES } from '../data/chessSources.js';
 
 // Buscador global Cmd+K: torneos propios (vía API), páginas y fuentes externas.
-export default function GlobalSearch({ myTournaments = [] }) {
+// openNonce: al incrementarse abre el buscador (botón 🔍 del header).
+export default function GlobalSearch({ myTournaments = [], openNonce = 0 }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
   const inputRef = useRef(null);
@@ -17,6 +18,7 @@ export default function GlobalSearch({ myTournaments = [] }) {
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, []);
+  useEffect(() => { if (openNonce) setOpen(true); }, [openNonce]);
   useEffect(() => { if (open) setTimeout(() => inputRef.current?.focus(), 30); }, [open ]);
 
   const results = useMemo(() => {

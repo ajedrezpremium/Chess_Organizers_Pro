@@ -17,14 +17,16 @@ export default function Layout() {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [enlacesOpen, setEnlacesOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [searchNonce, setSearchNonce] = useState(0);
   const userMenuRef = useRef(null);
-  const enlacesRef = useRef(null);
+  const moreRef = useRef(null);
+  const currentYear = new Date().getFullYear();
 
   useEffect(() => {
     function handleClick(e) {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setUserMenuOpen(false);
-      if (enlacesRef.current && !enlacesRef.current.contains(e.target)) setEnlacesOpen(false);
+      if (moreRef.current && !moreRef.current.contains(e.target)) setMoreOpen(false);
     }
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
@@ -42,18 +44,24 @@ export default function Layout() {
   directory: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-4h6v4M9 10h.01M15 10h.01M9 14h.01M15 14h.01" /></svg>,
   leagues: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 21h8m-4-3v3m0-3a5 5 0 005-5V5H7v8a5 5 0 005 5z" /></svg>,
   live: <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-white animate-pulse" />EN DIRECTO</span>,
+  dots: <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" /></svg>,
+  calendar: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
 };
 
-const navLinks = [
-    { to: '/app/dashboard-pro', label: 'Panel de control', icon: 'tournaments', title: 'Panel de control' },
-    { to: '/app/search', label: 'Buscar', icon: 'search', title: 'Buscador universal (país, fecha, nombre)' },
-    { to: '/app/directory', label: 'Directorio', icon: 'directory', title: 'Directorio federaciones, clubes y escuelas' },
-    { to: '/app/new', label: t('nav.newTournament'), icon: 'newTournament', title: 'Nuevo' },
-    { to: 'https://lichess.org/broadcast', label: t('nav.liveBroadcast'), icon: 'live', title: 'En directo — Lichess Broadcast', external: true, red: true },
-    { to: '/app/scan', label: t('nav.scanner'), icon: 'scan', title: 'Escanear' },
-    { to: '/app/elo', label: t('nav.elo'), icon: 'elo', title: 'Dashboard Elo' },
+const mainLinks = [
+    { to: '/app/dashboard-pro', label: 'Panel', icon: 'tournaments', title: 'Panel de control' },
+    { to: '/app/new', label: t('nav.newTournament'), icon: 'newTournament', title: 'Nuevo torneo' },
     { to: '/arbiter', label: t('nav.arbiter'), icon: 'arbiter', title: 'Árbitro' },
     { to: '/app/leagues', label: t('nav.leagues'), icon: 'leagues', title: t('nav.leagues') },
+  ];
+
+  const moreLinks = [
+    { to: '/app/scan', label: t('nav.scanner'), icon: 'scan', title: 'Escanear planillas' },
+    { to: '/app/elo', label: t('nav.elo'), icon: 'elo', title: 'Dashboard Elo' },
+    { to: '/app/directory', label: 'Directorio', icon: 'directory', title: 'Directorio federaciones, clubes y escuelas' },
+    { to: '/app/search', label: 'Buscar', icon: 'search', title: 'Buscador universal (país, fecha, nombre)' },
+    { to: `/catalog?year=${currentYear}`, label: 'Calendario', icon: 'calendar', title: 'Calendario — torneos por fecha' },
+    { to: 'https://lichess.org/broadcast', label: t('nav.liveBroadcast'), icon: 'live', title: 'En directo — Lichess Broadcast', external: true, red: true },
   ];
 
   return (
@@ -69,173 +77,53 @@ const navLinks = [
               </div>
             </Link>
               <div className="hidden sm:flex items-center gap-1">
-              {navLinks.map((l) => {
-                if (l.external) {
-                  return (
-                    <a key={l.to} href={l.to} target="_blank" rel="noreferrer" title={l.title}
-                      className={`flex items-center justify-center px-3 py-2 rounded-full text-xs font-black tracking-widest transition-all duration-200 shadow-sm hover:shadow-md ${l.red ? 'bg-red-600 text-white hover:bg-red-500 animate-pulse border border-red-400' : 'text-fide-300 hover:text-white hover:bg-fide-700/50'}`}>
-                      {SVG_ICONS[l.icon] || <span className="text-xs">{l.label}</span>}
-                    </a>
-                  );
-                }
+              {mainLinks.map((l) => {
                 const isActive = location.pathname === l.to || (l.to !== '/' && location.pathname.startsWith(l.to));
                 return (
                   <Link key={l.to} to={l.to} title={l.title}
-                    className={`flex items-center justify-center px-2.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
                       isActive ? 'bg-fide-700 text-white shadow-sm' : 'text-fide-300 hover:text-white hover:bg-fide-700/50'
                     }`}>
-                    {SVG_ICONS[l.icon] || <span className="text-xs">{l.icon}</span>}
+                    {SVG_ICONS[l.icon]}
+                    <span className="hidden lg:inline">{l.label}</span>
                   </Link>
                 );
               })}
+              <div className="relative" ref={moreRef}>
+                <button onClick={() => setMoreOpen(!moreOpen)} title="Más herramientas"
+                  className={`flex items-center gap-1 px-2.5 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${moreOpen ? 'bg-fide-700 text-white' : 'text-fide-300 hover:text-white hover:bg-fide-700/50'}`}>
+                  {SVG_ICONS.dots}
+                  <span className="hidden lg:inline">Más</span>
+                </button>
+                {moreOpen && (
+                  <div className="absolute left-0 top-full mt-1 w-56 bg-white dark:bg-fide-800 border dark:border-fide-700 rounded-xl shadow-xl py-1.5 z-50">
+                    {moreLinks.map((l) => (
+                      l.external ? (
+                        <a key={l.to} href={l.to} target="_blank" rel="noreferrer" onClick={() => setMoreOpen(false)} title={l.title}
+                          className="flex items-center gap-2.5 px-4 py-2 text-sm bg-red-600/10 text-red-500 dark:text-red-400 hover:bg-red-600 hover:text-white transition">
+                          {SVG_ICONS[l.icon]}<span className="font-semibold text-xs tracking-wider">{l.label}</span>
+                        </a>
+                      ) : (
+                        <Link key={l.to} to={l.to} onClick={() => setMoreOpen(false)} title={l.title}
+                          className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 dark:text-fide-200 hover:bg-gray-50 dark:hover:bg-fide-700 transition">
+                          <span className="text-fide-400">{SVG_ICONS[l.icon]}</span>{l.label}
+                        </Link>
+                      )
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
-            {/* Calendario */}
-            <Link to="/catalog?year=2026" title="Calendario 2026 — torneos por fecha" className="p-2 rounded-lg hover:bg-fide-700 text-fide-300 hover:text-white transition" aria-label="Calendario">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-            </Link>
-            {/* Enlaces TOP100 */}
-            <div className="relative" ref={enlacesRef}>
-              <button onClick={() => setEnlacesOpen(!enlacesOpen)} title="Enlaces — TOP100 webs de ajedrez" className={`p-2 rounded-lg transition ${enlacesOpen ? 'bg-fide-700 text-white' : 'hover:bg-fide-700 text-fide-300 hover:text-white'}`} aria-label="Enlaces">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
-              </button>
-              {enlacesOpen && (
-                <div className="absolute right-0 top-full mt-2 w-80 sm:w-[480px] bg-white dark:bg-fide-800 border dark:border-fide-700 rounded-xl shadow-2xl z-50 max-h-[70vh] overflow-auto">
-                  <div className="p-3 border-b dark:border-fide-700 flex items-center justify-between">
-                    <h4 className="text-xs font-bold text-fide-900 dark:text-white uppercase tracking-widest">🔗 TOP100 Webs Ajedrez</h4>
-                    <button onClick={() => setEnlacesOpen(false)} className="text-fide-400 hover:text-fide-600">✕</button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 p-3 text-xs">
-                    <div>
-                      <p className="font-bold text-fide-700 dark:text-amber-400 mb-1">Organismos</p>
-                      <ul className="space-y-1">
-                        <li><a href="https://www.fide.com" target="_blank" rel="noreferrer" className="hover:text-amber-600 dark:hover:text-amber-400">FIDE</a></li>
-                        <li><a href="https://www.ecfchess.org.uk" target="_blank" rel="noreferrer" className="hover:text-amber-600">ECF</a></li>
-                        <li><a href="https://new.uschess.org" target="_blank" rel="noreferrer" className="hover:text-amber-600">USCF</a></li>
-                        <li><a href="https://www.feda.org" target="_blank" rel="noreferrer" className="hover:text-amber-600">FEDA</a></li>
-                        <li><a href="https://www.europechess.org" target="_blank" rel="noreferrer" className="hover:text-amber-600">ECU</a></li>
-                        <li><a href="https://www.fide.com/calendar" target="_blank" rel="noreferrer" className="hover:text-amber-600">FIDE Calendar</a></li>
-                      </ul>
-                      <p className="font-bold text-fide-700 dark:text-amber-400 mt-3 mb-1">Rankings</p>
-                      <ul className="space-y-1">
-                        <li><a href="https://2700chess.com" target="_blank" rel="noreferrer" className="hover:text-amber-600">2700chess.com</a></li>
-                        <li><a href="http://www.chessmetrics.com" target="_blank" rel="noreferrer" className="hover:text-amber-600">Chessmetrics</a></li>
-                        <li><a href="https://www.2700chess.com/women" target="_blank" rel="noreferrer" className="hover:text-amber-600">2700 Women</a></li>
-                        <li><a href="https://ratings.fide.com/top.phtml?list=open" target="_blank" rel="noreferrer" className="hover:text-amber-600">FIDE Top100</a></li>
-                        <li><a href="https://2700chess.com/live" target="_blank" rel="noreferrer" className="hover:text-amber-600">2700 Live</a></li>
-                        <li><a href="https://www.chess.com/ratings" target="_blank" rel="noreferrer" className="hover:text-amber-600">Chess.com Ratings</a></li>
-                      </ul>
-                    </div>
-                    <div>
-                      <p className="font-bold text-fide-700 dark:text-amber-400 mb-1">Bases &amp; Partidas</p>
-                      <ul className="space-y-1">
-                        <li><a href="https://www.chessgames.com" target="_blank" rel="noreferrer" className="hover:text-amber-600">Chessgames.com</a></li>
-                        <li><a href="https://www.365chess.com" target="_blank" rel="noreferrer" className="hover:text-amber-600">365Chess</a></li>
-                        <li><a href="https://www.chess.com" target="_blank" rel="noreferrer" className="hover:text-amber-600">Chess.com</a></li>
-                        <li><a href="https://lichess.org" target="_blank" rel="noreferrer" className="hover:text-amber-600">Lichess.org</a></li>
-                        <li><a href="https://www.chessbase.com" target="_blank" rel="noreferrer" className="hover:text-amber-600">ChessBase</a></li>
-                        <li><a href="https://lichess.org/database" target="_blank" rel="noreferrer" className="hover:text-amber-600">Lichess DB</a></li>
-                        <li><a href="https://www.chess.com/analysis" target="_blank" rel="noreferrer" className="hover:text-amber-600">Chess.com Analysis</a></li>
-                      </ul>
-                      <p className="font-bold text-fide-700 dark:text-amber-400 mt-3 mb-1">Noticias &amp; Streams</p>
-                      <ul className="space-y-1">
-                        <li><a href="https://www.chess.com/news" target="_blank" rel="noreferrer" className="hover:text-amber-600">Chess.com News</a></li>
-                        <li><a href="https://en.chessbase.com" target="_blank" rel="noreferrer" className="hover:text-amber-600">ChessBase News</a></li>
-                        <li><a href="https://www.thechessdrum.net" target="_blank" rel="noreferrer" className="hover:text-amber-600">The Chess Drum</a></li>
-                        <li><a href="https://twitch.tv/chess" target="_blank" rel="noreferrer" className="hover:text-amber-600">Twitch Chess</a></li>
-                        <li><a href="https://www.theweekinchess.com" target="_blank" rel="noreferrer" className="hover:text-amber-600">The Week in Chess</a></li>
-                      </ul>
-                    </div>
-                  </div>
-                  <div className="border-t dark:border-fide-700 p-3">
-                    <p className="font-bold text-fide-700 dark:text-amber-400 mb-1 text-xs">⭐ Top 25 Influencers 2025 <span className="font-normal opacity-60">— impacto, streaming y comunidad</span></p>
-                    <p className="text-[10px] opacity-50 mb-2">Selección por audiencia YouTube/Twitch/TikTok/IG</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] max-h-52 overflow-auto pr-1">
-                      <a href="https://www.twitch.tv/gmhikaru" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">1. Hikaru Nakamura (GMHikaru) ⚡</a>
-                      <a href="https://www.youtube.com/@GothamChess" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">2. Levy Rozman (GothamChess) ♔</a>
-                      <a href="https://www.twitch.tv/annacramling" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">3. Anna Cramling ✨</a>
-                      <a href="https://www.youtube.com/@MagnusCarlsen" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">4. Magnus Carlsen 👑</a>
-                      <a href="https://www.twitch.tv/botezlive" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">5. BotezLive (Alexandra & Andrea) ♛</a>
-                      <a href="https://www.youtube.com/@crestbook" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">6. Sergei Shipov (Crestbook) 🇷🇺</a>
-                      <a href="https://www.youtube.com/@agadmator" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">7. Antonio Radić (Agadmator) 🎥</a>
-                      <a href="https://www.youtube.com/@Chessbrahs" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">8. Chessbrah (Hansen & Hambleton) 🇨🇦</a>
-                      <a href="https://www.youtube.com/@DanielNaroditskyGM" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">9. Daniel Naroditsky 📚</a>
-                      <a href="https://www.twitch.tv/nemsko" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">10. Nemo Zhou (Nemsko)</a>
-                      <a href="https://www.youtube.com/@RaffaelChess" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">11. Rafael Santos (Raffael Chess) 🇧🇷</a>
-                      <a href="https://www.youtube.com/@reyenigma" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">12. Rey Enigma 🎭</a>
-                      <a href="https://www.twitch.tv/juliensong" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">13. Julien Song 🇫🇷</a>
-                      <a href="https://www.twitch.tv/alessiasanteramo" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">14. Alessia Santeramo</a>
-                      <a href="https://www.youtube.com/@EricRosen" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">15. Eric Rosen — “oh no my queen!”</a>
-                      <a href="https://www.youtube.com/@RemoteChessAcademy" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">16. Igor Smirnov</a>
-                      <a href="https://www.youtube.com/@GMNeiksans" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">17. Arturs Neiksans 🇱🇻</a>
-                      <a href="https://www.twitch.tv/dinabelenkaya" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">18. Dina Belenkaya</a>
-                      <a href="https://www.twitch.tv/blitzstream" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">19. Blitzstream 🇫🇷</a>
-                      <a href="https://www.youtube.com/@SamayRainaOfficial" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">20. Samay Raina 🇮🇳</a>
-                      <a href="https://www.youtube.com/@chess" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">21. Chess.com</a>
-                      <a href="https://www.youtube.com/@ChessBaseIndia" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">22. ChessBase India 🇮🇳</a>
-                      <a href="https://www.youtube.com/@chess24" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">23. Chess24</a>
-                      <a href="https://www.youtube.com/@STLChessClub" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">24. St. Louis Chess Club</a>
-                      <a href="https://www.tiktok.com/@sarahchess" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">25. Sarah El Barbry ✨</a>
-                    </div>
-                  </div>
-                  <div className="border-t dark:border-fide-700 p-3 bg-amber-50/50 dark:bg-amber-900/10">
-                    <p className="font-bold text-fide-700 dark:text-amber-400 mb-1 text-xs">🇪🇸 Top 30 Hispano (+80k)</p>
-                    <p className="text-[10px] opacity-50 mb-2">No hay lista oficial única — ampliado a 30 para incluir +80k significativos</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] max-h-64 overflow-auto pr-1">
-                      <a href="https://www.youtube.com/@ReyEnigmaOficial" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">1. Rey Enigma — 2M YT / 3M TikTok 🎭</a>
-                      <a href="https://www.twitch.tv/annacramling" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">2. Anna Cramling (WFM) ✨</a>
-                      <a href="https://www.youtube.com/@PepeCuenca" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">3. Pepe Cuenca (GM) — chess24</a>
-                      <a href="https://www.youtube.com/@LuisFernandezSiles" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">4. Luis Fernández Siles — 420k YT</a>
-                      <a href="https://www.youtube.com/@ManuelMorsa" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">5. Manuel Morsa (MF) 🇲🇽</a>
-                      <a href="https://www.youtube.com/@chess24es" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">6. Chess24 en Español</a>
-                      <a href="https://www.youtube.com/@AleWang" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">7. Ale Wang 🇦🇷</a>
-                      <a href="https://www.youtube.com/@AjedrezMiPasatiempo" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">8. Ajenminutoscanal (MF)</a>
-                      <a href="https://www.youtube.com/@MiguelZaragoza" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">9. Miguel Zaragoza</a>
-                      <a href="https://www.youtube.com/@TiagoChessColombia" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">10. Tiagochesscolombia 🇨🇴</a>
-                      <a href="https://www.youtube.com/@RobertoMartinez" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">11. Roberto Martínez (Creativo)</a>
-                      <a href="https://www.twitch.tv/jelty" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">12. Jelty — 7M Fortnite → ajedrez</a>
-                      <a href="https://www.twitch.tv/manitodeplomo" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">13. Manitodeplomo (IM) — 100+ opens</a>
-                      <a href="https://www.twitch.tv/marcosdmarin" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">14. Marcos Daniel Marín 🇪🇸</a>
-                      <a href="https://www.twitch.tv/mochess97" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">15. Rodrigo Casares (Mochess97) ♟️</a>
-                      <a href="https://www.twitch.tv/casimate" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">16. casimate — #3 ajedrez ES Twitch</a>
-                      <a href="https://www.twitch.tv/chessmagis" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">17. ChessMagis — #14 ES</a>
-                      <a href="https://www.twitch.tv/berlychess" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">18. Kimberly Castillo (berlychess)</a>
-                      <a href="https://www.twitch.tv/javier_lever" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">19. Javier_Lever</a>
-                      <a href="https://www.twitch.tv/tatohaoe" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">20. Roberto Jiménez (TaToHAoE)</a>
-                      <a href="https://www.twitch.tv/elnonodeltablero" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">21. El Nono del Tablero — 85 años 👴</a>
-                      <a href="https://www.twitch.tv/franciscomarques" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">22. Francisco Marques</a>
-                      <a href="https://www.twitch.tv/davidmartinez" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">23. David Martínez (IM)</a>
-                      <a href="https://www.twitch.tv/marianoortega" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">24. Mariano Ortega Amarelle (IM)</a>
-                      <a href="https://www.youtube.com/@CirculoCapablanca" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">25. Círculo Capablanca — historia/táctica</a>
-                      <a href="https://www.youtube.com/@MiguelSantos" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate font-semibold bg-amber-100 dark:bg-amber-900/20 px-1 rounded">26. Miguel Santos “Miguelito” (GM) ⭐</a>
-                      <a href="https://www.youtube.com/@SpiderIbarra" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate font-semibold bg-amber-100 dark:bg-amber-900/20 px-1 rounded">27. José C. Ibarra “Spider Ibarra” (GM) ⭐</a>
-                      <a href="https://www.youtube.com/@DavidAnton" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">28. David Antón Guijarro (GM)</a>
-                      <a href="https://www.youtube.com/@SabrinaVegaChess" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate">29. Sabrina Vega (WGM)</a>
-                      <a href="https://www.youtube.com/channel/UCV2tUQcjqXYHZ5mw4opOpWQ" target="_blank" rel="noreferrer" className="hover:text-amber-600 truncate font-semibold bg-amber-100 dark:bg-amber-900/20 px-1 rounded">30. Ajedrez Premium ⭐</a>
-                    </div>
-                  </div>
-                  <div className="p-2 border-t dark:border-fide-700 bg-gray-50 dark:bg-fide-900/50 text-[10px] text-fide-500 text-center">TOP100 completo en <a href="https://chessorganizers.com/enlaces" target="_blank" rel="noreferrer" className="underline hover:text-amber-600">chessorganizers.com/enlaces</a></div>
-                </div>
-              )}
-            </div>
-            {/* Newsletter */}
-            <Link to="/newsletter" title="Newsletter — suscríbete (10 novedades programa + 10 mundial cada mes)" className="p-2 rounded-lg hover:bg-fide-700 text-fide-300 hover:text-white transition" aria-label="Newsletter">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-            </Link>
-            <div className="w-px h-6 bg-fide-700 mx-1 hidden sm:block" />
-            <LangSwitcher />
+            <button onClick={() => setSearchNonce((n) => n + 1)} title="Buscar (Ctrl+K)" aria-label="Buscar"
+              className="p-2 rounded-lg hover:bg-fide-700 text-fide-300 hover:text-white transition">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" /></svg>
+            </button>
             <SyncStatus />
             <NotificationDropdown />
             <Link to="/pricing" title={t('nav.planMembership')} aria-label={t('nav.planMembership')} className="p-2 rounded-lg hover:bg-fide-700 transition text-base leading-none" >💎</Link>
-            <GlobalSearch myTournaments={[]} />
-            <button onClick={toggle} className="p-2 rounded-lg hover:bg-fide-700 transition-all duration-200" title={dark ? t('nav.lightMode') : t('nav.darkMode')}>
-              {dark ? (
-                <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-              ) : (
-                <svg className="w-4 h-5 text-fide-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-              )}
-            </button>
+            <GlobalSearch myTournaments={[]} openNonce={searchNonce} />
             <div className="hidden sm:relative sm:flex items-center" ref={userMenuRef}>
               <button onClick={() => setUserMenuOpen(!userMenuOpen)} title={user?.name} aria-label={user?.name || t('nav.myProfile')}
                 className="flex items-center gap-1.5 pl-2 border-l border-fide-700 hover:bg-fide-700/50 pr-1.5 py-1.5 rounded-lg transition">
@@ -254,14 +142,18 @@ const navLinks = [
                     className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-fide-200 hover:bg-gray-50 dark:hover:bg-fide-700 transition">
                     <span className="text-base">♟</span> {t('nav.myProfile')}
                   </Link>
-                  <Link to="/pricing" onClick={() => setUserMenuOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-fide-200 hover:bg-gray-50 dark:hover:bg-fide-700 transition">
-                    <span className="text-base">💎</span> {t('nav.planMembership')}
-                  </Link>
                   <Link to="/app/inbox" onClick={() => setUserMenuOpen(false)}
                     className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-fide-200 hover:bg-gray-50 dark:hover:bg-fide-700 transition">
                     <span className="text-base">📬</span> {t('nav.inbox')}
                   </Link>
+                  <div className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 dark:text-fide-200">
+                    <span className="flex items-center gap-2"><span className="text-base">🌐</span></span>
+                    <LangSwitcher />
+                  </div>
+                  <button onClick={() => toggle()}
+                    className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-fide-200 hover:bg-gray-50 dark:hover:bg-fide-700 transition">
+                    <span className="text-base">{dark ? '☀️' : '🌙'}</span> {dark ? t('nav.lightMode') : t('nav.darkMode')}
+                  </button>
                   <div className="border-t dark:border-fide-700 mt-1 pt-1">
                     <button onClick={() => { setUserMenuOpen(false); handleLogout(); }}
                       className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition">
@@ -278,25 +170,51 @@ const navLinks = [
           </div>
         </div>
         {menuOpen && (
-          <div className="sm:hidden border-t border-fide-700/50 px-4 py-3 space-y-1 bg-fide-800/95 backdrop-blur-sm animate-fadeIn">
-            {navLinks.map((l) => (
+          <div className="sm:hidden border-t border-fide-700/50 px-4 py-3 space-y-1 bg-fide-800/95 backdrop-blur-sm animate-fadeIn max-h-[70vh] overflow-auto">
+            {mainLinks.map((l) => (
+              <Link key={l.to} to={l.to} onClick={() => setMenuOpen(false)} title={l.title}
+                className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-fide-200 hover:text-white hover:bg-fide-700 text-sm transition-all duration-200">
+                {SVG_ICONS[l.icon]}
+                {l.label}
+              </Link>
+            ))}
+            <p className="text-[10px] font-bold uppercase tracking-widest text-fide-500 px-3 pt-2">Más</p>
+            {moreLinks.map((l) => (
               l.external ? (
                 <a key={l.to} href={l.to} target="_blank" rel="noreferrer" onClick={() => setMenuOpen(false)} title={l.title}
-                  className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 ${l.red ? 'bg-red-600 text-white animate-pulse' : 'text-fide-200 hover:text-white hover:bg-fide-700'}`}>
-                  {SVG_ICONS[l.icon] || <span className="text-xs">{l.icon}</span>}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm bg-red-600/15 text-red-400 transition-all duration-200">
+                  {SVG_ICONS[l.icon]}
                   {l.label}
                 </a>
               ) : (
                 <Link key={l.to} to={l.to} onClick={() => setMenuOpen(false)} title={l.title}
                   className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-fide-200 hover:text-white hover:bg-fide-700 text-sm transition-all duration-200">
-                  {SVG_ICONS[l.icon] || <span className="text-xs">{l.icon}</span>}
+                  {SVG_ICONS[l.icon]}
                   {l.label}
                 </Link>
               )
             ))}
-            <div className="border-t border-fide-700/50 pt-2 mt-2 flex items-center gap-2 px-3 py-2 text-fide-400 text-sm">
-              <div className="w-6 h-6 rounded-full bg-fide-600 flex items-center justify-center text-xs font-bold text-amber-400">{user?.name?.charAt(0).toUpperCase() || 'U'}</div>
-              {user?.name}
+            <div className="border-t border-fide-700/50 pt-2 mt-2 space-y-1">
+              <Link to="/app/player" onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-fide-200 hover:text-white hover:bg-fide-700 text-sm transition-all duration-200">
+                <span>♟</span> {t('nav.myProfile')}
+              </Link>
+              <Link to="/app/inbox" onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-fide-200 hover:text-white hover:bg-fide-700 text-sm transition-all duration-200">
+                <span>📬</span> {t('nav.inbox')}
+              </Link>
+              <Link to="/app/notifications" onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-fide-200 hover:text-white hover:bg-fide-700 text-sm transition-all duration-200">
+                <span>🔔</span> Notificaciones
+              </Link>
+              <Link to="/pricing" onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-fide-200 hover:text-white hover:bg-fide-700 text-sm transition-all duration-200">
+                <span>💎</span> {t('nav.planMembership')}
+              </Link>
+              <button onClick={() => { setMenuOpen(false); handleLogout(); }}
+                className="flex items-center gap-2 w-full px-3 py-2.5 rounded-lg text-red-400 hover:bg-red-900/20 text-sm transition-all duration-200">
+                {t('nav.logout')}
+              </button>
             </div>
           </div>
         )}
@@ -349,6 +267,8 @@ const navLinks = [
                 <li><Link to="/app/leagues" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('nav.leagues')}</Link></li>
                 <li><a href="/public" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('register.viewTournaments')}</a></li>
                 <li><a href="/pricing" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">{t('nav.pricing') || 'Planes'}</a></li>
+                <li><a href="https://chessorganizers.com/enlaces" target="_blank" rel="noreferrer" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">🔗 TOP100 Enlaces</a></li>
+                <li><Link to="/newsletter" className="text-xs text-fide-400 hover:text-amber-400 transition-colors">Newsletter</Link></li>
               </ul>
             </div>
           </div>
