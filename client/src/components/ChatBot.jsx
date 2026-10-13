@@ -2,21 +2,6 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { api } from '../api/client.js';
 import { useI18n } from '../i18n/context.jsx';
 
-buildFAQ(t) {
-  return [
-    { q: t('chat.faq1_q'), a: t('chat.faq1_a') },
-    { q: t('chat.faq2_q'), a: t('chat.faq2_a') },
-    { q: t('chat.faq3_q'), a: t('chat.faq3_a') },
-    { q: t('chat.faq4_q'), a: t('chat.faq4_a') },
-    { q: t('chat.faq5_q'), a: t('chat.faq5_a') },
-    { q: t('chat.faq6_q'), a: t('chat.faq6_a') },
-    { q: t('chat.faq7_q'), a: t('chat.faq7_a') },
-    { q: t('chat.faq8_q'), a: t('chat.faq8_a') },
-    { q: t('chat.faq9_q'), a: t('chat.faq9_a') },
-    { q: t('chat.faq10_q'), a: t('chat.faq10_a') },
-  ];
-}
-
 const LANG_TAG = { es: 'es-ES', fr: 'fr-FR', de: 'de-DE', pt: 'pt-PT', en: 'en-US' };
 const langTag = (locale) => LANG_TAG[locale] || 'es-ES';
 const langPrefix = (locale) => (LANG_TAG[locale] || 'es-ES').split('-')[0].toLowerCase();
@@ -77,6 +62,22 @@ const CopyIcon = () => (
 
 export default function ChatBot() {
   const { t, locale } = useI18n();
+
+  function buildFAQ(t) {
+    return [
+      { q: t('chat.faq1_q'), a: t('chat.faq1_a') },
+      { q: t('chat.faq2_q'), a: t('chat.faq2_a') },
+      { q: t('chat.faq3_q'), a: t('chat.faq3_a') },
+      { q: t('chat.faq4_q'), a: t('chat.faq4_a') },
+      { q: t('chat.faq5_q'), a: t('chat.faq5_a') },
+      { q: t('chat.faq6_q'), a: t('chat.faq6_a') },
+      { q: t('chat.faq7_q'), a: t('chat.faq7_a') },
+      { q: t('chat.faq8_q'), a: t('chat.faq8_a') },
+      { q: t('chat.faq9_q'), a: t('chat.faq9_a') },
+      { q: t('chat.faq10_q'), a: t('chat.faq10_a') },
+    ];
+  }
+
   const FAQ = buildFAQ(t);
 
   const [open, setOpen] = useState(false);
