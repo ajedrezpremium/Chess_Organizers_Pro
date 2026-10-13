@@ -248,6 +248,10 @@ export default {
     pending: 'Pendiente', registered: 'Registrado', bye: 'BYE',
     backToTournaments: '← Mis torneos', dashboard: 'Volver al inicio',
     error: 'Error al cargar', resultError: 'Error',
+    pendingHint: 'Se activa al generar la ronda 1', notOperative: 'Este torneo aún no está operativo.',
+    activateHint: 'Si eres el organizador, genera la ronda 1 desde Gestión para activarlo.',
+    openManagement: 'Abrir gestión →',
+    emptyHint: 'Los torneos pendientes se activan al generar su primera ronda desde Gestión.',
     // New Pro Dashboard
     liveMode: 'Modo En Vivo', roundMode: 'Modo Ronda',
     roundOf: 'Ronda {current} de {total}',

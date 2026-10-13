@@ -137,10 +137,15 @@ export default function ArbiterPanel() {
 
   if (error) return (
     <div className="min-h-screen bg-gray-950 text-white p-4 flex items-center justify-center">
-      <div className="text-center">
+      <div className="text-center max-w-sm">
         <div className="text-4xl mb-4">⚖️</div>
-        <p className="text-red-400 mb-4">{error}</p>
-        <Link to="/" className="text-amber-500 hover:underline text-sm">{t('arbiter.dashboard')}</Link>
+        <p className="text-red-400 mb-2">{error}</p>
+        <p className="text-xs text-gray-400 mb-1">{t('arbiter.notOperative')}</p>
+        <p className="text-xs text-gray-500 mb-4">{t('arbiter.activateHint')}</p>
+        <div className="flex items-center justify-center gap-3">
+          <Link to={`/app/tournament/${id}`} className="text-xs font-semibold bg-amber-500 hover:bg-amber-400 text-black px-3 py-1.5 rounded-lg transition">{t('arbiter.openManagement')}</Link>
+          <Link to="/arbiter" className="text-amber-500 hover:underline text-sm">{t('arbiter.backToTournaments')}</Link>
+        </div>
       </div>
     </div>
   );

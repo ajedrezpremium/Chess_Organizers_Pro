@@ -34,6 +34,7 @@ export default function ArbiterTournamentsList() {
           <div className="text-center py-12 text-gray-500">
             <div className="text-4xl mb-3">⚖️</div>
             <p className="text-sm">{t('arbiter.noTournaments')}</p>
+            <p className="text-xs text-gray-600 mt-2 max-w-xs mx-auto">{t('arbiter.emptyHint')}</p>
             <Link to="/" className="text-amber-500 text-xs hover:underline mt-2 inline-block">{t('arbiter.dashboard')}</Link>
           </div>
         ) : (

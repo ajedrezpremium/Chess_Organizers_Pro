@@ -113,6 +113,7 @@ export default function Dashboard() {
   const activeCount = myTournaments.filter((item) => item.status === 'active').length;
   const finishedCount = myTournaments.filter((item) => item.status === 'finished').length;
   const pendingCount = myTournaments.filter((item) => item.status === 'pending').length;
+  const selectedTournament = myTournaments.find((m) => String(m.id) === String(selectedTournamentId));
 
   return (
     <div className="animate-fadeIn">
@@ -147,7 +148,11 @@ export default function Dashboard() {
                   {myTournaments.map((m) => <option key={m.id} value={m.id}>{m.name} — {m.status}</option>)}
                 </select>
                 <Link to={`/app/tournament/${selectedTournamentId}`} className="text-xs text-amber-600 hover:underline">Abrir gestión →</Link>
-                <Link to={`/arbiter/tournament/${selectedTournamentId}`} className="text-xs bg-amber-500 text-black px-2 py-1 rounded-full font-bold hover:bg-amber-400">⚖️ Panel árbitro</Link>
+                {selectedTournament?.status === 'pending' ? (
+                  <span title={t('arbiter.pendingHint')} className="text-xs bg-gray-300 dark:bg-fide-700 text-gray-500 dark:text-fide-400 px-2 py-1 rounded-full font-bold cursor-not-allowed">⚖️ Panel árbitro 🔒</span>
+                ) : (
+                  <Link to={`/arbiter/tournament/${selectedTournamentId}`} className="text-xs bg-amber-500 text-black px-2 py-1 rounded-full font-bold hover:bg-amber-400">⚖️ Panel árbitro</Link>
+                )}
               </div>
               <ArbiterControlCenter tournament={myTournaments.find((m) => m.id === selectedTournamentId)} rounds={controlData.rounds} players={controlData.players} />
             </div>
