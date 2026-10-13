@@ -14,8 +14,14 @@ export default function ProfileCard({ user, stats }) {
           <h3 className="font-bold text-sm dark:text-white truncate">{name}</h3>
           <p className="text-[11px] text-gray-500 dark:text-fide-400 truncate">{user?.email || t('dp.dpVerifiedAccount')}</p>
           <div className="flex gap-1.5 mt-1.5 flex-wrap">
-            <Badge tone={STATUS_STYLES.active}>{t('dp.dpFideVerified')}</Badge>
-            <Badge tone="bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800">PRO</Badge>
+            {user?.fide_id ? (
+              <a href={`https://ratings.fide.com/profile/${user.fide_id}`} target="_blank" rel="noreferrer" title="Perfil FIDE">
+                <Badge tone={STATUS_STYLES.active}>♟ FIDE {user.fide_id}</Badge>
+              </a>
+            ) : (user?.verified ? <Badge tone={STATUS_STYLES.active}>{t('dp.dpFideVerified')}</Badge> : null)}
+            {user?.federation ? (
+              <Badge tone="bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800">{user.federation}</Badge>
+            ) : null}
           </div>
         </div>
       </div>
