@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd client && NODE_ENV=development npm install && npm run build",
+  "buildCommand": "cd client && NODE_ENV=development npm install && npm run build && cd ../mobile && npm install && npx expo export -p web",
   "outputDirectory": "client/dist",
   "crons": [
     { "path": "/health/warm", "schedule": "0 0 * * *" }
@@ -60,6 +60,8 @@
     { "source": "/newsletter/(.*)", "destination": "/api/index.js" },
     { "source": "/api/v1", "destination": "/api/index.js" },
     { "source": "/api/v1/(.*)", "destination": "/api/index.js" },
+    { "source": "/app", "destination": "/index.html" },
+    { "source": "/app/(.*)", "destination": "/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
@@ -67,6 +69,24 @@
       "source": "/assets/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/_expo/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/index.html",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/manifest.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/manifest+json" }
       ]
     }
   ]

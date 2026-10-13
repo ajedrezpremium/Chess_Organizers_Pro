@@ -9,9 +9,12 @@
     "userInterfaceStyle": "automatic",
     "splash": {
       "backgroundColor": "#0f172a",
-      "resizeMode": "contain"
+      "resizeMode": "contain",
+      "image": "./assets/splash.png"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.chessorganizers.pro",
@@ -22,22 +25,66 @@
     },
     "android": {
       "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0f172a"
       },
       "package": "com.chessorganizers.pro",
-      "permissions": ["CAMERA", "VIBRATE", "RECEIVE_BOOT_COMPLETED"],
+      "permissions": [
+        "CAMERA",
+        "VIBRATE",
+        "RECEIVE_BOOT_COMPLETED"
+      ],
       "intentFilters": [
         {
           "action": "VIEW",
-          "data": [{ "scheme": "chessorg", "host": "*", "pathPrefix": "/public" }],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "data": [
+            {
+              "scheme": "chessorg",
+              "host": "*",
+              "pathPrefix": "/public"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png",
+      "name": "Chess Organizers Pro",
+      "shortName": "ChessOrg",
+      "description": "Plataforma completa de gestión de torneos de ajedrez",
+      "themeColor": "#0f172a",
+      "backgroundColor": "#0f172a",
+      "display": "standalone",
+      "scope": "/app/",
+      "startUrl": "/app/",
+      "orientation": "portrait-primary",
+      "preferRelatedApplications": false,
+      "icons": [
+        {
+          "src": "./assets/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "any maskable"
+        },
+        {
+          "src": "./assets/icon-512.png",
+          "sizes": "512x512",
+          "type": "image/png",
+          "purpose": "any maskable"
         }
       ]
     },
     "plugins": [
       "expo-camera",
       "expo-notifications",
-      "expo-updates"
+      "expo-updates",
+      "expo-asset"
     ],
     "extra": {
       "apiUrl": "https://chessorganizerspro.com"

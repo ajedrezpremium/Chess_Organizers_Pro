@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Background -->
+  <rect width="1024" height="1024" fill="#0f172a" rx="180"/>
+  
+  <!-- Chess board pattern -->
+  <g fill="#f59e0b">
+    <rect x="180" y="180" width="110" height="110"/>
+    <rect x="310" y="180" width="110" height="110"/>
+    <rect x="440" y="180" width="110" height="110"/>
+    <rect x="570" y="180" width="110" height="110"/>
+    <rect x="700" y="180" width="110" height="110"/>
+    <rect x="180" y="310" width="110" height="110"/>
+    <rect x="310" y="310" width="110" height="110"/>
+    <rect x="440" y="310" width="110" height="110"/>
+    <rect x="570" y="310" width="110" height="110"/>
+    <rect x="700" y="310" width="110" height="110"/>
+    <rect x="180" y="440" width="110" height="110"/>
+    <rect x="310" y="440" width="110" height="110"/>
+    <rect x="440" y="440" width="110" height="110"/>
+    <rect x="570" y="440" width="110" height="110"/>
+    <rect x="700" y="440" width="110" height="110"/>
+    <rect x="180" y="570" width="110" height="110"/>
+    <rect x="310" y="570" width="110" height="110"/>
+    <rect x="440" y="570" width="110" height="110"/>
+    <rect x="570" y="570" width="110" height="110"/>
+    <rect x="700" y="570" width="110" height="110"/>
+    <rect x="180" y="700" width="110" height="110"/>
+    <rect x="310" y="700" width="110" height="110"/>
+    <rect x="440" y="700" width="110" height="110"/>
+    <rect x="570" y="700" width="110" height="110"/>
+    <rect x="700" y="700" width="110" height="110"/>
+  </g>
+  
+  <!-- Crown/King piece in center -->
+  <g fill="#f59e0b" transform="translate(512, 512)">
+    <path d="M-80,-20 L-60,-80 L-40,-20 L-20,-80 L0,-20 L20,-80 L40,-20 L60,-80 L80,-20 L80,40 L-80,40 Z" fill="#f59e0b"/>
+    <circle cx="0" cy="-60" r="15" fill="#fff"/>
+    <path d="M-60,40 L-60,80 L60,80 L60,40 Z" fill="#f59e0b"/>
+    <rect x="-40" y="50" width="80" height="30" fill="#fff"/>
+  </g>
+  
+  <!-- "PRO" text -->
+  <text x="512" y="880" font-family="Arial, sans-serif" font-size="64" font-weight="bold" fill="#f59e0b" text-anchor="middle">PRO</text>
+</svg>
