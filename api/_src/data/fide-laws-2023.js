@@ -371,14 +371,18 @@ export const FIDE_LAWS_2023 = {
 /**
  * Busca artículos relevantes para una pregunta dada
  */
+const normLaws = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
 export function searchFideLaws(query) {
   const q = query.toLowerCase();
+  const qn = normLaws(query);
   const results = [];
 
-  // Buscar por palabras clave
+  // Buscar por palabras clave (sin tildes para tolerar ambas formas)
   for (const [kw, articleId] of Object.entries(FIDE_LAWS_2023.keywords)) {
-    if (q.includes(kw.toLowerCase())) {
-      const article = FIDE_LAWS_2023.articles.find((a) => a.id === articleId);
+    if (qn.includes(normLaws(kw))) {
+      const article = FIDE_LAWS_2023.articles.find((a) => a.id === articleId)
+        || FIDE_LAWS_2023.articles.find((a) => a.id === String(articleId).split('.')[0]);
       if (article && !results.find((r) => r.id === article.id)) {
         results.push(article);
       }

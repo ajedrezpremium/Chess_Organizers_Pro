@@ -2,7 +2,6 @@ import config from '../config.js';
 import { getSystemPrompt, normalizeAiLang } from '../data/fide-system-prompt.js';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const MODEL = config.ai.model || 'google/gemini-2.0-flash-001';
 
 let localKnowledge = null;
 
@@ -95,10 +94,22 @@ function buildFallbackAnswer(question, lang) {
   return { answer: t.generic, article: null, title: null, confidence: 'low', related: [] };
 }
 
-// Respuesta sin IA remota: usa la base local de Leyes FIDE si responde con
-// confianza; si no, el fallback multilingüe (cubre los temas más comunes
-// — jugada ilegal, pieza tocada — en el idioma pedido).
+// Respuesta sin IA remota: 1) banco de casos prácticos, 2) base local de
+// Leyes FIDE si responde con confianza; si no, el fallback multilingüe.
 async function localAnswer(question, l) {
+  try {
+    const mod = await import('../data/arbiter-cases.js');
+    if (mod?.searchArbiterCases) {
+      const hits = mod.searchArbiterCases(question, 3);
+      if (hits.length && hits[0]._score >= 10) {
+        return {
+          answer: hits[0].a, article: hits[0].article, title: hits[0].title,
+          confidence: 'high', related: hits.slice(1).map((h) => ({ q: h.topic, article: h.article })),
+          source: 'cases', lang: l,
+        };
+      }
+    }
+  } catch {}
   const local = await getLocalKnowledge();
   if (local?.getArbiterResponse) {
     const r = local.getArbiterResponse(question);
@@ -122,41 +133,58 @@ export async function askFideRules(question, history = [], lang = 'es') {
     { role: 'user', content: question },
   ];
 
-  try {
-    const res = await fetch(OPENROUTER_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-        'HTTP-Referer': config.publicUrl,
-        'X-Title': 'Chess Organizers Pro',
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages,
-        temperature: 0.3,
-        max_tokens: 1024,
-      }),
-    });
+  // Cadena de modelos: prueba en orden (free primero) hasta lograr respuesta.
+  const chain = [...new Set([
+    ...(config.ai.models || '').split(',').map((s) => s.trim()).filter(Boolean),
+    config.ai.model,
+  ].filter(Boolean))];
 
-    if (!res.ok) {
-      console.warn(`OpenRouter error ${res.status}`);
-      return localAnswer(question, l);
+  for (const model of chain) {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 25000);
+      let res;
+      try {
+        res = await fetch(OPENROUTER_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`,
+            'HTTP-Referer': config.publicUrl,
+            'X-Title': 'Chess Organizers Pro',
+          },
+          body: JSON.stringify({
+            model,
+            messages,
+            temperature: 0.3,
+            max_tokens: 1024,
+          }),
+          signal: ctrl.signal,
+        });
+      } finally {
+        clearTimeout(timer);
+      }
+
+      if (!res.ok) {
+        console.warn(`OpenRouter ${model} error ${res.status}`);
+        continue;
+      }
+
+      const data = await res.json();
+      const answer = data.choices?.[0]?.message?.content?.trim();
+      if (answer) {
+        return { answer, source: 'ai', model: data.model || model, lang: l };
+      }
+      console.warn(`OpenRouter ${model} empty answer`);
+    } catch (err) {
+      console.warn(`OpenRouter ${model} failed:`, err.message);
     }
-
-    const data = await res.json();
-    const answer = data.choices?.[0]?.message?.content?.trim();
-    if (answer) {
-      return { answer, source: 'ai', model: data.model || MODEL, lang: l };
-    }
-
-    const local = await getLocalKnowledge();
-    if (local?.getArbiterResponse) return { ...local.getArbiterResponse(question), source: 'local', lang: l };
-    return { ...buildFallbackAnswer(question, l), source: 'fallback', lang: l };
-  } catch (err) {
-    console.warn('OpenRouter fallback:', err.message);
-    const local = await getLocalKnowledge();
-    if (local?.getArbiterResponse) return { ...local.getArbiterResponse(question), source: 'local', lang: l };
-    return { ...buildFallbackAnswer(question, l), source: 'fallback', lang: l };
   }
+
+  const local = await getLocalKnowledge();
+  if (local?.getArbiterResponse) {
+    const r = local.getArbiterResponse(question);
+    if (r && r.confidence && r.confidence !== 'low') return { ...r, source: 'local', lang: l };
+  }
+  return { ...buildFallbackAnswer(question, l), source: 'fallback', lang: l };
 }
