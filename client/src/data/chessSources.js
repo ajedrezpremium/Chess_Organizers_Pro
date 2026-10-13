@@ -7,7 +7,7 @@ export const CHESS_SOURCES = [
   { id: '2700live', name: '2700 Live', url: 'https://2700chess.com/live', cat: 'calendar', live: true },
   { id: 'ecu', name: 'ECU Calendar', url: 'https://www.europechess.org/calendar/', cat: 'calendar' },
   { id: 'chessbase-cal', name: 'ChessBase', url: 'https://en.chessbase.com', cat: 'calendar' },
-  { id: 'fide-cal', name: 'FIDE Calendar', url: 'https://www.fide.com/calendar', cat: 'calendar' },
+  { id: 'fide-cal', name: 'FIDE Calendar', url: 'https://calendar.fide.com/calendar.php', cat: 'calendar' },
   { id: 'chess-calendar', name: 'Chess-Calendar.eu', url: 'https://www.chess-calendar.eu', cat: 'calendar' },
   { id: 'chess-results', name: 'Chess-Results.com', url: 'https://chess-results.com', cat: 'pairings' },
   { id: 'mychess', name: 'MyChess.events', url: 'https://mychess.events', cat: 'calendar' },

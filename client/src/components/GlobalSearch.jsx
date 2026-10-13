@@ -4,6 +4,17 @@ import { CHESS_SOURCES } from '../data/chessSources.js';
 
 // Buscador global Cmd+K: torneos propios (vía API), páginas y fuentes externas.
 // openNonce: al incrementarse abre el buscador (botón 🔍 del header).
+function faviconFor(url) {
+  try { return `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=64`; } catch { return null; }
+}
+
+function SourceIcon({ url }) {
+  const [err, setErr] = useState(false);
+  const src = faviconFor(url);
+  if (!src || err) return <span>🔗</span>;
+  return <img src={src} alt="" loading="lazy" onError={() => setErr(true)} className="w-4 h-4 rounded-sm shrink-0" />;
+}
+
 export default function GlobalSearch({ myTournaments = [], openNonce = 0 }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
@@ -15,8 +26,8 @@ export default function GlobalSearch({ myTournaments = [], openNonce = 0 }) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setOpen(true); }
       if (e.key === 'Escape') setOpen(false);
     };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
+    document.addEventListener('keydown', onKey, true);
+    return () => document.removeEventListener('keydown', onKey, true);
   }, []);
   useEffect(() => { if (openNonce) setOpen(true); }, [openNonce]);
   useEffect(() => { if (open) setTimeout(() => inputRef.current?.focus(), 30); }, [open ]);
@@ -32,13 +43,16 @@ export default function GlobalSearch({ myTournaments = [], openNonce = 0 }) {
 
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm p-4" onClick={() => setOpen(false)}>
+    <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm p-4" onClick={() => setOpen(false)}
+      onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false); }}>
       <div className="max-w-xl mx-auto mt-20 bg-white dark:bg-fide-800 rounded-2xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-2 px-4 border-b dark:border-fide-700">
           <span>🔍</span>
           <input ref={inputRef} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar torneos, páginas, fuentes… (Esc para cerrar)"
             className="flex-1 py-3 text-sm bg-transparent outline-none dark:text-white placeholder:text-gray-400" />
           <kbd className="text-[10px] bg-gray-100 dark:bg-fide-700 px-1.5 py-0.5 rounded">ESC</kbd>
+          <button onClick={() => setOpen(false)} aria-label="Cerrar buscador" title="Cerrar (Esc)"
+            className="w-6 h-6 rounded-lg text-gray-400 hover:text-white hover:bg-fide-700 transition text-sm leading-none">✕</button>
         </div>
         <div className="max-h-80 overflow-auto p-2">
           <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 px-2 pt-2">Mis torneos</p>
@@ -55,8 +69,9 @@ export default function GlobalSearch({ myTournaments = [], openNonce = 0 }) {
             🔍 Buscar “{q || '…'}” en el buscador universal →
           </button>
           {results.sources.map((s) => (
-            <a key={s.id} href={s.url} target="_blank" rel="noreferrer" className="block px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-fide-700 text-sm dark:text-white">
-              🔗 {s.name} <span className="text-xs opacity-50">· {s.cat}</span>
+            <a key={s.id} href={s.url} target="_blank" rel="noreferrer" className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-fide-700 text-sm dark:text-white">
+              <SourceIcon url={s.url} />
+              <span className="truncate">{s.name} <span className="text-xs opacity-50">· {s.cat}</span></span>
             </a>
           ))}
         </div>
