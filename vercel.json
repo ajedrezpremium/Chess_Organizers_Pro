@@ -7,7 +7,8 @@
   "rewrites": [
     { "source": "/auth", "destination": "/api/index.js" },
     { "source": "/auth/(.*)", "destination": "/api/index.js" },
-    { "source": "/public", "destination": "/api/index.js" },
+    { "source": "/public", "destination": "/index.html" },
+    { "source": "/public/tournament/(.*)", "destination": "/index.html" },
     { "source": "/public/(.*)", "destination": "/api/index.js" },
     { "source": "/tournaments", "destination": "/api/index.js" },
     { "source": "/tournaments/(.*)", "destination": "/api/index.js" },

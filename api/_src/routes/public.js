@@ -714,4 +714,10 @@ router.post('/tournaments/:id/register', async (req, res) => {
   res.status(201).json({ ok: true, message: 'Solicitud de inscripción enviada. El organizador la revisará.' });
 });
 
+// Ruta desconocida bajo /public — 404 (evita que caiga en routers con
+// authenticate global, que devolverían un engañoso 401 "Token requerido").
+router.use((req, res) => {
+  res.status(404).json({ error: 'Ruta no encontrada' });
+});
+
 export default router;
