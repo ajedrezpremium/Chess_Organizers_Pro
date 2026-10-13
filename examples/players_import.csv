@@ -1,0 +1,11 @@
+name,last_name,fide_id,federation,fide_rating,title,birth_date,sex,email,phone,notes
+Magnus,Carlsen,1503014,NOR,2850,GM,30.11.1990,M,magnus@carlsen.ch,+47 123 45 67,World Champion
+Ian,Nepomniachtchi,4168119,RUS,2780,GM,14.07.1990,M,ian@nepo.ru,+7 999 123 45 67,
+Ding,Liren,8603677,CHN,2790,GM,24.10.1992,M,ding@chess.cn,+86 138 0000 1111,
+Fabiano,Caruana,2020009,USA,2775,GM,30.07.1992,M,fabiano@caruana.com,+1 555 123 4567,
+Hikaru,Nakamura,2016192,USA,2780,GM,09.12.1987,M,hikaru@nakamura.com,+1 555 987 6543,
+Alireza,Firouzja,12573981,FRA,2760,GM,18.06.2003,M,alireza@firouzja.fr,+33 6 12 34 56 78,
+Ana,Martinez,2200001,ESP,2200,WFM,15.03.1995,F,ana.martinez@ajedrez.es,+34 600 123 456,
+Carlos,Lopez,2200002,ESP,2180,FM,22.08.1993,M,carlos.lopez@ajedrez.es,+34 600 654 321,
+Elena,Rodriguez,2200003,ESP,2050,WFM,10.01.1998,F,elena.rodriguez@ajedrez.es,+34 600 789 123,
+David,Kim,,KOR,2030,,05.05.2000,M,david.kim@chess.kr,+82 10 1234 5678,

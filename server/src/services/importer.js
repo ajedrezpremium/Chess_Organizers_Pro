@@ -26,8 +26,33 @@ const KNOWN_COLUMNS = {
   notes: ['notes', 'notas', 'observaciones', 'comment', 'remarks'],
 };
 
+// Vega export columns (TSV with semicolon delimiter)
+const VEGA_COLUMNS = {
+  seed: ['startno', 'start no', 'startnr', 'start nr', 'rank', 'rk', 'strt'],
+  name: ['name', 'nombre', 'player', 'jugador', 'playername'],
+  fideId: ['fide id', 'fideid', 'fide_id', 'fide number', 'fide nr', 'fide-nr'],
+  federation: ['fed', 'federation', 'country', 'pais', 'país', 'nation', 'flag'],
+  fideRating: ['rating', 'elo', 'fide rating', 'fide elo', 'fiderating', 'rate'],
+  title: ['title', 'título', 'titulo', 'fide title', 'titre'],
+  birthDate: ['birth date', 'birth_date', 'dob', 'date of birth', 'fecha nacimiento', 'born'],
+  sex: ['sex', 'gender', 'genero', 'género', 'sexo'],
+  club: ['club', 'team', 'equipo', 'verein', 'team name'],
+  points: ['points', 'pts', 'score', 'puntos'],
+  progress: ['progress', 'progr', 'progreso'],
+  buchholz: ['buchholz', 'bh', 'buchh'],
+  fineBuchholz: ['fine buchholz', 'fb', 'fbuchholz'],
+  performance: ['performance', 'perf', 'tp', 'tpr'],
+};
+
 const COLUMN_ALIASES = {};
 for (const [key, aliases] of Object.entries(KNOWN_COLUMNS)) {
+  for (const alias of aliases) {
+    COLUMN_ALIASES[alias] = key;
+  }
+}
+
+// Add Vega-specific aliases
+for (const [key, aliases] of Object.entries(VEGA_COLUMNS)) {
   for (const alias of aliases) {
     COLUMN_ALIASES[alias] = key;
   }
@@ -282,6 +307,213 @@ export async function importPlayersFromTRF(db, tournamentId, trfContent) {
       results.imported++;
     } catch (err) {
       results.errors.push(err.message);
+      results.skipped++;
+    }
+  }
+
+  return results;
+}
+
+// ── Vega Import ────────────────────────────────────────────────────
+
+/**
+ * Parsea contenido TSV exportado desde Vega
+ * Vega usa ; como delimitador y columnas específicas
+ */
+export function parseVegaTSV(text) {
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  if (lines.length < 2) throw new Error('Vega TSV debe tener encabezado + datos');
+
+  const headers = parseLine(lines[0], ';');
+  const rows = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const values = parseLine(lines[i], ';');
+    if (values.length === 0) continue;
+    const row = {};
+    for (let j = 0; j < headers.length; j++) {
+      row[headers[j]] = values[j] || '';
+    }
+    rows.push(row);
+  }
+
+  return { headers, rows };
+}
+
+/**
+ * Importa jugadores desde formato Vega exportado (TSV con ;)
+ */
+export async function importPlayersFromVega(db, tournamentId, userId, vegaContent) {
+  const { headers, rows } = parseVegaTSV(vegaContent);
+  const columnMap = detectColumnMap(headers);
+  return importPlayers(db, tournamentId, userId, rows, columnMap);
+}
+
+// ── Team Tournament Import ─────────────────────────────────────────
+
+/**
+ * Importa equipos y composición desde CSV/TSV para torneos por equipos
+ * Formato esperado: team_name, board, player_name, fide_id, rating, title, fed
+ */
+export async function importTeams(db, tournamentId, userId, csvContent, options = {}) {
+  const delimiter = options.delimiter || detectDelimiter(csvContent);
+  const { headers, rows } = parseCSV(csvContent, { delimiter });
+
+  const results = { imported: 0, skipped: 0, errors: [], teams: [], players: [] };
+
+  const t = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(tournamentId, userId);
+  if (!t) throw new Error('Torneo no encontrado');
+
+  if (t.type !== 'team_swiss' && t.type !== 'team_round_robin') {
+    throw new Error('El torneo no es de tipo equipos');
+  }
+
+  const teamMap = new Map();
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    try {
+      const teamName = (row.team_name || row.team || row.equipo || row['team name'] || '').trim();
+      const board = parseInt(row.board || row.tablero || row.bd || '0', 10);
+      const playerName = (row.player_name || row.name || row.nombre || row.player || '').trim();
+      const fideId = (row.fide_id || row.fideid || row['fide id'] || '').trim();
+      const rating = parseInt(row.rating || row.elo || row.fide_rating || '0', 10) || 0;
+      const title = (row.title || row.titulo || '').trim();
+      const federation = (row.fed || row.federation || row.country || row.pais || '').trim().toUpperCase();
+
+      if (!teamName || !playerName || board < 1) {
+        results.skipped++;
+        continue;
+      }
+
+      let team = teamMap.get(teamName);
+      if (!team) {
+        const existingTeam = await db.prepare('SELECT * FROM teams WHERE tournament_id = ? AND name = ?').get(tournamentId, teamName);
+        if (existingTeam) {
+          team = existingTeam;
+        } else {
+          const result = await db.prepare('INSERT INTO teams (tournament_id, name) VALUES (?, ?)').run(tournamentId, teamName);
+          team = { id: result.lastInsertRowid, tournament_id: tournamentId, name: teamName };
+        }
+        teamMap.set(teamName, team);
+      }
+
+      let player;
+      if (fideId) {
+        player = await db.prepare('SELECT * FROM players WHERE fide_id = ?').get(fideId);
+      }
+      if (!player) {
+        const nameParts = playerName.includes(',') 
+          ? playerName.split(',').map(s => s.trim())
+          : playerName.split(' ').map(s => s.trim());
+        const lastName = nameParts.length > 1 ? nameParts[0] : '';
+        const firstName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : nameParts[0];
+
+        const result = await db.prepare(`
+          INSERT INTO players (fide_id, name, last_name, fide_rating, title, federation)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).run(fideId || '', firstName, lastName, rating, title, federation);
+        player = await db.prepare('SELECT * FROM players WHERE id = ?').get(result.lastInsertRowid);
+        results.players.push(player);
+      }
+
+      const alreadyEnrolled = await db.prepare(
+        'SELECT id FROM tournament_players WHERE tournament_id = ? AND player_id = ?'
+      ).get(tournamentId, player.id);
+
+      let tournamentPlayer;
+      if (!alreadyEnrolled) {
+        const maxSeed = await db.prepare(
+          'SELECT MAX(seed_rank) as max FROM tournament_players WHERE tournament_id = ?'
+        ).get(tournamentId);
+        const nextSeed = (maxSeed?.max ?? 0) + 1;
+        const result = await db.prepare(
+          'INSERT INTO tournament_players (tournament_id, player_id, seed_rank) VALUES (?, ?, ?)'
+        ).run(tournamentId, player.id, nextSeed);
+        tournamentPlayer = await db.prepare('SELECT * FROM tournament_players WHERE id = ?').get(result.lastInsertRowid);
+      } else {
+        tournamentPlayer = alreadyEnrolled;
+      }
+
+      const existingEnrollment = await db.prepare(
+        'SELECT id FROM team_members WHERE team_id = ? AND board_number = ?'
+      ).get(team.id, board);
+
+      if (!existingEnrollment) {
+        await db.prepare(
+          'INSERT INTO team_members (team_id, tournament_player_id, board_number) VALUES (?, ?, ?)'
+        ).run(team.id, tournamentPlayer.id, board);
+      }
+
+      results.teams.push({ team, board, player });
+      results.imported++;
+    } catch (err) {
+      results.errors.push(`Fila ${i + 2}: ${err.message}`);
+      results.skipped++;
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Importa composición de rondas por equipos (team composition per round)
+ * Formato: round, team_name, board, player_name/fide_id
+ * Crea/actualiza tabla team_composition (requiere migración)
+ */
+export async function importTeamComposition(db, tournamentId, userId, csvContent) {
+  const { rows } = parseCSV(csvContent);
+  const results = { imported: 0, skipped: 0, errors: [] };
+
+  // Check if team_composition table exists
+  try {
+    await db.prepare('SELECT 1 FROM team_composition LIMIT 1').get();
+  } catch {
+    results.errors.push('Tabla team_composition no existe. Ejecutar migración primero.');
+    return results;
+  }
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    try {
+      const round = parseInt(row.round || row.ronda || '0', 10);
+      const teamName = (row.team_name || row.team || row.equipo || '').trim();
+      const board = parseInt(row.board || row.tablero || '0', 10);
+      const playerIdentifier = (row.player_name || row.player || row.fide_id || row.fideid || '').trim();
+
+      if (!round || !teamName || !board || !playerIdentifier) {
+        results.skipped++;
+        continue;
+      }
+
+      const team = await db.prepare('SELECT * FROM teams WHERE tournament_id = ? AND name = ?').get(tournamentId, teamName);
+      if (!team) { results.errors.push(`Fila ${i + 2}: Equipo "${teamName}" no encontrado`); results.skipped++; continue; }
+
+      let player = null;
+      if (/^\d+$/.test(playerIdentifier)) {
+        player = await db.prepare('SELECT * FROM players WHERE fide_id = ?').get(playerIdentifier);
+      }
+      if (!player) {
+        player = await db.prepare('SELECT * FROM players WHERE name = ?').get(playerIdentifier);
+      }
+      if (!player) {
+        player = await db.prepare('SELECT * FROM players WHERE last_name = ?').get(playerIdentifier);
+      }
+      if (!player) { results.errors.push(`Fila ${i + 2}: Jugador "${playerIdentifier}" no encontrado`); results.skipped++; continue; }
+
+      const tm = await db.prepare('SELECT tm.*, tp.player_id FROM team_members tm JOIN tournament_players tp ON tm.tournament_player_id = tp.id WHERE tm.team_id = ? AND tp.player_id = ? AND tm.board_number = ?').get(team.id, player.id, board);
+      if (!tm) { results.errors.push(`Fila ${i + 2}: Jugador no está en tablero ${board} del equipo`); results.skipped++; continue; }
+
+      const existing = await db.prepare('SELECT id FROM team_composition WHERE tournament_id = ? AND round = ? AND team_id = ? AND board = ?').get(tournamentId, round, team.id, board);
+      if (existing) {
+        await db.prepare('UPDATE team_composition SET player_id = ? WHERE id = ?').run(player.id, existing.id);
+      } else {
+        await db.prepare('INSERT INTO team_composition (tournament_id, round, team_id, board, player_id) VALUES (?, ?, ?, ?, ?)').run(tournamentId, round, team.id, board, player.id);
+      }
+
+      results.imported++;
+    } catch (err) {
+      results.errors.push(`Fila ${i + 2}: ${err.message}`);
       results.skipped++;
     }
   }

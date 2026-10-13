@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS tournaments (
   start_date      TEXT,
   end_date        TEXT,
   system          TEXT    NOT NULL DEFAULT 'dutch'
-                          CHECK(system IN ('dutch','roundrobin','burstein','dubov')),
+                          CHECK(system IN ('dutch','roundrobin','burstein','dubov','swiss960','roundrobin960')),
   n_rounds        INTEGER NOT NULL DEFAULT 6,
   time_control    TEXT    DEFAULT '90+30',
   rated           INTEGER DEFAULT 1,
@@ -41,6 +41,8 @@ CREATE TABLE IF NOT EXISTS tournaments (
   status          TEXT    DEFAULT 'pending'
                           CHECK(status IN ('pending','active','finished','cancelled')),
   tiebreaks       TEXT    DEFAULT 'BH1,BH,SB,DE,PR',
+  rating_update_mode TEXT    DEFAULT 'initial'
+                          CHECK(rating_update_mode IN ('initial','monthly')),
   description     TEXT    DEFAULT '',
   banner_url      TEXT    DEFAULT '',
   created_by      INTEGER REFERENCES users(id),
@@ -356,6 +358,18 @@ CREATE TABLE IF NOT EXISTS team_matches (
   updated_at    TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Team Composition per Round (para torneos por equipos: alineación por ronda)
+CREATE TABLE IF NOT EXISTS team_composition (
+  id            SERIAL PRIMARY KEY,
+  tournament_id INTEGER NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+  round         INTEGER NOT NULL,
+  team_id       INTEGER NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+  board         INTEGER NOT NULL,
+  player_id     INTEGER NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(tournament_id, round, team_id, board)
+);
+
 -- Match Pairings
 CREATE TABLE IF NOT EXISTS match_pairings (
   id              SERIAL PRIMARY KEY,
@@ -412,6 +426,8 @@ CREATE INDEX IF NOT EXISTS idx_league_tournaments_league     ON league_tournamen
 CREATE INDEX IF NOT EXISTS idx_league_participants_league    ON league_participants(league_id);
 CREATE INDEX IF NOT EXISTS idx_team_matches_tournament       ON team_matches(tournament_id);
 CREATE INDEX IF NOT EXISTS idx_match_pairings_match          ON match_pairings(team_match_id);
+CREATE INDEX IF NOT EXISTS idx_team_composition_tournament   ON team_composition(tournament_id, round);
+CREATE INDEX IF NOT EXISTS idx_team_composition_team         ON team_composition(team_id);
 
 -- ============================================================
 -- DATOS SEMILLA — Planes de membresía

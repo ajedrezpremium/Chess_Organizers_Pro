@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { getDb } from '../db/index.js';
 import { authenticate } from '../middleware/auth.js';
-import { parseCSV, detectColumnMap, suggestColumnMap, importPlayers, importPlayersFromTRF } from '../services/importer.js';
+import { parseCSV, detectColumnMap, suggestColumnMap, importPlayers, importPlayersFromTRF, importPlayersFromVega, importTeams, importTeamComposition } from '../services/importer.js';
 
 const router = Router();
 
@@ -72,6 +72,57 @@ router.post('/tsv/:tid', authenticate, async (req, res) => {
 
     const { rows } = parseCSV(tsv, { delimiter: '\t' });
     const results = importPlayers(db, req.params.tid, req.user.id, rows, column_map);
+    res.json(results);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// POST /import/vega/:tid — importar desde archivo Vega exportado (TSV con ;)
+router.post('/vega/:tid', authenticate, async (req, res) => {
+  try {
+    const db = getDb();
+    const { vega } = req.body;
+    if (!vega) return res.status(400).json({ error: 'Contenido Vega TSV requerido' });
+
+    const t = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
+    if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
+
+    const results = await importPlayersFromVega(db, req.params.tid, req.user.id, vega);
+    res.json(results);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// POST /import/teams/:tid — importar equipos y jugadores para torneo por equipos
+router.post('/teams/:tid', authenticate, async (req, res) => {
+  try {
+    const db = getDb();
+    const { csv, delimiter } = req.body;
+    if (!csv) return res.status(400).json({ error: 'Contenido CSV requerido' });
+
+    const t = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
+    if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
+
+    const results = await importTeams(db, req.params.tid, req.user.id, csv, { delimiter });
+    res.json(results);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// POST /import/team-composition/:tid — importar composición por ronda
+router.post('/team-composition/:tid', authenticate, async (req, res) => {
+  try {
+    const db = getDb();
+    const { csv } = req.body;
+    if (!csv) return res.status(400).json({ error: 'Contenido CSV requerido' });
+
+    const t = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.tid, req.user.id);
+    if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
+
+    const results = await importTeamComposition(db, req.params.tid, req.user.id, csv);
     res.json(results);
   } catch (err) {
     res.status(400).json({ error: err.message });
