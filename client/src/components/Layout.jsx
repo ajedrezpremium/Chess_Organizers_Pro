@@ -61,7 +61,6 @@ const mainLinks = [
     { to: '/app/directory', label: 'Directorio', icon: 'directory', title: 'Directorio federaciones, clubes y escuelas' },
     { to: '/app/search', label: 'Buscar', icon: 'search', title: 'Buscador universal (país, fecha, nombre)' },
     { to: `/catalog?year=${currentYear}`, label: 'Calendario', icon: 'calendar', title: 'Calendario — torneos por fecha' },
-    { to: 'https://lichess.org/broadcast', label: t('nav.liveBroadcast'), icon: 'live', title: 'En directo — Lichess Broadcast', external: true, red: true },
   ];
 
   return (
@@ -89,6 +88,10 @@ const mainLinks = [
                   </Link>
                 );
               })}
+              <a href="https://lichess.org/broadcast" target="_blank" rel="noreferrer" title="En directo — Lichess Broadcast" aria-label="En directo — Lichess Broadcast"
+                className="flex items-center justify-center w-8 h-8 rounded-lg bg-red-600 hover:bg-red-500 text-white transition shadow-sm animate-pulse">
+                <span className="w-2.5 h-2.5 rounded-full bg-white" />
+              </a>
               <div className="relative" ref={moreRef}>
                 <button onClick={() => setMoreOpen(!moreOpen)} title="Más herramientas"
                   className={`flex items-center gap-1 px-2.5 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${moreOpen ? 'bg-fide-700 text-white' : 'text-fide-300 hover:text-white hover:bg-fide-700/50'}`}>
@@ -178,6 +181,10 @@ const mainLinks = [
                 {l.label}
               </Link>
             ))}
+            <a href="https://lichess.org/broadcast" target="_blank" rel="noreferrer" onClick={() => setMenuOpen(false)} title="En directo — Lichess Broadcast"
+              className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm bg-red-600 text-white animate-pulse font-bold tracking-widest">
+              <span className="w-2 h-2 rounded-full bg-white animate-pulse" />EN DIRECTO
+            </a>
             <p className="text-[10px] font-bold uppercase tracking-widest text-fide-500 px-3 pt-2">Más</p>
             {moreLinks.map((l) => (
               l.external ? (
