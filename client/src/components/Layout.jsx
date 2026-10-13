@@ -227,7 +227,7 @@ const navLinks = [
             <LangSwitcher />
             <SyncStatus />
             <NotificationDropdown />
-            <Link to="/app/notifications" title="Centro de notificaciones — urgentes y pendientes del evento" className="hidden md:inline px-2 py-2 rounded-lg hover:bg-fide-700 text-fide-300 hover:text-white transition text-[11px] font-semibold" aria-label="Todas las notificaciones">Ver todas</Link>
+            <Link to="/pricing" title={t('nav.planMembership')} aria-label={t('nav.planMembership')} className="p-2 rounded-lg hover:bg-fide-700 transition text-base leading-none" >💎</Link>
             <GlobalSearch myTournaments={[]} />
             <button onClick={toggle} className="p-2 rounded-lg hover:bg-fide-700 transition-all duration-200" title={dark ? t('nav.lightMode') : t('nav.darkMode')}>
               {dark ? (
@@ -237,12 +237,11 @@ const navLinks = [
               )}
             </button>
             <div className="hidden sm:relative sm:flex items-center" ref={userMenuRef}>
-              <button onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-2 pl-2 border-l border-fide-700 hover:bg-fide-700/50 pr-2 py-1.5 rounded-lg transition">
+              <button onClick={() => setUserMenuOpen(!userMenuOpen)} title={user?.name} aria-label={user?.name || t('nav.myProfile')}
+                className="flex items-center gap-1.5 pl-2 border-l border-fide-700 hover:bg-fide-700/50 pr-1.5 py-1.5 rounded-lg transition">
                 <div className="w-7 h-7 rounded-full bg-fide-600 flex items-center justify-center text-xs font-bold text-amber-400">
                   {user?.name?.charAt(0).toUpperCase() || 'U'}
                 </div>
-                <span className="text-sm text-fide-200 max-w-[120px] truncate">{user?.name}</span>
                 <svg className={`w-3 h-3 text-fide-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
               </button>
               {userMenuOpen && (

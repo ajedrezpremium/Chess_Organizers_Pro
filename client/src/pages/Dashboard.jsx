@@ -25,25 +25,15 @@ export default function Dashboard() {
   const [myTournaments, setMyTournaments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [membership, setMembership] = useState(null);
   const [tab, setTab] = useState('tournaments');
   const [selectedTournamentId, setSelectedTournamentId] = useState(null);
   const [controlData, setControlData] = useState({ rounds: [], players: [] });
   const { toast } = useToast();
 
-  const handleManageBilling = async () => {
-    try {
-      const result = await api.stripePortal({ return_url: window.location.origin + '/' });
-      window.location.href = result.url;
-    } catch (e) {
-      toast.error(e.message || t('dashboard.billingError'));
-    }
-  };
   const fetchData = useCallback(() => {
     setLoading(true);
     const timeout = setTimeout(() => { setLoading(false); }, 5000);
-    api.listTournaments().then((d) => setMyTournaments(d.tournaments)).catch(() => {}).finally(() => clearTimeout(timeout));
-    api.myMembership().then((d) => setMembership(d.membership)).catch(() => {}).finally(() => { clearTimeout(timeout); setLoading(false); });
+    api.listTournaments().then((d) => setMyTournaments(d.tournaments)).catch(() => {}).finally(() => { clearTimeout(timeout); setLoading(false); });
   }, []);
 
   useEffect(() => { fetchData(); }, [location.key]);
@@ -126,35 +116,6 @@ export default function Dashboard() {
 
   return (
     <div className="animate-fadeIn">
-      {/* Membership banner */}
-      {membership && (
-        <div className="mb-6 bg-gradient-to-r from-amber-900/30 to-fide-900/30 border border-amber-800/40 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-amber-400">♛</span>
-            <span className="text-fide-300">{t('dashboard.plan')}:</span>
-            <span className="font-semibold text-amber-300">{membership.plan_name}</span>
-            {membership.max_tournaments > 0 && (
-              <span className="text-fide-400 ml-2">
-                {membership.active_tournaments}/{membership.max_tournaments} {t('nav.tournaments').toLowerCase()}
-              </span>
-            )}
-            {membership.current_period_end && (
-              <span className="text-fide-400 text-xs ml-2">
-                {membership.cancel_at_period_end ? 'Termina' : 'Renueva'} {new Date(membership.current_period_end).toLocaleDateString()}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {membership.stripe_subscription_id && (
-              <button onClick={handleManageBilling} className="text-xs text-amber-400 hover:text-amber-300 underline shrink-0">
-                {t('dashboard.billing')}
-              </button>
-            )}
-            <Link to="/pricing" className="text-xs text-amber-400 hover:text-amber-300 underline shrink-0">{t('dashboard.changePlan')}</Link>
-          </div>
-        </div>
-      )}
-
       {/* Pro header — 3 botones + icono evento chessorganizers.com */}
       <div className="flex flex-wrap items-center gap-2 mb-5">
         <div className="flex items-center gap-2">
