@@ -189,60 +189,97 @@ const $ = cheerioMod.load(html);
 // ================================================================
 async function scrapeFideCalendar(filters = {}) {
   await checkRateLimit('fide-calendar');
-  
+
   const cacheKey = `fide-calendar:${JSON.stringify(filters)}`;
   const cached = getCache(cacheKey);
   if (cached) return cached;
 
   try {
-    // FIDE Calendar oficial
-    const url = 'https://ratings.fide.com/calendar.phtml';
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'text/html',
-      }
-    });
-    
-    const html = await response.text();
     const cheerioMod = await getCheerio();
-if (!cheerioMod) throw new Error('cheerio not available');
-const $ = cheerioMod.load(html);
-    const tournaments = [];
+    if (!cheerioMod) throw new Error('cheerio not available');
 
-    // FIDE Calendar table structure
-    $('table.calendar-table tbody tr, .tournament-row').each((i, el) => {
-      const $el = $(el);
-      const cells = $el.find('td');
-      
-      if (cells.length >= 4) {
-        const name = cells.eq(0).text().trim();
-        const city = cells.eq(1).text().trim();
-        const country = cells.eq(2).text().trim();
-        const dates = cells.eq(3).text().trim();
-        const link = cells.eq(0).find('a').attr('href');
-        
-        if (name) {
-          const { start, end } = parseDateRange(dates);
-          tournaments.push({
-            external_id: `fide-${Date.now()}-${i}`,
-            name,
-            system: 'dutch',
-            n_rounds: 11,
-            federation: 'FIDE',
-            country,
-            city,
-            start_date: parseDate(start),
-            end_date: parseDate(end),
-            time_control: 'Classical',
-            status: determineStatus(start, end),
-            description: '',
-            source_url: link ? `https://ratings.fide.com${link}` : '',
-            player_count: 0,
-          });
-        }
+    // Nuevo calendario oficial FIDE (el antiguo ratings.fide.com/calendar.phtml da 404).
+    // La lista se sirve vía POST a calendar_server.php con show=table.
+    const MONTHS = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
+    const TC_MAP = { standard: 'Classical', classical: 'Classical', rapid: 'Rapid', blitz: 'Blitz' };
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const tournaments = [];
+    const MAX_PAGES = 5;
+
+    for (let page = 1; page <= MAX_PAGES; page++) {
+      const params = new URLSearchParams({ show: 'table', page: String(page) });
+      if (filters.search) params.set('name_filter', filters.search);
+
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 15000);
+      let html;
+      try {
+        const response = await fetch('https://calendar.fide.com/calendar_server.php', {
+          method: 'POST',
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Accept': 'text/html',
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Referer': 'https://calendar.fide.com/calendar.php',
+          },
+          body: params.toString(),
+          signal: ctrl.signal,
+        });
+        html = await response.text();
+      } finally {
+        clearTimeout(timer);
       }
-    });
+
+      const $p = cheerioMod.load(html);
+      const rows = $p('.calendar-h-row');
+      if (!rows.length) break;
+
+      rows.each((i, el) => {
+        const $el = $p(el);
+        const days = $el.find('.t-tile-header-day').map((_, d) => parseInt($p(d).text().trim(), 10)).get().filter((n) => Number.isFinite(n));
+        const monthRaw = ($el.find('.t-tile-header-month').first().text() || '').trim().slice(0, 3).toLowerCase();
+        const m = MONTHS[monthRaw] || 1;
+        // Las filas no traen año: si el mes ya pasó, es del año siguiente.
+        let year = now.getFullYear();
+        if (m < now.getMonth() + 1) year += 1;
+        const d1 = days[0] || 1;
+        const d2 = days[1] || d1;
+        const start_date = `${year}-${pad(m)}-${pad(d1)}`;
+        const end_date = `${year}-${pad(m)}-${pad(d2)}`;
+
+        const link = $el.find('.calendar-h-name a');
+        const name = link.text().trim();
+        if (!name) return;
+        const href = link.attr('href') || '';
+        const idMatch = href.match(/id=(\d+)/);
+        const fideId = idMatch ? idMatch[1] : `${Date.now()}-${page}-${i}`;
+
+        const tcRaw = ($el.find('.calendar-h-start').text() || '').replace(/time control:/i, '').trim();
+        const cityRaw = ($el.find('.calendar-h-city').text() || '').trim();
+        const cityMatch = cityRaw.match(/^(.*),\s*([A-Z]{3})$/);
+        let city = cityMatch ? cityMatch[1].trim() : cityRaw;
+        let ccode = cityMatch ? cityMatch[2] : '';
+        if (!cityMatch && /^[A-Z]{3}$/.test(cityRaw)) ccode = cityRaw;
+
+        tournaments.push({
+          external_id: `fide-${fideId}`,
+          name,
+          system: 'dutch',
+          n_rounds: 11,
+          federation: ccode || 'FIDE',
+          country: ccode,
+          city,
+          start_date,
+          end_date,
+          time_control: TC_MAP[tcRaw.toLowerCase()] || tcRaw || 'Classical',
+          status: determineStatus(start_date, end_date),
+          description: '',
+          source_url: idMatch ? `https://calendar.fide.com/calendar.php?id=${fideId}` : '',
+          player_count: 0,
+        });
+      });
+    }
 
     setCache(cacheKey, tournaments);
     return tournaments;

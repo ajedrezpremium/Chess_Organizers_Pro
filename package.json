@@ -2,6 +2,9 @@
     "name":  "chess-organizers-pro",
     "version":  "1.0.0",
     "private":  true,
+    "dependencies":  {
+                        "cheerio":  "^1.2.0"
+                    },
     "scripts":  {
                     "server":  "cd server \u0026\u0026 npm run dev",
                     "client":  "cd client \u0026\u0026 npm run dev",
