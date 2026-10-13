@@ -131,6 +131,11 @@ export default function Landing() {
               Ver Torneos Públicos →
             </Link>
           </div>
+          <div className="mt-4">
+            <Link to="/pricing" className="text-sm text-fide-300 hover:text-amber-400 underline underline-offset-4 transition">
+              Ver planes →
+            </Link>
+          </div>
 
           {/* Stats counters */}
           <div className="mt-16 grid grid-cols-3 gap-4 max-w-lg mx-auto">

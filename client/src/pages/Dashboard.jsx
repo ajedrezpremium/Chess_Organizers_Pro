@@ -8,6 +8,7 @@ import { useToast } from '../components/Toast.jsx';
 import NotificationSettings from '../components/NotificationSettings.jsx';
 import MyTournamentsList from '../components/Dashboard/MyTournamentsList.jsx';
 import DemoTournamentsPanel from '../components/Dashboard/DemoTournamentsPanel.jsx';
+import GuidedTour from '../components/GuidedTour.jsx';
 import ActiveTournamentsFeed from '../components/Dashboard/ActiveTournamentsFeed.jsx';
 import ArbiterControlCenter from '../components/ArbiterControlCenter.jsx';
 
@@ -26,6 +27,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [tab, setTab] = useState('tournaments');
+  const [tourRun, setTourRun] = useState(false);
   const [selectedTournamentId, setSelectedTournamentId] = useState(null);
   const [controlData, setControlData] = useState({ rounds: [], players: [] });
   const { toast } = useToast();
@@ -37,6 +39,23 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => { fetchData(); }, [location.key]);
+
+  useEffect(() => {
+    if (!loading) {
+      try { if (!localStorage.getItem('cop-tour-done-v1')) setTourRun(true); } catch {}
+    }
+  }, [loading]);
+
+  const closeTour = () => { try { localStorage.setItem('cop-tour-done-v1', '1'); } catch {} setTourRun(false); };
+
+  const tourSteps = [
+    { selector: null, title: t('tour.welcomeTitle'), text: t('tour.welcomeText') },
+    { selector: '[data-tour="proheader"]', title: t('tour.s1Title'), text: t('tour.s1Text') },
+    { selector: '[data-tour="tournaments"]', title: t('tour.s2Title'), text: t('tour.s2Text') },
+    { selector: '[data-tour="demo"]', title: t('tour.s3Title'), text: t('tour.s3Text') },
+    { selector: '[data-tour="tabs"]', title: t('tour.s4Title'), text: t('tour.s4Text') },
+    { selector: null, title: t('tour.finaleTitle'), text: t('tour.finaleText'), cta: { label: t('tour.finaleCta'), to: '/pricing' } },
+  ];
 
   useEffect(() => {
     if (myTournaments.length && !selectedTournamentId) setSelectedTournamentId(myTournaments[0].id);
@@ -72,6 +91,7 @@ export default function Dashboard() {
 
   const handleSelectDemo = (demo) => {
     // Clonar torneo demo y redirigir a edición
+    toast.info(t('dashboard.cloningDemo'));
     api.createTournament({
       name: demo.name.replace('🏆 ', '').replace('🌐 ', '').replace('🏟️ ', ''),
       system: demo.system,
@@ -118,17 +138,18 @@ export default function Dashboard() {
   return (
     <div className="animate-fadeIn">
       {/* Pro header — 3 botones + icono evento chessorganizers.com */}
-      <div className="flex flex-wrap items-center gap-2 mb-5">
+      <div data-tour="proheader" className="flex flex-wrap items-center gap-2 mb-5">
         <div className="flex items-center gap-2">
           <Link to="/catalog?status=active" title="En directo — torneos en juego" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-600 text-white text-xs font-bold tracking-widest hover:bg-emerald-500 transition shadow-sm hover:shadow-md active:scale-95"><span className="w-2 h-2 rounded-full bg-white animate-pulse" /> {t('dashboard.live')} <span className="bg-white text-emerald-700 px-1.5 py-0.5 rounded-full text-[10px]">{activeCount}</span></Link>
           <Link to="/catalog?status=pending" title="Próximos — torneos pendientes" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500 text-black text-xs font-bold tracking-widest hover:bg-amber-400 transition shadow-sm hover:shadow-md active:scale-95"><span className="w-2 h-2 rounded-full bg-black" /> {t('dashboard.upcoming')} <span className="bg-black text-amber-400 px-1.5 py-0.5 rounded-full text-[10px]">{pendingCount}</span></Link>
           <Link to="/catalog?status=finished" title="Historial — torneos finalizados (pasados)" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-600 text-white text-xs font-bold tracking-widest hover:bg-sky-500 transition shadow-sm hover:shadow-md active:scale-95"><span className="w-2 h-2 rounded-full bg-white" /> {t('dashboard.history')} <span className="bg-white text-sky-700 px-1.5 py-0.5 rounded-full text-[10px]">{finishedCount}</span></Link>
         </div>
         <a href="https://chessorganizers.com" target="_blank" rel="noopener noreferrer" title="Evento — chessorganizers.com" className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-amber-700 text-white text-sm font-bold shadow-sm hover:shadow-md hover:scale-105 transition">♛</a>
+        <button onClick={() => setTourRun(true)} title="Tour guiado" className="inline-flex items-center h-8 px-3 rounded-full border border-fide-600 text-fide-300 text-xs font-bold hover:border-amber-400 hover:text-amber-300 transition">🎯 Tour</button>
       </div>
 
       {/* Nav tabs */}
-      <div className="flex gap-1 border-b border-fide-700/50 mb-6">
+      <div data-tour="tabs" className="flex gap-1 border-b border-fide-700/50 mb-6">
         <button onClick={() => setTab('tournaments')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition ${tab === 'tournaments' ? 'border-amber-500 text-amber-400' : 'border-transparent text-fide-400 hover:text-fide-300'}`}>{t('dashboard.tabTournaments')}</button>
         <button onClick={() => setTab('notifications')}
@@ -161,14 +182,18 @@ export default function Dashboard() {
           {/* LAYOUT LIMPIO — Sin columna derecha redundante (header ya tiene EN DIRECTO, Escanear y botones LIVE/PRÓXIMOS/HISTORIAL) */}
           <div className="space-y-6 max-w-3xl mx-auto">
               {/* 1. Mis Torneos (MI HISTORIAL) */}
+              <div data-tour="tournaments">
               <MyTournamentsList
                 tournaments={myTournaments}
                 onOpen={handleOpenTournament}
                 emptyMessage={t('dashboard.noTournaments')}
               />
+              </div>
 
               {/* 2. Torneos Demo Preconfigurados (3 modalidades) */}
-              <DemoTournamentsPanel onSelectDemo={handleSelectDemo} />
+              <div data-tour="demo">
+              <DemoTournamentsPanel onOpen={handleSelectDemo} />
+              </div>
 
               {/* 3. 10 Torneos ACTIVOS — Efecto Llamada */}
               <ActiveTournamentsFeed
@@ -182,6 +207,8 @@ export default function Dashboard() {
           </div>
         </>
       )}
+
+      {tourRun && <GuidedTour steps={tourSteps} onClose={closeTour} />}
 
       <ConfirmModal
         open={!!deleteTarget}

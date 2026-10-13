@@ -153,6 +153,38 @@ export default function PricingPage() {
           </div>
         )}
 
+        {/* Confianza */}
+        <div className="flex flex-wrap justify-center gap-x-8 gap-y-2 mt-12 text-sm text-gray-400">
+          {[t('pricing.trust1'), t('pricing.trust2'), t('pricing.trust3')].map((x) => (
+            <span key={x} className="flex items-center gap-2"><span className="text-green-500 font-bold">✓</span>{x}</span>
+          ))}
+        </div>
+
+        {/* Garantía */}
+        <div className="max-w-5xl mx-auto mt-6 bg-amber-500/10 border border-amber-500/30 rounded-2xl px-6 py-4 text-center text-sm text-amber-300">
+          🛡️ {t('pricing.guarantee')}
+        </div>
+
+        {/* FAQ */}
+        <div className="max-w-3xl mx-auto mt-12">
+          <h2 className="text-xl font-bold text-white text-center mb-4">{t('pricing.faqTitle')}</h2>
+          <div className="space-y-2">
+            {[1, 2, 3, 4].map((n) => (
+              <details key={n} className="bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 text-sm">
+                <summary className="cursor-pointer font-medium text-white">{t(`pricing.faq${n}q`)}</summary>
+                <p className="text-gray-400 mt-2">{t(`pricing.faq${n}a`)}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+
+        {/* CTA final */}
+        <div className="max-w-5xl mx-auto mt-12 bg-gradient-to-r from-amber-600 to-amber-500 rounded-2xl px-6 py-10 text-center">
+          <h2 className="text-2xl font-bold text-black">{t('pricing.ctaTitle')}</h2>
+          <p className="text-black/70 text-sm mt-2 mb-6">{t('pricing.ctaSub')}</p>
+          <Link to={user ? '/' : '/register'} className="inline-block bg-black text-amber-400 font-bold px-8 py-3 rounded-xl hover:scale-105 transition">{t('pricing.ctaBtn')}</Link>
+        </div>
+
         {user && current && (
           <div className="text-center mt-8 text-sm text-gray-600">
             {t('pricing.currentPlan')}: <span className="text-amber-500 font-medium">{current.plan_name}</span>

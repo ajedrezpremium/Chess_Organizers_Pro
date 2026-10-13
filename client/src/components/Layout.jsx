@@ -61,6 +61,7 @@ const mainLinks = [
     { to: '/app/directory', label: 'Directorio', icon: 'directory', title: 'Directorio federaciones, clubes y escuelas' },
     { to: '/app/search', label: 'Buscar', icon: 'search', title: 'Buscador universal (país, fecha, nombre)' },
     { to: `/catalog?year=${currentYear}`, label: 'Calendario', icon: 'calendar', title: 'Calendario — torneos por fecha' },
+    { to: 'https://calendar.fide.com/calendar.php', label: 'Calendario FIDE', icon: 'calendar', title: 'Calendario oficial FIDE', external: true },
   ];
 
   return (
