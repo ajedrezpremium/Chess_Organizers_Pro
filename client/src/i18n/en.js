@@ -185,7 +185,7 @@ activeFeedTitle: 'Active Tournaments — Pending',
     pts: 'Pts', seed: '#',
   },
   chat: {
-    title: 'COP Assistant', online: 'Online', placeholder: 'Type your question...',
+    title: 'CHESS ARBITER', online: 'Online', placeholder: 'Type your question...',
     faqTitle: '— Frequently Asked —', hideFaq: '✕ Hide FAQ', showFaq: '📋 FAQ',
     reset: '🔄 Reset', share: 'Share chat', tts: 'Read', ttsStop: 'Stop',
     voiceFemale: '👩 Female', voiceMale: '👨 Male', stt: '🎤 Speak',

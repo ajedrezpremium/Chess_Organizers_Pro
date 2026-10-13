@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { api } from '../api/client.js';
 import { useI18n } from '../i18n/context.jsx';
 
-function buildFAQ(t) {
+buildFAQ(t) {
   return [
     { q: t('chat.faq1_q'), a: t('chat.faq1_a') },
     { q: t('chat.faq2_q'), a: t('chat.faq2_a') },

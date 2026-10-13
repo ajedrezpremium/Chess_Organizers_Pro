@@ -78,6 +78,23 @@ const NOVELTIES_ANSWER = {
   pt: { answer: 'Não há edição posterior às Leis FIDE 2023 (vigentes desde 01/01/2023, handbook.fide.com). Posso explicar pontos-chave ou qualquer artigo: lance ilegal, peça tocada, celular, empates, sanções… Diga o tema.', article: null, title: 'Leis FIDE 2023' },
 };
 
+// Preguntas de tipo "qué sabes / conoce las leyes": demostrar experticia
+const KNOWLEDGE_HINTS = {
+  es: ['qué sabes', 'que sabes', 'conoces', 'conoces las leyes', 'sabes de las leyes', 'qué conoces', 'que conoces', 'experto', 'eres experto', 'conocimiento', 'domina'],
+  en: ["what do you know", 'what do you know about', 'do you know', 'know the laws', 'are you expert', 'expert in', 'knowledge of'],
+  fr: ['que savez-vous', 'savez-vous', 'connaissez-vous', 'connaissez les lois', 'expert', 'êtes-vous expert'],
+  de: ['was wissen sie', 'was weißt du', 'kennen sie die regeln', 'kennst du', 'experte', 'bist du experte'],
+  pt: ['o que você sabe', 'sabe das leis', 'conhece as leis', 'é especialista', 'conhecimento'],
+};
+
+const KNOWLEDGE_ANSWER = {
+  es: { answer: 'Conozco en profundidad las Leyes FIDE 2023 (vigentes desde 01/01/2023): Art. 1-12 (reglas de juego), Apéndices A-G, Guidelines. Domino: jugadas ilegales (7.5), pieza tocada (4.3), tablas (5.1, 9.1-9.6), reloj (6.1-6.11), anotación (8.1-8.4), móvil (11.3), conducta (11.5), sanciones (12.9), apéndices A-G. También sistemas de emparejamiento (holandés, round-robin), desempates, emparejamientos por equipos, TRF, rating FIDE. Pregunta cualquier artículo o caso práctico.', article: null, title: 'Experto Leyes FIDE 2023' },
+  en: { answer: 'I know the FIDE Laws 2023 in depth (in force since 01/01/2023): Arts. 1-12, Appendices A-G, Guidelines. Expert in: illegal moves (7.5), touch-move (4.3), draws (5.1, 9.1-9.6), clock (6.1-6.11), notation (8.1-8.4), mobile (11.3), conduct (11.5), penalties (12.9), appendices A-G. Also pairing systems (Dutch, RR), tie-breaks, team pairings, TRF, FIDE rating. Ask any article or practical case.', article: null, title: 'FIDE Laws 2023 Expert' },
+  fr: { answer: 'Je connais en profondeur les Lois FIDE 2023 (en vigueur depuis 01/01/2023) : Arts. 1-12, Annexes A-G, Guidelines. Expert en : coups illégaux (7.5), pièce touchée (4.3), nulles (5.1, 9.1-9.6), pendules (6.1-6.11), notation (8.1-8.4), mobile (11.3), conduite (11.5), sanctions (12.9), annexes A-G. Aussi systèmes d\'appariement (hollandais, RR), départages, matchs par équipes, TRF, rating FIDE. Posez toute question.', article: null, title: 'Expert Lois FIDE 2023' },
+  de: { answer: 'Ich kenne die FIDE-Regeln 2023 (gültig seit 01.01.2023) in der Tiefe: Art. 1-12, Anhänge A-G, Guidelines. Expertise: regelwidrige Züge (7.5), berührte Figur (4.3), Remis (5.1, 9.1-9.6), Uhren (6.1-6.11), Notation (8.1-8.4), Handy (11.3), Verhalten (11.5), Strafen (12.9), Anhänge A-G. Auch Paarungssysteme (holländisch, RR), Tie-Breaks, Mannschaftskämpfe, TRF, FIDE-Rating. Fragen Sie jeden Artikel.', article: null, title: 'FIDE-Regeln 2023 Experte' },
+  pt: { answer: 'Conheço em profundidade as Leis FIDE 2023 (vigentes desde 01/01/2023): Arts. 1-12, Apêndices A-G, Guidelines. Domínio: lances ilegais (7.5), peça tocada (4.3), empates (5.1, 9.1-9.6), relógios (6.1-6.11), anotação (8.1-8.4), celular (11.3), conduta (11.5), sanções (12.9), apêndices A-G. Também sistemas de emparelhamento (holandês, RR), desempates, matchs por equipes, TRF, rating FIDE. Pergunte qualquer artigo.', article: null, title: 'Especialista Leis FIDE 2023' },
+};
+
 function buildFallbackAnswer(question, lang) {
   const l = normalizeAiLang(lang);
   const t = FALLBACK_TEXT[l];
@@ -90,6 +107,9 @@ function buildFallbackAnswer(question, lang) {
   }
   if (NOVELTIES_HINTS[l].some((h) => q.includes(h))) {
     return { ...NOVELTIES_ANSWER[l], confidence: 'medium', related: [] };
+  }
+  if (KNOWLEDGE_HINTS[l].some((h) => q.includes(h))) {
+    return { ...KNOWLEDGE_ANSWER[l], confidence: 'high', related: [] };
   }
   return { answer: t.generic, article: null, title: null, confidence: 'low', related: [] };
 }

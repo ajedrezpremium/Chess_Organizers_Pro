@@ -185,7 +185,7 @@ export default {
     pts: 'Pts', seed: '#',
   },
   chat: {
-    title: 'Assistente COP', online: 'Online', placeholder: 'Digite sua pergunta...',
+    title: 'CHESS ARBITER', online: 'Online', placeholder: 'Digite sua pergunta...',
     faqTitle: '— Perguntas frequentes —', hideFaq: '✕ Ocultar FAQ', showFaq: '📋 FAQ',
     reset: '🔄 Reiniciar', share: 'Compartilhar chat', tts: 'Ler', ttsStop: 'Parar',
     voiceFemale: '👩 Feminina', voiceMale: '👨 Masculina', stt: '🎤 Falar',
