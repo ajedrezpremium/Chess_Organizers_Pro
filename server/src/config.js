@@ -37,7 +37,7 @@ export default {
 
   ai: {
     openrouterKey: get('OPENROUTER_API_KEY', ''),
-    model: get('AI_MODEL', 'google/gemini-2.0-flash-001'),
+    model: get('AI_MODEL', 'google/gemini-2.5-flash'),
     systemPrompt: FIDE_LAWS_SYSTEM_PROMPT,
   },
 

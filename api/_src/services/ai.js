@@ -61,6 +61,24 @@ const TOUCH_HINTS = {
   pt: ['tocada', 'tocar', 'peça tocada'],
 };
 
+// Preguntas sobre "reglas nuevas / novedades": no hay edición posterior a
+// las Leyes 2023; respuesta estática honesta en cada idioma.
+const NOVELTIES_HINTS = {
+  es: ['nuevas reglas', 'reglas nuevas', 'nueva regla', 'novedad', 'novedades', 'últimas reglas', 'ultimas reglas', 'últimas', 'ultimas', 'nuevas', 'nuevo reglamento', 'reglamento', 'actualiz', '2024', '2025', '2026'],
+  en: ["what's new", 'what is new', 'new rules', 'latest rules', 'newest', 'latest', 'rule change', 'rules changed', 'rule update', 'rules updated', 'updated rules', 'new regulation', '2024', '2025', '2026'],
+  fr: ['nouvelle règle', 'nouveautés', 'dernières', 'dernieres', 'nouveaux', 'nouvelles', 'changements', 'modifi', '2024', '2025', '2026'],
+  de: ['neue regeln', 'neuesten', 'neusten', 'neuerungen', 'änderung', 'geändert', 'aktualisiert', '2024', '2025', '2026'],
+  pt: ['novas regras', 'regras novas', 'novidades', 'últimas', 'ultimas', 'novas', 'mudanças', 'atualiz', 'novo regulamento', 'regulamento', '2024', '2025', '2026'],
+};
+
+const NOVELTIES_ANSWER = {
+  es: { answer: 'No hay una edición posterior a las Leyes FIDE 2023 (vigentes desde el 01/01/2023, handbook.fide.com): son las actuales. Puedo explicarte sus puntos clave o cualquier artículo concreto: jugada ilegal, pieza tocada, móvil, tablas, sanciones… Dime el tema.', article: null, title: 'Leyes FIDE 2023' },
+  en: { answer: 'There is no edition after the FIDE Laws of Chess 2023 (in force since 01/01/2023, handbook.fide.com): they are current. I can explain key points or any specific article: illegal move, touch-move, mobile phones, draws, penalties… Tell me the topic.', article: null, title: 'FIDE Laws 2023' },
+  fr: { answer: 'Il n’existe pas d’édition postérieure aux Lois FIDE 2023 (en vigueur depuis le 01/01/2023, handbook.fide.com). Je peux expliquer les points clés ou tout article : coup illégal, pièce touchée, mobile, nulles, sanctions… Précisez le sujet.', article: null, title: 'Lois FIDE 2023' },
+  de: { answer: 'Es gibt keine Ausgabe nach den FIDE-Regeln 2023 (gültig seit 01.01.2023, handbook.fide.com). Ich kann Kernpunkte oder jeden Artikel erklären: regelwidrige Züge, berührte Figur, Handy, Remis, Strafen… Nenne das Thema.', article: null, title: 'FIDE-Regeln 2023' },
+  pt: { answer: 'Não há edição posterior às Leis FIDE 2023 (vigentes desde 01/01/2023, handbook.fide.com). Posso explicar pontos-chave ou qualquer artigo: lance ilegal, peça tocada, celular, empates, sanções… Diga o tema.', article: null, title: 'Leis FIDE 2023' },
+};
+
 function buildFallbackAnswer(question, lang) {
   const l = normalizeAiLang(lang);
   const t = FALLBACK_TEXT[l];
@@ -70,6 +88,9 @@ function buildFallbackAnswer(question, lang) {
   }
   if (TOUCH_HINTS[l].some((h) => q.includes(h))) {
     return { ...t.touched, confidence: 'high', related: [] };
+  }
+  if (NOVELTIES_HINTS[l].some((h) => q.includes(h))) {
+    return { ...NOVELTIES_ANSWER[l], confidence: 'medium', related: [] };
   }
   return { answer: t.generic, article: null, title: null, confidence: 'low', related: [] };
 }
