@@ -126,9 +126,15 @@ activeFeedTitle: 'Active Tournaments — Pending',
     system: 'System', rounds: 'Number of rounds', federation: 'Federation',
     timeControl: 'Time control', description: 'Description',
     descPlaceholder: 'Additional tournament information...',
-    creating: 'Creating...', create: 'Create Tournament', systems: {
+    creating: 'Creating...', create: 'Create Tournament',
+    ratingUpdateMode: 'Rating Update Mode',
+    ratingUpdateInitial: 'Initial tournament Elo',
+    ratingUpdateMonthly: 'Updated monthly FIDE list',
+    ratingUpdateDesc: 'For tournaments >30 days: use initial Elo or update via monthly FIDE list',
+    systems: {
       dutch: 'Dutch Swiss (FIDE)', roundrobin: 'Round Robin (Berger)',
       burstein: 'Burstein (3 bands)', dubov: 'Dubov (4 quartiles)',
+      swiss960: 'Swiss Chess960 (Fischer Random)', roundrobin960: 'Round Robin Chess960',
     },
   },
   settings: {

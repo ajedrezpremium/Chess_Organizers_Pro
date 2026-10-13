@@ -5,17 +5,19 @@ import { useI18n } from '../i18n/context.jsx';
 import { useToast } from '../components/Toast.jsx';
 
 const SYSTEMS = [
-  { value: 'dutch', labelKey: 'dutch', descKey: 'dutch' },
-  { value: 'roundrobin', labelKey: 'roundrobin', descKey: 'roundrobin' },
-  { value: 'burstein', labelKey: 'burstein', descKey: 'burstein' },
-  { value: 'dubov', labelKey: 'dubov', descKey: 'dubov' },
+  { value: 'dutch', labelKey: 'dutch', descKey: 'dutch', category: 'standard' },
+  { value: 'roundrobin', labelKey: 'roundrobin', descKey: 'roundrobin', category: 'standard' },
+  { value: 'burstein', labelKey: 'burstein', descKey: 'burstein', category: 'standard' },
+  { value: 'dubov', labelKey: 'dubov', descKey: 'dubov', category: 'standard' },
+  { value: 'swiss960', labelKey: 'swiss960', descKey: 'swiss960', category: 'chess960' },
+  { value: 'roundrobin960', labelKey: 'roundrobin960', descKey: 'roundrobin960', category: 'chess960' },
 ];
 
 export default function TournamentNew() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useI18n();
-  const [form, setForm] = useState({ name: '', system: 'dutch', n_rounds: 6, federation: '', time_control: '90+30', description: '' });
+  const [form, setForm] = useState({ name: '', system: 'dutch', n_rounds: 6, federation: '', time_control: '90+30', description: '', rating_update_mode: 'initial' });
   const [saving, setSaving] = useState(false);
   const [selectedSystem, setSelectedSystem] = useState('dutch');
 
@@ -66,21 +68,25 @@ export default function TournamentNew() {
             placeholder={t('newTournament.namePlaceholder')} />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-fide-200 mb-1.5">{t('newTournament.system')}</label>
-            <select name="system" value={form.system} onChange={handleChange}
-              className="w-full border border-gray-300 dark:border-fide-600 rounded-lg px-3.5 py-2.5 text-sm bg-white dark:bg-fide-700 dark:text-white focus:ring-2 focus:ring-fide-500 focus:border-fide-500 outline-none transition-all duration-200">
-              {sysList.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-            </select>
-            <p className="text-xs text-gray-400 dark:text-fide-500 mt-1">{sysList.find((s) => s.value === form.system)?.desc}</p>
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-fide-200 mb-1.5">{t('newTournament.system')}</label>
+              <select name="system" value={form.system} onChange={handleChange}
+                className="w-full border border-gray-300 dark:border-fide-600 rounded-lg px-3.5 py-2.5 text-sm bg-white dark:bg-fide-700 dark:text-white focus:ring-2 focus:ring-fide-500 focus:border-fide-500 outline-none transition-all duration-200">
+                {sysList.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+              </select>
+              <p className="text-xs text-gray-400 dark:text-fide-500 mt-1">{sysList.find((s) => s.value === form.system)?.desc}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-fide-200 mb-1.5">{t('newTournament.ratingUpdateMode')}</label>
+              <select name="rating_update_mode" value={form.rating_update_mode} onChange={handleChange}
+                className="w-full border border-gray-300 dark:border-fide-600 rounded-lg px-3.5 py-2.5 text-sm bg-white dark:bg-fide-700 dark:text-white focus:ring-2 focus:ring-fide-500 focus:border-fide-500 outline-none transition-all duration-200">
+                <option value="initial">{t('newTournament.ratingUpdateInitial')}</option>
+                <option value="monthly">{t('newTournament.ratingUpdateMonthly')}</option>
+              </select>
+              <p className="text-xs text-gray-400 dark:text-fide-500 mt-1">{t('newTournament.ratingUpdateDesc')}</p>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-fide-200 mb-1.5">{t('newTournament.rounds')}</label>
-            <input name="n_rounds" type="number" value={form.n_rounds} onChange={handleChange} min={1} max={99}
-              className="w-full border border-gray-300 dark:border-fide-600 rounded-lg px-3.5 py-2.5 text-sm bg-white dark:bg-fide-700 dark:text-white focus:ring-2 focus:ring-fide-500 focus:border-fide-500 outline-none transition-all duration-200" />
-          </div>
-        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>

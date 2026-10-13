@@ -126,9 +126,15 @@ export default {
     system: 'Système', rounds: 'Nombre de rondes', federation: 'Fédération',
     timeControl: 'Contrôle du temps', description: 'Description',
     descPlaceholder: 'Informations supplémentaires sur le tournoi...',
-    creating: 'Création...', create: 'Créer le Tournoi', systems: {
+    creating: 'Création...', create: 'Créer le Tournoi',
+    ratingUpdateMode: 'Mode de mise à jour Elo',
+    ratingUpdateInitial: 'Elo initial du tournoi',
+    ratingUpdateMonthly: 'Liste FIDE mensuelle mise à jour',
+    ratingUpdateDesc: 'Tournois >30 jours: Elo initial ou liste FIDE mensuelle',
+    systems: {
       dutch: 'Suisse Hollandais (FIDE)', roundrobin: 'Round Robin (Berger)',
       burstein: 'Burstein (3 groupes)', dubov: 'Dubov (4 quartiles)',
+      swiss960: 'Suisse Chess960 (Fischer Random)', roundrobin960: 'Round Robin Chess960',
     },
   },
   settings: {

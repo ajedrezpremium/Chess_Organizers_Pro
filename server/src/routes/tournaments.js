@@ -41,14 +41,15 @@ router.post('/', authenticate, validate({
   n_rounds: { type: 'integer' },
   start_date: { type: 'date' },
   time_control: { type: 'string' },
+  rating_update_mode: { type: 'string' },
 }), async (req, res) => {
   const db = getDb();
-  const { name, system, n_rounds, start_date, end_date, city, federation, time_control, rated, chief_arbiter, description } = req.body;
+  const { name, system, n_rounds, start_date, end_date, city, federation, time_control, rated, chief_arbiter, description, rating_update_mode } = req.body;
 
   const result = await db.prepare(`
-    INSERT INTO tournaments (name, system, n_rounds, start_date, end_date, city, federation, time_control, rated, chief_arbiter, description, created_by)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(name, system ?? 'dutch', n_rounds ?? 6, start_date ?? null, end_date ?? null, city ?? '', federation ?? '', time_control ?? '90+30', rated ?? 1, chief_arbiter ?? '', description ?? '', req.user.id);
+    INSERT INTO tournaments (name, system, n_rounds, start_date, end_date, city, federation, time_control, rated, chief_arbiter, description, rating_update_mode, created_by)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(name, system ?? 'dutch', n_rounds ?? 6, start_date ?? null, end_date ?? null, city ?? '', federation ?? '', time_control ?? '90+30', rated ?? 1, chief_arbiter ?? '', description ?? '', rating_update_mode ?? 'initial', req.user.id);
 
   const tournament = await db.prepare('SELECT * FROM tournaments WHERE id = ?').get(result.lastInsertRowid);
 
@@ -64,7 +65,7 @@ router.patch('/:id', authenticate, async (req, res) => {
   const t = await db.prepare('SELECT * FROM tournaments WHERE id = ? AND created_by = ?').get(req.params.id, req.user.id);
   if (!t) return res.status(404).json({ error: 'Torneo no encontrado' });
 
-  const allowed = ['name','system','n_rounds','start_date','end_date','city','federation','time_control','rated','chief_arbiter','status','description','primary_color','secondary_color','logo_url','banner_url','stream_url','stream_platform','registration_fee','registration_currency','auto_approve','custom_fields','categories','fide_event_id','documents','links'];
+  const allowed = ['name','system','n_rounds','start_date','end_date','city','federation','time_control','rated','chief_arbiter','status','description','primary_color','secondary_color','logo_url','banner_url','stream_url','stream_platform','registration_fee','registration_currency','auto_approve','custom_fields','categories','fide_event_id','documents','links','rating_update_mode'];
   const updates = [];
   const params = [];
 

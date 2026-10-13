@@ -620,6 +620,8 @@ function GroupsTab({ tournamentId, groups, tournament, onUpdate }) {
               <option value="roundrobin">Round Robin</option>
               <option value="burstein">Burstein</option>
               <option value="dubov">Dubov</option>
+              <option value="swiss960">Suizo Chess960</option>
+              <option value="roundrobin960">Round Robin Chess960</option>
             </select>
             <input type="number" value={form.n_rounds} onChange={(e) => setForm({ ...form, n_rounds: parseInt(e.target.value) || 6 })}
               placeholder="Rondas" className="border dark:border-fide-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none" />
@@ -649,6 +651,7 @@ function GroupsTab({ tournamentId, groups, tournament, onUpdate }) {
                     className="w-full border dark:border-fide-600 rounded px-2 py-1 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none">
                     <option value="dutch">Suizo Holandés</option><option value="roundrobin">Round Robin</option>
                     <option value="burstein">Burstein</option><option value="dubov">Dubov</option>
+                    <option value="swiss960">Suizo Chess960</option><option value="roundrobin960">Round Robin Chess960</option>
                   </select>
                   <div className="flex gap-2">
                     <input type="number" value={editing.n_rounds} onChange={(e) => setEditing({ ...editing, n_rounds: parseInt(e.target.value) || 6 })}
@@ -939,6 +942,7 @@ function SettingsTab({ tournament, onUpdate }) {
   });
   const [arbiters, setArbiters] = useState([]);
   const [newArbiterEmail, setNewArbiterEmail] = useState('');
+  const [ratingUpdateMode, setRatingUpdateMode] = useState(tournament.rating_update_mode || 'initial');
 
   useEffect(() => {
     api.arbiter.listArbiters(tournament.id).then(setArbiters).catch(() => {});
@@ -976,6 +980,7 @@ function SettingsTab({ tournament, onUpdate }) {
         fide_event_id: fideEventId,
         documents: JSON.stringify(documents),
         links: JSON.stringify(links),
+        rating_update_mode: ratingUpdateMode,
       });
       toast.success(t('settings.saved'));
       onUpdate();
@@ -983,9 +988,9 @@ function SettingsTab({ tournament, onUpdate }) {
   };
 
   const handleReset = async () => {
-    setPrimary('#f59e0b'); setSecondary('#1f2937'); setLogo(''); setBannerUrl(''); setStreamUrl(''); setStreamPlatform(''); setCategoriesStr(''); setRegFee(0); setRegCurrency('usd'); setAutoApprove(false); setCustomFields([]); setFideEventId(''); setFideApproved(0); setDocuments([]); setLinks({});
+    setPrimary('#f59e0b'); setSecondary('#1f2937'); setLogo(''); setBannerUrl(''); setStreamUrl(''); setStreamPlatform(''); setCategoriesStr(''); setRegFee(0); setRegCurrency('usd'); setAutoApprove(false); setCustomFields([]); setFideEventId(''); setFideApproved(0); setDocuments([]); setLinks({}); setRatingUpdateMode('initial');
     try {
-      await api.updateTournament(tournament.id, { primary_color: '#f59e0b', secondary_color: '#1f2937', logo_url: '', banner_url: '', stream_url: '', stream_platform: '', categories: '', registration_fee: 0, registration_currency: 'usd', auto_approve: 0, custom_fields: '[]', fide_event_id: '', documents: '[]', links: '{}' });
+      await api.updateTournament(tournament.id, { primary_color: '#f59e0b', secondary_color: '#1f2937', logo_url: '', banner_url: '', stream_url: '', stream_platform: '', categories: '', registration_fee: 0, registration_currency: 'usd', auto_approve: 0, custom_fields: '[]', fide_event_id: '', documents: '[]', links: '{}', rating_update_mode: 'initial' });
       toast.success(t('settings.resetSuccess'));
       onUpdate();
     } catch (e) { toast.error(e.message); }
@@ -1115,44 +1120,25 @@ function SettingsTab({ tournament, onUpdate }) {
                 className="rounded bg-gray-800 border-gray-700 text-fide-600 focus:ring-fide-500" />
               Aprobar automáticamente al pagar
             </label>
-          </div>
+</div>
         </div>
       </div>
 
-      {/* FIDE Event ID */}
       <div className="bg-white dark:bg-fide-800 border dark:border-fide-700 rounded-xl p-6 shadow-sm">
-        <h3 className="text-sm font-semibold dark:text-white mb-4 flex items-center gap-2">♛ FIDE Event ID</h3>
-        <p className="text-xs text-gray-500 dark:text-fide-400 mb-4">
-          Ingresa el ID del evento FIDE para que el torneo aparezca vinculado al registro oficial de FIDE.
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="text-xs text-gray-500 dark:text-fide-400 mb-1 block">FIDE Event ID</label>
-            <input value={fideEventId} onChange={(e) => setFideEventId(e.target.value)}
-              placeholder="Ej: 123456"
-              className="w-full border dark:border-fide-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none focus:ring-2 focus:ring-fide-500 font-mono" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 dark:text-fide-400 mb-1 block">Estado FIDE</label>
-            <div className="flex items-center gap-2 h-10">
-              {fideApproved || tournament.submitted_to_fide ? (
-                <span className="inline-flex items-center gap-1 text-xs bg-green-900/40 text-green-400 px-3 py-1.5 rounded-full border border-green-700/50">
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                  {tournament.submitted_to_fide ? 'Enviado a FIDE' : 'Aprobado por FIDE'}
-                </span>
-              ) : (
-                <span className="text-xs text-gray-500">No enviado</span>
-              )}
-              {fideEventId && (
-                <a href={`https://ratings.fide.com/tournament_details.phtml?event=${fideEventId}`} target="_blank" rel="noopener noreferrer"
-                  className="text-xs text-fide-500 hover:underline ml-2">Ver en FIDE ↗</a>
-              )}
-            </div>
-          </div>
-        </div>
+        <h3 className="text-sm font-semibold dark:text-white mb-4 flex items-center gap-2">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          Actualización de Rating (Regla 30+ días)
+        </h3>
+        <p className="text-xs text-gray-500 dark:text-fide-400 mb-4">Para torneos que duran más de 30 días: elegir si se usa el Elo inicial del torneo o la lista FIDE mensual actualizada para cálculo de desempates (ARO, TPR).</p>
+        <select value={ratingUpdateMode} onChange={(e) => setRatingUpdateMode(e.target.value)}
+          className="w-full max-w-xs border dark:border-fide-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-fide-700 dark:text-white outline-none focus:ring-2 focus:ring-fide-500">
+        <option value="initial">Elo inicial del torneo (por defecto)</option>
+        <option value="monthly">Lista FIDE mensual actualizada</option>
+        </select>
+<p className="text-xs text-gray-500 dark:text-fide-400 mt-2">
+            {'Seg\\u00e1n VCL4THP v13 Preguntas 210-216: en torneos >30 d\\u00edas se puede elegir Elo inicial o lista mensual.'}
+          </p>
       </div>
-
-      {/* Documentos (reglamentos, PDFs) */}
       <div className="bg-white dark:bg-fide-800 border dark:border-fide-700 rounded-xl p-6 shadow-sm">
         <h3 className="text-sm font-semibold dark:text-white mb-4">Documentos</h3>
         <p className="text-xs text-gray-500 dark:text-fide-400 mb-4">Añade enlaces a reglamentos, PDFs, circulares. Se mostrarán en la página pública del torneo.</p>

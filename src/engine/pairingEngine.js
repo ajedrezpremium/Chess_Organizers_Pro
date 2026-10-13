@@ -25,11 +25,13 @@ export const Backend = {
 };
 
 export const System = {
-  DUTCH:     'dutch',
-  ROUNDROBIN:'roundrobin',
-  BURSTEIN:  'burstein',
-  DUBOV:     'dubov',
-  KNOCKOUT:  'knockout',
+  DUTCH:      'dutch',
+  ROUNDROBIN: 'roundrobin',
+  BURSTEIN:   'burstein',
+  DUBOV:      'dubov',
+  KNOCKOUT:   'knockout',
+  SWISS960:   'swiss960',
+  RR960:      'roundrobin960',
 };
 
 export class PairingEngine {
@@ -69,17 +71,23 @@ export class PairingEngine {
   async pairNextRound({ trf, system = 'dutch', players, round, bandA }) {
     const backend = await this.resolveBackend();
 
+    // Chess960 systems use standard pairing logic but with Chess960 position
+    const isChess960 = system === System.SWISS960 || system === System.RR960;
+    const baseSystem = isChess960
+      ? (system === System.SWISS960 ? System.DUTCH : System.ROUNDROBIN)
+      : system;
+
     if (backend === Backend.BBP) {
-      if (system === System.ROUNDROBIN) {
+      if (baseSystem === System.ROUNDROBIN) {
         return this._pairRRWithJS(players, round);
       }
-      return this._pairWithBBP(trf, system);
+      return this._pairWithBBP(trf, baseSystem);
     }
 
-    if (system === System.ROUNDROBIN) return this._pairRRWithJS(players, round);
-    if (system === System.BURSTEIN)   return this._pairBurstein(players, round, bandA ?? this._bandA);
-    if (system === System.DUBOV)      return this._pairDubov(players, round);
-    if (system === System.KNOCKOUT)   return this._pairKO(players, round);
+    if (baseSystem === System.ROUNDROBIN) return this._pairRRWithJS(players, round);
+    if (baseSystem === System.BURSTEIN)   return this._pairBurstein(players, round, bandA ?? this._bandA);
+    if (baseSystem === System.DUBOV)      return this._pairDubov(players, round);
+    if (baseSystem === System.KNOCKOUT)   return this._pairKO(players, round);
     return this._pairWithJS(players, round);
   }
 

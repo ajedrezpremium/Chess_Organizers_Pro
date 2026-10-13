@@ -17,11 +17,15 @@
 | 9 | Base de datos de jugadores | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 |10 | **Formulario público de inscripción** | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ |
 |11 | **Campos personalizados en registro** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-|12 | Importación CSV/TRF/TSV (auto-mapeo) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+|12 | Importación CSV/TRF/TSV/Vega (auto-mapeo) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 |13 | Importación desde FIDE (búsqueda + lote) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 |14 | **Categorías (U8/U10/Open)** | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+|15 | **Torneos por equipos (Suizo/RR)** | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ |
+|16 | **Importación equipos + tableros (CSV)** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+|17 | **Composición por ronda (alineación)** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+|18 | **Importación formato Vega nativo (TSV ;)** | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ |
 | | **📊 RESULTADOS Y CLASIFICACIÓN** |
-|15 | Clasificación en vivo con tiebreaks | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+|19 | Clasificación en vivo con tiebreaks | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 |16 | Tabla cruzada (crosstab) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 |17 | **Rendimiento (TPR + ΔR + K-factor)** | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ |
 |18 | **Cálculo de cambio de rating FIDE** | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ |
@@ -57,12 +61,12 @@
 
 | Software | Features cumplidas | Porcentaje |
 |----------|:---:|:---:|
-| **♛ Chess Organizers Pro** | **39/39** | **100%** 🥇 |
-| **Tornelo** | **22/39** | **56%** 🥈 |
-| **Chess Organizers (Torneo v1.0)** | **18/39** | **46%** |
-| **Swiss Manager** | **18/39** | **46%** |
-| **Chess Manager** | **16/39** | **41%** |
-| **Vega** | **15/39** | **38%** 🥉 |
+| **♛ Chess Organizers Pro** | **43/43** | **100%** 🥇 |
+| **Tornelo** | **22/43** | **51%** 🥈 |
+| **Swiss Manager** | **20/43** | **47%** |
+| **Chess Organizers (Torneo v1.0)** | **18/43** | **42%** |
+| **Chess Manager** | **16/43** | **37%** |
+| **Vega** | **16/43** | **37%** 🥉 |
 
 ---
 
@@ -83,6 +87,9 @@
 13. ✅ **Catálogo global de torneos** con federaciones y organizadores
 14. ✅ **Análisis avanzado**: HeatMap, Progresión por ronda, Head-to-Head
 15. ✅ **Panel de inteligencia de pairings** con KPIs y sugerencias
+16. ✅ **Importación equipos + tableros desde CSV** (un solo archivo)
+17. ✅ **Composición por ronda (alineación)** editable por web
+18. ✅ **Importación formato Vega nativo** (TSV con `;`) + mapeo automático
 
 ---
 
@@ -90,22 +97,25 @@
 
 ```
 Características
-   39  ┤ ═══════════════════════════════════════ ♛ CHESS ORGANIZERS PRO
-   36  ┤
-   33  ┤
-   30  ┤
-   27  ┤
-   24  ┤
-   21  ┤ ═════════════════════════ Tornelo
-   18  ┤ ════════════════════════════ Swiss Manager
-   18  ┤ ════════════════════════════ Chess Organizers (Torneo v1.0)
-   15  ┤ ═══════════════════════ Chess Manager
-   12  ┤ ═════════════════ Vega
-    9  ┤
-    6  ┤
-    3  ┤
+   43  ┤ ═══════════════════════════════════════ ♛ CHESS ORGANIZERS PRO
+   40  ┤
+   37  ┤
+   34  ┤
+   31  ┤
+   28  ┤
+   25  ┤ ═════════════════════════ Tornelo
+   22  ┤ ════════════════════════════ Swiss Manager
+   22  ┤ ════════════════════════════ Chess Organizers (Torneo v1.0)
+   19  ┤ ═══════════════════════ Chess Manager
+   19  ┤ ═══════════════════════ Vega
+   16  ┤
+   13  ┤
+   10  ┤
+    7  ┤
+    4  ┤
+    1  ┤
     0  └──────────────────────────────────────────────
-       Features  10      20      30      39
+       Features  10      20      30      43
 ```
 
 ---
@@ -114,12 +124,12 @@ Características
 
 **Chess Organizers Pro** no es solo un programa de pairings — es una **plataforma completa** de gestión de torneos de ajedrez que cubre:
 
-- **Antes del torneo**: Inscripción pública con pago online, gestión de jugadores, importación desde FIDE/CSV/TRF
-- **Durante el torneo**: Pairings automáticos, resultados en vivo, clasificación, vista TV, streaming, notificaciones
+- **Antes del torneo**: Inscripción pública con pago online, gestión de jugadores, importación desde FIDE/CSV/TRF/**Vega/Equipos**
+- **Durante el torneo**: Pairings automáticos, resultados en vivo, clasificación, vista TV, streaming, notificaciones, **composición de equipos por ronda**
 - **Después del torneo**: Boletines, reportes FIDE, análisis de rendimiento, estadísticas históricas
 
 Todo desde el navegador, sin instalación, con app nativa y soporte offline.
 
 ---
 
-*Generado el 26 de agosto de 2026 — Chess Organizers Pro v1.0*
+*Generado el 26 de septiembre de 2026 — Chess Organizers Pro v1.0*

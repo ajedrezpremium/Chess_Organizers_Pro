@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-import * as XLSX from 'xlsx';
+import { Workbook } from 'exceljs';
+import { saveAs } from 'file-saver';
 
 const SYS_LABELS = { dutch: 'Suizo Holandés', roundrobin: 'Round Robin', burstein: 'Burstein', dubov: 'Dubov' };
 

@@ -39,18 +39,6 @@ export default function Dashboard() {
       toast.error(e.message || t('dashboard.billingError'));
     }
   };
-
-  const [syncing, setSyncing] = useState(false);
-  const handleSyncPlatform = async () => {
-    setSyncing(true);
-    try {
-      const payload = { tournaments: myTournaments.slice(0, 5).map((t) => ({ id: t.id, name: t.name, status: t.status, n_rounds: t.n_rounds })) };
-      try { await fetch('https://chessorganizers.com/api/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); } catch {}
-      toast.success(t('dashboard.syncSuccess'));
-    } catch { toast.error(t('dashboard.syncError')); }
-    finally { setSyncing(false); }
-  };
-
   const fetchData = useCallback(() => {
     setLoading(true);
     const timeout = setTimeout(() => { setLoading(false); }, 5000);
@@ -175,9 +163,6 @@ export default function Dashboard() {
           <Link to="/catalog?status=finished" title="Historial — torneos finalizados (pasados)" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-600 text-white text-xs font-bold tracking-widest hover:bg-sky-500 transition shadow-sm hover:shadow-md active:scale-95"><span className="w-2 h-2 rounded-full bg-white" /> {t('dashboard.history')} <span className="bg-white text-sky-700 px-1.5 py-0.5 rounded-full text-[10px]">{finishedCount}</span></Link>
         </div>
         <a href="https://chessorganizers.com" target="_blank" rel="noopener noreferrer" title="Evento — chessorganizers.com" className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-amber-700 text-white text-sm font-bold shadow-sm hover:shadow-md hover:scale-105 transition">♛</a>
-        <button onClick={handleSyncPlatform} disabled={syncing} className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-black text-xs font-bold border border-zinc-800 dark:border-zinc-200 hover:opacity-90 disabled:opacity-50">
-          {syncing ? '…' : '⬆'} {t('dashboard.connectPlatform')}
-        </button>
       </div>
 
       {/* Nav tabs */}
@@ -192,19 +177,10 @@ export default function Dashboard() {
         <NotificationSettings />
       ) : (
         <>
-          {/* Botón Nuevo — el header duplicado "Mis Torneos" se eliminó, queda solo en el card */}
-          <div className="flex justify-end mb-4">
-            <Link to="/app/new"
-              className="inline-flex items-center gap-2 bg-fide-700 hover:bg-fide-800 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.97]">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
-              {t('dashboard.newTournament')}
-            </Link>
-          </div>
-
           {/* 🎯 CENTRO DE CONTROL ARBITRAL — P1 imprescindible */}
           {myTournaments.length > 0 && selectedTournamentId && (
-            <div className="mb-6">
-              <div className="flex flex-wrap items-center gap-2 mb-3">
+            <div className="mb-4">
+              <div className="flex flex-wrap items-center gap-2 mb-2">
                 <label className="text-xs font-bold tracking-widest opacity-60">🎯 Centro de Control — Torneo:</label>
                 <select value={selectedTournamentId} onChange={(e) => setSelectedTournamentId(e.target.value)} className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-fide-600 bg-white dark:bg-fide-800 text-sm min-w-[220px]">
                   {myTournaments.map((m) => <option key={m.id} value={m.id}>{m.name} — {m.status}</option>)}
