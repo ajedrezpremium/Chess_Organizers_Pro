@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { getDb } from '../db/index.js';
 import { authenticate, authorize } from '../middleware/auth.js';
+import { publish } from '../services/pubsub.js';
 
 const router = Router();
 
@@ -95,6 +96,7 @@ router.patch('/rounds/:rid/result', authenticate, async (req, res) => {
   if (!['1', '0', '=', 'U', 'F', 'H', 'Z'].includes(result)) return res.status(400).json({ error: 'Resultado inválido' });
 
   await db.prepare('UPDATE pairings SET result = ? WHERE id = ? AND round_id = ?').run(result, pairing_id, req.params.rid);
+  publish(round.tid, 'result:updated', { round_id: req.params.rid, pairing_id, result });
   res.json({ ok: true });
 });
 
@@ -109,6 +111,7 @@ router.post('/players/:tpId/check-in', authenticate, async (req, res) => {
   if (!isArbiterOf(db, tp.tid, req.user.id)) return res.status(403).json({ error: 'No eres árbitro de este torneo' });
 
   await db.prepare('UPDATE tournament_players SET checked_in = 1 WHERE id = ?').run(req.params.tpId);
+  publish(tp.tid, 'result:updated', { player_id: tp.id, checked_in: 1 });
   res.json({ ok: true, player: tp.id, checked_in: 1 });
 });
 

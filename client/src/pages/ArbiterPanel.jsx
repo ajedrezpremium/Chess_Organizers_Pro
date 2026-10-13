@@ -34,13 +34,28 @@ export default function ArbiterPanel() {
   const [highContrast, setHighContrast] = useState(false);
   const [outdoorMode, setOutdoorMode] = useState(false);
   const [viewMode, setViewMode] = useState('round'); // 'round' | 'tournament'
+  const [liveState, setLiveState] = useState('connecting'); // live | connecting | reconnecting
   const [syncing, setSyncing] = useState(false);
   const [showIncidentModal, setShowIncidentModal] = useState(false);
   const [incidentBoard, setIncidentBoard] = useState('');
   const [incidentNote, setIncidentNote] = useState('');
   const [incidentType, setIncidentType] = useState('warning');
   const [standings, setStandings] = useState(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const gridRef = useRef(null);
+
+  const toggleFullscreen = useCallback(() => {
+    try {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else document.documentElement.requestFullscreen();
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    const onFs = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onFs);
+    return () => document.removeEventListener('fullscreenchange', onFs);
+  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -58,6 +73,37 @@ export default function ArbiterPanel() {
     api.standings(data.tournament.id).then((s) => setStandings(s.standings || s)).catch(() => {});
   }, [data]);
 
+  // ── SSE en vivo con reconexión: cambios de otros árbitros ──
+  useEffect(() => {
+    const tid = data?.tournament?.id;
+    if (!tid) return;
+    const BASE = (import.meta.env.VITE_API_URL ?? '').includes('onrender.com') ? '' : (import.meta.env.VITE_API_URL ?? '');
+    let es = null, timer = null, closed = false, attempt = 0, debounce = null;
+    const reloadSoon = () => { clearTimeout(debounce); debounce = setTimeout(() => { if (!closed) load(); }, 600); };
+    const schedule = () => {
+      if (closed) return;
+      setLiveState('reconnecting');
+      attempt += 1;
+      clearTimeout(timer);
+      timer = setTimeout(connect, Math.min(1000 * 2 ** attempt, 30000));
+    };
+    const connect = () => {
+      if (closed) return;
+      setLiveState(attempt === 0 ? 'connecting' : 'reconnecting');
+      try {
+        es = new EventSource(`${BASE}/public/tournaments/${tid}/sse`);
+      } catch { schedule(); return; }
+      const onMsg = () => reloadSoon();
+      es.addEventListener('result:updated', onMsg);
+      es.addEventListener('round:generated', onMsg);
+      es.addEventListener('round:closed', onMsg);
+      es.onopen = () => { attempt = 0; setLiveState('live'); };
+      es.onerror = () => { try { es.close(); } catch {} schedule(); };
+    };
+    connect();
+    return () => { closed = true; clearTimeout(timer); clearTimeout(debounce); try { es?.close(); } catch {} };
+  }, [data?.tournament?.id, load]);
+
   const round = data?.rounds?.[roundIdx];
   const tournament = data?.tournament;
   const players = data?.players || [];
@@ -70,7 +116,9 @@ export default function ArbiterPanel() {
     const isOpen = round.status === 'generated' || round.status === 'published';
     if (!isOpen) return;
     const handler = (e) => {
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+      if (e.key === 'f' || e.key === 'F') { toggleFullscreen(); return; }
+      if (e.key === 'p' || e.key === 'P') { e.preventDefault(); window.print(); return; }
       let result = null;
       if (e.key === '1') result = '1';
       else if (e.key === '2') result = '0';
@@ -95,17 +143,19 @@ export default function ArbiterPanel() {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [round, selectedBoard]);
+  }, [round, selectedBoard, toggleFullscreen]);
 
   const handleResult = async (rid, pairingId, result) => {
-    try {
-      await api.arbiter.setResult(rid, pairingId, result);
-      await load();
-    } catch (e) { toast.error(e.message || t('arbiter.resultError')); }
+    // Optimista: pinta al instante, revierte con recarga si falla
+    setData((d) => d ? { ...d, rounds: d.rounds.map((r) => r.id === rid ? { ...r, pairings: (r.pairings || []).map((p) => p.id === pairingId ? { ...p, result } : p) } : r) } : d);
+    try { await api.arbiter.setResult(rid, pairingId, result); }
+    catch (e) { toast.error(e.message || t('arbiter.resultError')); load(); }
   };
 
   const handleCheckIn = async (tpId) => {
-    try { await api.arbiter.checkIn(tpId); await load(); } catch (e) { toast.error(e.message || t('arbiter.resultError')); }
+    setData((d) => d ? { ...d, players: (d.players || []).map((p) => p.id === tpId ? { ...p, checked_in: 1 } : p) } : d);
+    try { await api.arbiter.checkIn(tpId); }
+    catch (e) { toast.error(e.message || t('arbiter.resultError')); load(); }
   };
 
   const handleSync = async () => {
@@ -175,8 +225,9 @@ export default function ArbiterPanel() {
 
   return (
     <div className={`min-h-screen ${bgClass} flex flex-col`}>
+      <style>{`@media print { .arbiter-print-area, .arbiter-print-area * { background: #fff !important; color: #000 !important; border-color: #ddd !important; } }`}</style>
       {/* ── Header contextual reducido ── */}
-      <header className={`${highContrast ? 'bg-black text-white' : outdoorMode ? 'bg-amber-600 text-white' : 'bg-gray-900 text-white'} border-b ${highContrast ? 'border-black' : 'border-gray-800'} sticky top-0 z-50`}>
+      <header className={`${highContrast ? 'bg-black text-white' : outdoorMode ? 'bg-amber-600 text-white' : 'bg-gray-900 text-white'} border-b ${highContrast ? 'border-black' : 'border-gray-800'} sticky top-0 z-50 print:hidden`}>
         <div className="px-3 sm:px-4 py-2 sm:py-3 flex flex-wrap items-center gap-2 sm:gap-3">
           <Link to="/arbiter" className="text-[11px] opacity-70 hover:opacity-100 flex items-center gap-1">
             ← {t('arbiter.backToTournaments')}
@@ -187,6 +238,11 @@ export default function ArbiterPanel() {
             {round ? t('arbiter.roundOf', { current: round.round_number, total: tournament.n_rounds }) : '—'}
           </span>
           <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${viewMode === 'round' ? 'bg-amber-500 text-black' : 'bg-gray-700 text-gray-300'}`}> {viewMode === 'round' ? t('arbiter.roundMode') : t('arbiter.liveMode')}</span>
+          <span title={liveState === 'live' ? t('arbiter.liveOn') : t('arbiter.liveOff')}
+            className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 ${liveState === 'live' ? 'bg-emerald-600/20 text-emerald-400' : 'bg-gray-700 text-gray-400'}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${liveState === 'live' ? 'bg-emerald-400 animate-pulse' : 'bg-gray-500'}`} />
+            {liveState === 'live' ? t('arbiter.liveOn') : t('arbiter.liveOff')}
+          </span>
 
           <div className="ml-auto flex items-center gap-1 sm:gap-2">
             <button onClick={() => setViewMode(viewMode === 'round' ? 'tournament' : 'round')} className="text-[11px] px-2 py-1 rounded-lg bg-gray-800 hover:bg-gray-700 transition hidden sm:inline-flex">⇄ {viewMode === 'round' ? t('arbiter.liveMode') : t('arbiter.roundMode')}</button>
@@ -194,6 +250,8 @@ export default function ArbiterPanel() {
             <button onClick={() => setOutdoorMode(!outdoorMode)} className={`text-[11px] px-2 py-1 rounded-lg border transition ${outdoorMode ? 'bg-amber-400 text-black border-amber-500' : 'bg-gray-800 text-gray-300 border-gray-700'}`}>{t('arbiter.outdoorMode')}</button>
             <Link to={`/public/tournament/${tournament.id}`} target="_blank" className="text-[11px] px-2 py-1 rounded-lg bg-sky-600 text-white hover:bg-sky-500 hidden sm:inline-flex">📺 PDF</Link>
             <button onClick={() => window.print()} className="text-[11px] px-2 py-1 rounded-lg bg-gray-700 text-white hover:bg-gray-600 hidden sm:inline-flex">🖨️ {t('common.print') || 'Imprimir'}</button>
+            <button onClick={toggleFullscreen} title={t('arbiter.kiosk')} aria-label={t('arbiter.kiosk')}
+              className={`text-[11px] px-2 py-1 rounded-lg border transition ${isFullscreen ? 'bg-amber-500 text-black border-amber-500' : 'bg-gray-800 text-gray-300 border-gray-700 hover:text-white'}`}>⛶</button>
             <button onClick={handleSync} disabled={syncing} className="text-[11px] px-3 py-1.5 rounded-lg bg-amber-500 text-black font-bold hover:bg-amber-400 disabled:opacity-50 flex items-center gap-1">
               {syncing ? '…' : '⬆'} <span className="hidden sm:inline">{t('arbiter.syncChessOrganizers')}</span><span className="sm:hidden">Sync</span>
             </button>
@@ -208,7 +266,7 @@ export default function ArbiterPanel() {
           <div className="ml-auto flex items-center gap-2">
             <span className="hidden sm:inline">{t('arbiter.checkIn', { n: checkedIn, total: players.length })}</span>
             <div className="relative">
-              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar mesa / jugador…" className={`pl-7 pr-2 py-1 rounded-lg text-xs w-36 sm:w-48 outline-none border ${highContrast ? 'bg-white border-black text-black placeholder:text-zinc-500' : 'bg-gray-800 border-gray-700 text-white placeholder:text-gray-500'}`} />
+              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('arbiter.searchBoards')} className={`pl-7 pr-2 py-1 rounded-lg text-xs w-36 sm:w-48 outline-none border ${highContrast ? 'bg-white border-black text-black placeholder:text-zinc-500' : 'bg-gray-800 border-gray-700 text-white placeholder:text-gray-500'}`} />
               <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs opacity-50">🔍</span>
             </div>
           </div>
@@ -216,7 +274,7 @@ export default function ArbiterPanel() {
       </header>
 
       {/* Check-in strip */}
-      <div className={`px-4 py-2 ${highContrast ? 'bg-zinc-100' : outdoorMode ? 'bg-amber-50' : 'bg-gray-900/30'} border-b ${highContrast ? 'border-black' : 'border-gray-800'} flex gap-1 overflow-x-auto`}>
+      <div className={`px-4 py-2 ${highContrast ? 'bg-zinc-100' : outdoorMode ? 'bg-amber-50' : 'bg-gray-900/30'} border-b ${highContrast ? 'border-black' : 'border-gray-800'} flex gap-1 overflow-x-auto print:hidden`}>
         {players.map((p) => (
           <button key={p.id} onClick={() => !p.checked_in && handleCheckIn(p.id)}
             className={`w-7 h-7 rounded-full text-[10px] font-bold shrink-0 transition flex items-center justify-center ${p.checked_in ? 'bg-green-600 text-white' : highContrast ? 'bg-white border border-black text-black hover:bg-zinc-100' : 'bg-gray-800 text-gray-500 hover:bg-gray-700'}`}
@@ -227,7 +285,7 @@ export default function ArbiterPanel() {
       </div>
 
       {/* Round tabs */}
-      <div className={`flex gap-1 px-4 py-3 overflow-x-auto border-b ${highContrast ? 'border-black bg-zinc-50' : 'border-gray-800'}`}>
+      <div className={`flex gap-1 px-4 py-3 overflow-x-auto border-b print:hidden ${highContrast ? 'border-black bg-zinc-50' : 'border-gray-800'}`}>
         {data.rounds.map((r, i) => (
           <button key={r.id} onClick={() => { setRoundIdx(i); setSelectedBoard(null); }}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition ${roundIdx === i ? 'bg-amber-600 text-black' : highContrast ? 'bg-white border border-black text-black' : 'bg-gray-800 text-gray-400'}`}>
@@ -238,11 +296,15 @@ export default function ArbiterPanel() {
       </div>
 
       {/* ── Main layout: Grid + Panel ── */}
-      <div className="flex-1 flex flex-col lg:flex-row min-h-0">
+      <div className="arbiter-print-area flex-1 flex flex-col lg:flex-row min-h-0">
+        <div className="hidden print:block px-4 pt-4 text-black">
+          <h1 className="text-lg font-black">{tournament.name}</h1>
+          <p className="text-xs">♟️ {t('cc.roundTitle', { n: round?.round_number || '—' })} · {new Date().toLocaleDateString()} · {tournament.city || tournament.federation || ''}</p>
+        </div>
         {/* Grid de mesas */}
         <div className="flex-1 p-3 sm:p-4" ref={gridRef}>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xs font-bold tracking-widest opacity-60">{t('arbiter.boardGrid')} — {filteredPairings.length} mesas</h2>
+            <h2 className="text-xs font-bold tracking-widest opacity-60">{t('arbiter.boardGrid')} — {t('arbiter.boardsCount', { n: filteredPairings.length })}</h2>
             <span className="text-[10px] opacity-50 hidden sm:inline">{t('arbiter.keyboardShortcuts')}</span>
           </div>
 
@@ -262,7 +324,7 @@ export default function ArbiterPanel() {
                     <div key={p.id} onClick={() => setSelectedBoard(p.board)}
                       className={`rounded-xl border-l-4 p-3 cursor-pointer transition-all ${cardBase} ${STATUS_COLOR[status]} ${isSelected ? 'ring-2 ring-amber-500 scale-[1.02]' : 'hover:scale-[1.01]'} ${highContrast && isSelected ? '!ring-black' : ''}`}>
                       <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[10px] font-bold tracking-widest opacity-60">MESA {p.board}</span>
+                        <span className="text-[10px] font-bold tracking-widest opacity-60">{t('arbiter.mesaBoard', { b: p.board })}</span>
                         <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wide ${status === 'playing' ? 'bg-emerald-600 text-white' : status === 'validated' ? 'bg-sky-600 text-white' : status === 'incident' ? 'bg-amber-500 text-black' : 'bg-red-600 text-white'}`}>
                           {status === 'playing' ? t('arbiter.statusPlaying') : status === 'validated' ? t('arbiter.statusValidated') : status === 'incident' ? t('arbiter.statusIncident') : t('arbiter.statusNoShow')}
                         </span>
@@ -275,7 +337,7 @@ export default function ArbiterPanel() {
                       </div>
 
                       {isOpen ? (
-                        <div className="flex justify-center gap-1 my-1.5">
+                        <div className="flex justify-center gap-1 my-1.5 print:hidden">
                           {[
                             { k: '1', label: '1-0', color: 'bg-green-700' },
                             { k: '=', label: '½-½', color: 'bg-amber-700' },
@@ -307,7 +369,7 @@ export default function ArbiterPanel() {
 
                       {/* Quick extra buttons (U/F/H/Z) compact */}
                       {isOpen && (
-                        <div className="flex gap-1 mt-2">
+                        <div className="flex gap-1 mt-2 print:hidden">
                           {['U', 'F', 'H', 'Z'].map((r) => (
                             <button key={r} onClick={(e) => { e.stopPropagation(); handleResult(round.id, p.id, r); }}
                               className={`flex-1 py-1 rounded text-[10px] font-bold ${p.result === r ? 'bg-zinc-700 text-white' : highContrast ? 'bg-white border border-black text-black' : 'bg-black/10 text-white/50 hover:bg-black/20'}`}>{r}</button>
@@ -326,14 +388,14 @@ export default function ArbiterPanel() {
         </div>
 
         {/* Panel lateral acciones rápidas */}
-        <aside className={`w-full lg:w-[340px] shrink-0 border-t lg:border-t-0 lg:border-l ${highContrast ? 'border-black bg-zinc-50' : outdoorMode ? 'border-amber-200 bg-amber-50' : 'border-gray-800 bg-gray-900/40'} p-3 sm:p-4 space-y-4 overflow-y-auto`}>
+        <aside className={`w-full lg:w-[340px] shrink-0 border-t lg:border-t-0 lg:border-l ${highContrast ? 'border-black bg-zinc-50' : outdoorMode ? 'border-amber-200 bg-amber-50' : 'border-gray-800 bg-gray-900/40'} p-3 sm:p-4 space-y-4 overflow-y-auto print:hidden`}>
           {/* Acciones rápidas */}
           <div>
             <h3 className="text-[11px] font-bold tracking-widest opacity-60 mb-2">{t('arbiter.quickResult')} — {t('arbiter.autoAdvance')}</h3>
             <div className="grid grid-cols-2 gap-2">
               <button onClick={() => setShowIncidentModal(true)} className="py-2.5 rounded-xl bg-amber-600 text-black font-bold text-xs hover:bg-amber-500 transition">[!] {t('arbiter.addIncident')}</button>
               <button onClick={() => { if (round) window.open(`/public/tournament/${tournament.id}#round-${round.round_number}`, '_blank'); }} className={`py-2.5 rounded-xl font-bold text-xs transition ${highContrast ? 'bg-white border border-black text-black' : 'bg-white text-black hover:bg-zinc-100'}`}>👁 {t('arbiter.playerView')}</button>
-              <button onClick={() => { if (round) toast.success('Pairings publicados'); }} className="py-2.5 rounded-xl bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-500 transition">▸ {t('arbiter.generatePairings')}</button>
+              <button onClick={() => { if (round) toast.success(t('arbiter.publishedPairings')); }} className="py-2.5 rounded-xl bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-500 transition">▸ {t('arbiter.generatePairings')}</button>
               <button onClick={handleSync} className="py-2.5 rounded-xl bg-sky-600 text-white font-bold text-xs hover:bg-sky-500 transition">⬆ {t('arbiter.syncChessOrganizers')}</button>
             </div>
             <p className="text-[10px] opacity-40 mt-2">{t('arbiter.syncDescription')}</p>
@@ -345,12 +407,12 @@ export default function ArbiterPanel() {
             <ul className="space-y-1.5 text-[11px] opacity-70">
               <li className="flex justify-between"><span>{t('arbiter.colorBalance')}</span><span className="text-emerald-500">✓ OK</span></li>
               <li className="flex justify-between"><span>{t('arbiter.repeatOpponents')}</span><span className="text-emerald-500">✓ 0</span></li>
-              <li className="flex justify-between"><span>{t('arbiter.forfeitWarnings')}</span><span className={incidentCount ? 'text-amber-500' : 'text-emerald-500'}>{incidentCount ? `${incidentCount} — revisar` : '✓ 0'}</span></li>
+              <li className="flex justify-between"><span>{t('arbiter.forfeitWarnings')}</span><span className={incidentCount ? 'text-amber-500' : 'text-emerald-500'}>{incidentCount ? t('arbiter.reviewCount', { n: incidentCount }) : '✓ 0'}</span></li>
             </ul>
             <div className="flex gap-1 mt-3">
               <button onClick={() => window.open(`/api/tournaments/${tournament.id}/trf`, '_blank')} className="flex-1 py-1.5 rounded-lg bg-zinc-800 text-white text-[11px] font-medium hover:bg-zinc-700">{t('arbiter.exportTRF')}</button>
-              <button onClick={() => toast.success('PGN exportado')} className="flex-1 py-1.5 rounded-lg bg-zinc-800 text-white text-[11px] font-medium hover:bg-zinc-700">{t('arbiter.exportPGN')}</button>
-              <button onClick={() => toast.success('XLSX exportado')} className="flex-1 py-1.5 rounded-lg bg-zinc-800 text-white text-[11px] font-medium hover:bg-zinc-700">{t('arbiter.exportXLSX')}</button>
+              <button onClick={() => toast.success(t('arbiter.pgnExported'))} className="flex-1 py-1.5 rounded-lg bg-zinc-800 text-white text-[11px] font-medium hover:bg-zinc-700">{t('arbiter.exportPGN')}</button>
+              <button onClick={() => toast.success(t('arbiter.xlsxExported'))} className="flex-1 py-1.5 rounded-lg bg-zinc-800 text-white text-[11px] font-medium hover:bg-zinc-700">{t('arbiter.exportXLSX')}</button>
             </div>
           </div>
 
@@ -382,7 +444,7 @@ export default function ArbiterPanel() {
                 {standings.slice(0, 8).map((s, i) => (
                   <li key={s.player_id || i} className="flex gap-2">
                     <span className="w-4 text-right opacity-40">{i + 1}.</span>
-                    <span className="flex-1 truncate">{s.name || s.player_name || `Jugador ${i + 1}`}</span>
+                    <span className="flex-1 truncate">{s.name || s.player_name || t('arbiter.playerFallback', { n: i + 1 })}</span>
                     <span className="font-bold">{s.points ?? s.score ?? '—'} pts</span>
                   </li>
                 ))}
@@ -400,9 +462,25 @@ export default function ArbiterPanel() {
         </aside>
       </div>
 
+      {/* Acta imprimible */}
+      <div className="hidden print:block px-4 py-6 text-black">
+        <div className="grid grid-cols-2 gap-8 text-xs">
+          <div>
+            <p className="font-bold">{t('arbiter.actaReferee')}:</p>
+            <div className="border-b border-black h-10" />
+            <p className="mt-1 opacity-60">{t('arbiter.actaSign')}</p>
+          </div>
+          <div>
+            <p className="font-bold">{t('arbiter.actaNotes')}:</p>
+            <div className="border-b border-black h-10" />
+            <div className="border-b border-black h-10 mt-2" />
+          </div>
+        </div>
+      </div>
+
       {/* Incident modal */}
       {showIncidentModal && (
-        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowIncidentModal(false)}>
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 print:hidden" onClick={() => setShowIncidentModal(false)}>
           <div onClick={(e) => e.stopPropagation()} className={`${highContrast ? 'bg-white text-black' : 'bg-zinc-900 text-white'} rounded-2xl p-5 w-full max-w-sm space-y-3`}>
             <h3 className="font-bold text-sm">⛳ {t('arbiter.addIncident')}</h3>
             <div className="grid grid-cols-2 gap-2">
