@@ -273,8 +273,8 @@ export const DIRECTORY_SEED = [
   { id: 'club-montecarlo', kind: 'club', name: 'Cercle d’Échecs de Monte-Carlo', country: 'MON', city: 'Mónaco', url: 'https://www.monaco-echecs.mc/', email: '', verified: true, events12m: 8 },
   { id: 'club-nona', kind: 'club', name: 'NONA — Batumi', country: 'GEO', city: 'Batumi', url: 'http://www.chessbatumi.ge/', email: '', verified: true, events12m: 8 },
   { id: 'club-odlar', kind: 'club', name: 'Odlar Yurdu — Bakú', country: 'AZE', city: 'Bakú', url: '', email: '', verified: false, events12m: 8 },
-  { id: 'club-beersheva', kind: 'club', name: 'Beer Sheva Chess Club', country: 'ISR', city: 'Beerseba', url: 'https://beershevachess.org', email: 'info@beershevachess.org', verified: true, events12m: 10 },
-  { id: 'club-ashdod', kind: 'club', name: 'Ashdod Chess Club', country: 'ISR', city: 'Asdod', url: 'https://ashdodchess.org', email: 'info@ashdodchess.org', verified: true, events12m: 8 },
+  { id: 'club-beersheva', kind: 'club', name: 'Beer Sheva Chess Club', country: 'ISR', city: 'Beerseba', url: '', email: '', verified: true, events12m: 10 },
+  { id: 'club-ashdod', kind: 'club', name: 'Ashdod Chess Club', country: 'ISR', city: 'Asdod', url: '', email: '', verified: true, events12m: 8 },
   { id: 'club-tata', kind: 'club', name: 'Tata Steel Chess Tournament — Wijk aan Zee', country: 'NED', city: 'Wijk aan Zee', url: 'https://tatasteelchess.com/', email: '', verified: true, events12m: 6 },
   { id: 'club-solingen', kind: 'club', name: 'Schachgesellschaft Solingen', country: 'GER', city: 'Solingen', url: 'https://www.schachgesellschaft.de/', email: '', verified: true, events12m: 14 },
 
