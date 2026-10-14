@@ -59,6 +59,7 @@ export default function DirectoryPage() {
     federation: ALL_ENTRIES.filter((d) => d.kind === 'federation').length,
     club: ALL_ENTRIES.filter((d) => d.kind === 'club').length,
     school: ALL_ENTRIES.filter((d) => d.kind === 'school').length,
+    company: ALL_ENTRIES.filter((d) => d.kind === 'company').length,
   }), []);
   const harvestedCount = (HARVESTED_CLUBS || []).length;
   const list = ALL_ENTRIES
@@ -68,7 +69,7 @@ export default function DirectoryPage() {
       (!q.trim() || `${d.name} ${d.city} ${d.country}`.toLowerCase().includes(q.trim().toLowerCase())))
     .sort((a, b) => (Number(b.featured || false) - Number(a.featured || false)) || (a.name || '').localeCompare(b.name || ''));
 
-  const kindLabel = (k) => k === 'federation' ? 'Federación' : k === 'club' ? 'Club' : 'Escuela';
+  const kindLabel = (k) => k === 'federation' ? 'Federación' : k === 'club' ? 'Club' : k === 'company' ? 'Empresa' : 'Escuela';
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -107,7 +108,7 @@ export default function DirectoryPage() {
         {list.map((d) => (
           <Card key={d.id} className={`p-4 hover:shadow-md transition ${d.featured ? 'ring-2 ring-amber-400/70' : ''}`}>
             <div className="flex items-center gap-2">
-              <span className="text-xl">{d.kind === 'federation' ? '🏛️' : d.kind === 'club' ? '♟️' : '🎓'}</span>
+              <span className="text-xl">{d.kind === 'federation' ? '🏛️' : d.kind === 'club' ? '♟️' : d.kind === 'company' ? '🏢' : '🎓'}</span>
               <div className="min-w-0 flex-1">
                 <h3 className="font-bold text-xs dark:text-white truncate">{d.name}</h3>
                 <p className="text-[11px] text-gray-500 dark:text-fide-400">📍 {d.city} · {d.country}</p>

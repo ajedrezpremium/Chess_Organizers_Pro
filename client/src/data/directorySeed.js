@@ -34,7 +34,7 @@ export const DIRECTORY_SEED = [
   { id: 'fed-ger', kind: 'federation', name: 'Deutscher Schachbund', country: 'GER', city: 'Berlín', url: 'https://www.schachbund.de', email: 'info@schachbund.de', verified: true, events12m: 160 },
   { id: 'fed-gre', kind: 'federation', name: 'Ελληνική Σκακιστική Ομοσπονδία', country: 'GRE', city: 'Atenas', url: 'https://chessfed.gr', email: 'info@chessfed.gr', verified: true, events12m: 45 },
   { id: 'fed-gue', kind: 'federation', name: 'Guernsey Chess Federation', country: 'GUE', city: 'Saint Peter Port', url: 'https://guernseychess.com', email: 'info@guernseychess.com', verified: true, events12m: 4 },
-  { id: 'fed-hun', kind: 'federation', name: 'Magyar Sakkszövetség', country: 'HUN', city: 'Budapest', url: 'https://www.hun chess.hu', email: 'info@hun chess.hu', verified: true, events12m: 70 },
+  { id: 'fed-hun', kind: 'federation', name: 'Magyar Sakkszövetség', country: 'HUN', city: 'Budapest', url: 'https://chess.hu/', email: 'titkarsag@chess.hu', verified: true, events12m: 70 },
   { id: 'fed-iom', kind: 'federation', name: 'Isle of Man Chess Association', country: 'IOM', city: 'Douglas', url: 'https://iomchess.com', email: 'info@iomchess.com', verified: true, events12m: 6 },
   { id: 'fed-irl', kind: 'federation', name: 'Irish Chess Union', country: 'IRL', city: 'Dublín', url: 'https://icu.ie', email: 'info@icu.ie', verified: true, events12m: 22 },
   { id: 'fed-isl', kind: 'federation', name: 'Skáksamband Íslands', country: 'ISL', city: 'Reikiavik', url: 'https://skak.is', email: 'skak@skak.is', verified: true, events12m: 16 },
@@ -275,6 +275,7 @@ export const DIRECTORY_SEED = [
   { id: 'club-beersheva', kind: 'club', name: 'Beer Sheva Chess Club', country: 'ISR', city: 'Beerseba', url: 'https://beershevachess.org', email: 'info@beershevachess.org', verified: true, events12m: 10 },
   { id: 'club-ashdod', kind: 'club', name: 'Ashdod Chess Club', country: 'ISR', city: 'Asdod', url: 'https://ashdodchess.org', email: 'info@ashdodchess.org', verified: true, events12m: 8 },
   { id: 'club-tata', kind: 'club', name: 'Tata Steel Chess Club — Wijk aan Zee', country: 'NED', city: 'Wijk aan Zee', url: '', email: '', verified: true, events12m: 6 },
+  { id: 'club-solingen', kind: 'club', name: 'Schachgesellschaft Solingen', country: 'GER', city: 'Solingen', url: 'https://www.schachgesellschaft.de/', email: '', verified: true, events12m: 14 },
 
   // ── ESCUELAS y academias ──
   { id: 'esc-premium', kind: 'school', name: 'Ajedrez Premium — Academia Online', country: 'INT', city: 'Online', url: 'https://www.ajedrezpremium.com', email: 'info@ajedrezpremium.com', verified: true, events12m: 52, featured: true },
@@ -310,6 +311,14 @@ export const DIRECTORY_SEED = [
   { id: 'esc-berlin', kind: 'school', name: 'Schachakademie Berlin', country: 'GER', city: 'Berlín', url: 'https://berlinschach.de', email: 'info@berlinschach.de', verified: true, events12m: 14 },
   { id: 'esc-london', kind: 'school', name: 'London Chess Academy', country: 'ENG', city: 'Londres', url: 'https://londonchessacademy.co.uk', email: 'info@londonchessacademy.co.uk', verified: true, events12m: 16 },
   { id: 'esc-chennai', kind: 'school', name: 'Chennai Chess Academy', country: 'IND', city: 'Chennai', url: 'https://chennaichess.in', email: 'info@chennaichess.in', verified: true, events12m: 24 },
+  { id: 'comp-chesscom', kind: 'company', name: 'Chess.com', country: 'USA', city: 'Online', url: 'https://www.chess.com', email: '', verified: true, events12m: 120 },
+  { id: 'comp-lichess', kind: 'company', name: 'Lichess.org', country: 'INT', city: 'Online', url: 'https://lichess.org', email: '', verified: true, events12m: 100 },
+  { id: 'comp-chessbase', kind: 'company', name: 'ChessBase', country: 'GER', city: 'Hamburgo', url: 'https://www.chessbase.com', email: '', verified: true, events12m: 24 },
+  { id: 'comp-forward', kind: 'company', name: 'Forward Chess', country: 'USA', city: 'Nueva York', url: 'https://forwardchess.com', email: '', verified: true, events12m: 12 },
+  { id: 'comp-nic', kind: 'company', name: 'New In Chess', country: 'NED', city: 'Alkmaar', url: 'https://www.newinchess.com', email: '', verified: true, events12m: 12 },
+  { id: 'comp-quality', kind: 'company', name: 'Quality Chess', country: 'SCO', city: 'Glasgow', url: 'https://www.qualitychess.co.uk', email: '', verified: true, events12m: 12 },
+  { id: 'comp-chessmood', kind: 'company', name: 'ChessMood', country: 'INT', city: 'Online', url: 'https://chessmood.com', email: '', verified: true, events12m: 12 },
+  { id: 'comp-dgt', kind: 'company', name: 'Digital Game Technology (DGT)', country: 'NED', city: 'Enschede', url: 'https://digitalgametechnology.com', email: '', verified: true, events12m: 6 },
 ];
 
 export const DIRECTORY_KINDS = [
@@ -317,4 +326,5 @@ export const DIRECTORY_KINDS = [
   { key: 'federation', label: 'Federaciones' },
   { key: 'club', label: 'Clubes' },
   { key: 'school', label: 'Escuelas' },
+  { key: 'company', label: 'Empresas' },
 ];
