@@ -270,12 +270,12 @@ export const DIRECTORY_SEED = [
   { id: 'club-hammersmith', kind: 'club', name: 'Hammersmith Chess Club — Londres', country: 'ENG', city: 'Londres', url: 'https://hammerchess.co.uk/', email: 'enquiries@hammerchess.co.uk', verified: true, events12m: 30, featured: true },
   { id: 'club-rockaden', kind: 'club', name: 'SK Rockaden — Estocolmo', country: 'SWE', city: 'Estocolmo', url: 'https://rockaden.se', email: 'info@rockaden.se', verified: true, events12m: 10 },
   { id: 'club-oslo', kind: 'club', name: 'Oslo Schakselskap', country: 'NOR', city: 'Oslo', url: '', email: '', verified: true, events12m: 12 },
-  { id: 'club-montecarlo', kind: 'club', name: 'Cercle d’Échecs de Monte-Carlo', country: 'MON', city: 'Mónaco', url: 'https://montecarlochess.com', email: 'info@montecarlochess.com', verified: true, events12m: 8 },
+  { id: 'club-montecarlo', kind: 'club', name: 'Cercle d’Échecs de Monte-Carlo', country: 'MON', city: 'Mónaco', url: 'https://www.monaco-echecs.mc/', email: '', verified: true, events12m: 8 },
   { id: 'club-nona', kind: 'club', name: 'NONA — Batumi', country: 'GEO', city: 'Batumi', url: 'https://nonachess.ge', email: 'info@nonachess.ge', verified: true, events12m: 8 },
   { id: 'club-odlar', kind: 'club', name: 'Odlar Yurdu — Bakú', country: 'AZE', city: 'Bakú', url: 'https://odlarchess.az', email: 'info@odlarchess.az', verified: true, events12m: 8 },
   { id: 'club-beersheva', kind: 'club', name: 'Beer Sheva Chess Club', country: 'ISR', city: 'Beerseba', url: 'https://beershevachess.org', email: 'info@beershevachess.org', verified: true, events12m: 10 },
   { id: 'club-ashdod', kind: 'club', name: 'Ashdod Chess Club', country: 'ISR', city: 'Asdod', url: 'https://ashdodchess.org', email: 'info@ashdodchess.org', verified: true, events12m: 8 },
-  { id: 'club-tata', kind: 'club', name: 'Tata Steel Chess Club — Wijk aan Zee', country: 'NED', city: 'Wijk aan Zee', url: '', email: '', verified: true, events12m: 6 },
+  { id: 'club-tata', kind: 'club', name: 'Tata Steel Chess Tournament — Wijk aan Zee', country: 'NED', city: 'Wijk aan Zee', url: 'https://tatasteelchess.com/', email: '', verified: true, events12m: 6 },
   { id: 'club-solingen', kind: 'club', name: 'Schachgesellschaft Solingen', country: 'GER', city: 'Solingen', url: 'https://www.schachgesellschaft.de/', email: '', verified: true, events12m: 14 },
 
   // ── ESCUELAS y academias ──
