@@ -319,6 +319,7 @@ export const DIRECTORY_SEED = [
   { id: 'comp-quality', kind: 'company', name: 'Quality Chess', country: 'SCO', city: 'Glasgow', url: 'https://www.qualitychess.co.uk', email: '', verified: true, events12m: 12 },
   { id: 'comp-chessmood', kind: 'company', name: 'ChessMood', country: 'INT', city: 'Online', url: 'https://chessmood.com', email: '', verified: true, events12m: 12 },
   { id: 'comp-dgt', kind: 'company', name: 'Digital Game Technology (DGT)', country: 'NED', city: 'Enschede', url: 'https://digitalgametechnology.com', email: '', verified: true, events12m: 6 },
+  { id: 'esc-xequemate', kind: 'school', name: 'Xeque & Mate Brasil', country: 'BRA', city: 'São Paulo', url: 'https://xequematebrasil.com.br/', email: '', verified: true, events12m: 24 },
 ];
 
 export const DIRECTORY_KINDS = [

@@ -56,4 +56,5 @@ export const HARVESTED_CLUBS = [
   { id: 'hv-por-2', kind: 'club', name: 'Academia Xadrez Madeira Outdoor', country: 'POR', city: '', url: '', email: '', verified: false, events12m: 1, players: 8, source: 'chess-results', ref: 'https://chess-results.com/fed.aspx?lan=1&fed=POR' },
   { id: 'hv-por-3', kind: 'club', name: 'Xadrez Colégio Efanor', country: 'POR', city: '', url: '', email: '', verified: false, events12m: 2, players: 7, source: 'chess-results', ref: 'https://chess-results.com/fed.aspx?lan=1&fed=POR' },
   { id: 'hv-por-4', kind: 'club', name: 'Leça Academia 1912', country: 'POR', city: '', url: '', email: '', verified: false, events12m: 1, players: 4, source: 'chess-results', ref: 'https://chess-results.com/fed.aspx?lan=1&fed=POR' },
+  { id: 'hv-bra-1', kind: 'club', name: 'Jardim Damasceno', country: 'BRA', city: 'São Paulo', url: '', email: '', verified: false, events12m: 1, players: 3, source: 'chess-results', ref: 'https://chess-results.com/fed.aspx?lan=1&fed=BRA' },
 ];
