@@ -254,7 +254,7 @@ export const DIRECTORY_SEED = [
   { id: 'club-vigo', kind: 'club', name: 'Club Ajedrez Vigo', country: 'ESP', city: 'Vigo', url: 'https://vigoxadrez.gal', email: 'info@vigoxadrez.gal', verified: true, events12m: 10 },
   { id: 'club-marmenor', kind: 'club', name: 'Club Ajedrez Mar Menor', country: 'ESP', city: 'San Javier', url: 'https://marmenorchess.com', email: 'info@marmenorchess.com', verified: true, events12m: 8 },
   { id: 'club-baden', kind: 'club', name: 'OSG Baden-Baden', country: 'GER', city: 'Baden-Baden', url: 'https://www.osg-baden-baden.de', email: 'info@osg-baden-baden.de', verified: true, events12m: 12 },
-  { id: 'club-porz', kind: 'club', name: 'SG Porz', country: 'GER', city: 'Porz', url: 'https://sgporz.de', email: 'info@sgporz.de', verified: true, events12m: 10 },
+  { id: 'club-porz', kind: 'club', name: 'SG Porz', country: 'GER', city: 'Porz', url: 'https://www.sg-porz.de/', email: '', verified: true, events12m: 10 },
   { id: 'club-werder', kind: 'club', name: 'Werder Bremen — Schach', country: 'GER', city: 'Bremen', url: 'https://werder-schach.de', email: 'info@werder-schach.de', verified: true, events12m: 10 },
   { id: 'club-clichy', kind: 'club', name: 'Clichy Échecs 92', country: 'FRA', city: 'Clichy', url: 'https://clichyechecs.wixsite.com/accueil/infos', email: 'clichyechecs@gmail.com', verified: true, events12m: 12 },
   { id: 'club-bischwiller', kind: 'club', name: 'Bischwiller Échecs', country: 'FRA', city: 'Bischwiller', url: 'https://bischwiller-echecs.com/', email: '', verified: true, events12m: 10 },
