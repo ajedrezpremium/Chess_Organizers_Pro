@@ -228,7 +228,7 @@ export const DIRECTORY_SEED = [
   { id: 'club-solvay', kind: 'club', name: 'Club Ajedrez Solvay — Torrelavega', country: 'ESP', city: 'Torrelavega', url: '', email: '', verified: false, events12m: 16 },
   { id: 'club-gros', kind: 'club', name: 'Gros Xake Taldea — Donostia', country: 'ESP', city: 'Donostia', url: 'https://www.grosxake.com/', email: 'xakegros@telefonica.net', verified: true, events12m: 20 },
   { id: 'club-sestao', kind: 'club', name: 'Sestao Xake Taldea', country: 'ESP', city: 'Sestao', url: '', email: '', verified: false, events12m: 14 },
-  { id: 'club-magic', kind: 'club', name: 'Magic Extremadura — Mérida', country: 'ESP', city: 'Mérida', url: 'https://magicextremadura.com', email: 'info@magicextremadura.com', verified: true, events12m: 15 },
+  { id: 'club-magic', kind: 'club', name: 'Magic Extremadura — Mérida', country: 'ESP', city: 'Mérida', url: 'https://www.ajedrezmagic.es/', email: '', verified: true, events12m: 15 },
   { id: 'club-silla', kind: 'club', name: 'Club Ajedrez Silla — Valencia', country: 'ESP', city: 'Silla', url: 'https://sillachess.com', email: 'info@sillachess.com', verified: true, events12m: 12 },
   { id: 'club-benimaclet', kind: 'club', name: 'Club Ajedrez Benimaclet', country: 'ESP', city: 'Valencia', url: 'https://benimacletchess.com', email: 'info@benimacletchess.com', verified: true, events12m: 10 },
   { id: 'club-ourense', kind: 'club', name: 'Xadrez Ourense', country: 'ESP', city: 'Ourense', url: '', email: '', verified: false, events12m: 18, featured: true },
@@ -237,7 +237,8 @@ export const DIRECTORY_SEED = [
   { id: 'club-lucena', kind: 'club', name: 'Club Ajedrez Lucena', country: 'ESP', city: 'Lucena', url: 'https://www.xadrezgalego.net/club-lucena/', email: '', phone: '986 260 259 · 653 66 16 84', verified: true, events12m: 8 },
   // Tenerife (fuente: Chess-Results Oktoberchess Ébano 2026, 67 jugadores FIDE)
   { id: 'club-ebano', kind: 'club', name: 'Club de Ajedrez Ébano', country: 'ESP', city: 'San Cristóbal de La Laguna', url: 'https://www.ebanoajedrez.com/', email: 'ebanoajedrez@gmail.com', verified: true, events12m: 20, featured: true },
-  { id: 'club-cajacanarias', kind: 'club', name: 'Club de Ajedrez CajaCanarias', country: 'ESP', city: 'Tenerife', url: 'https://cajacanariaschess.com', email: 'info@cajacanariaschess.com', verified: true, events12m: 14 },
+  { id: 'club-cajacanarias', kind: 'club', name: 'Club de Ajedrez CajaCanarias', country: 'ESP', city: 'Tenerife', url: '', email: '', verified: true, events12m: 14 },
+  { id: 'club-adeje', kind: 'club', name: 'Adeje Chess Club', country: 'ESP', city: 'Adeje', url: 'https://adejechessclub.com/', email: 'info@adejechessclub.com', phone: '+34 722 24 99 41', verified: true, events12m: 12 },
   { id: 'club-canarias64', kind: 'club', name: 'Club de Ajedrez Canarias 64', country: 'ESP', city: 'Tenerife', url: 'https://canarias64.com', email: 'info@canarias64.com', verified: true, events12m: 10 },
   { id: 'club-jaque-tfe', kind: 'club', name: 'Club de Ajedrez Jaque', country: 'ESP', city: 'Tenerife', url: 'https://jaquetenerife.com', email: 'info@jaquetenerife.com', verified: true, events12m: 12 },
   { id: 'club-reyahogado', kind: 'club', name: 'Club de Ajedrez Rey Ahogado', country: 'ESP', city: 'Tenerife', url: 'https://reyahogado.com', email: 'info@reyahogado.com', verified: true, events12m: 6 },
