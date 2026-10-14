@@ -234,7 +234,7 @@ export const DIRECTORY_SEED = [
   { id: 'club-ourense', kind: 'club', name: 'Xadrez Ourense', country: 'ESP', city: 'Ourense', url: '', email: '', verified: false, events12m: 18, featured: true },
   { id: 'club-ferrol', kind: 'club', name: 'Xadrez Ferrol', country: 'ESP', city: 'Ferrol', url: 'https://xadrezferrol.gal', email: 'info@xadrezferrol.gal', verified: true, events12m: 12 },
   { id: 'club-fontecarmoa', kind: 'club', name: 'CX Fontecarmoa — Vilagarcía', country: 'ESP', city: 'Vilagarcía', url: 'https://fontecarmoa.gal', email: 'info@fontecarmoa.gal', verified: true, events12m: 10 },
-  { id: 'club-lucena', kind: 'club', name: 'Club Ajedrez Lucena', country: 'ESP', city: 'Lucena', url: 'https://lucenachess.com', email: 'info@lucenachess.com', verified: true, events12m: 8 },
+  { id: 'club-lucena', kind: 'club', name: 'Club Ajedrez Lucena', country: 'ESP', city: 'Lucena', url: 'https://www.xadrezgalego.net/club-lucena/', email: '', phone: '986 260 259 · 653 66 16 84', verified: true, events12m: 8 },
   // Tenerife (fuente: Chess-Results Oktoberchess Ébano 2026, 67 jugadores FIDE)
   { id: 'club-ebano', kind: 'club', name: 'Club de Ajedrez Ébano', country: 'ESP', city: 'San Cristóbal de La Laguna', url: 'https://www.ebanoajedrez.com/', email: 'ebanoajedrez@gmail.com', verified: true, events12m: 20, featured: true },
   { id: 'club-cajacanarias', kind: 'club', name: 'Club de Ajedrez CajaCanarias', country: 'ESP', city: 'Tenerife', url: 'https://cajacanariaschess.com', email: 'info@cajacanariaschess.com', verified: true, events12m: 14 },
