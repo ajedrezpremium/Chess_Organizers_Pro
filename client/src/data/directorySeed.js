@@ -256,7 +256,7 @@ export const DIRECTORY_SEED = [
   { id: 'club-porz', kind: 'club', name: 'SG Porz', country: 'GER', city: 'Porz', url: 'https://sgporz.de', email: 'info@sgporz.de', verified: true, events12m: 10 },
   { id: 'club-werder', kind: 'club', name: 'Werder Bremen — Schach', country: 'GER', city: 'Bremen', url: 'https://werder-schach.de', email: 'info@werder-schach.de', verified: true, events12m: 10 },
   { id: 'club-clichy', kind: 'club', name: 'Clichy Échecs 92', country: 'FRA', city: 'Clichy', url: 'https://clichyechecs.wixsite.com/accueil/infos', email: 'clichyechecs@gmail.com', verified: true, events12m: 12 },
-  { id: 'club-bischwiller', kind: 'club', name: 'Bischwiller Échecs', country: 'FRA', city: 'Bischwiller', url: 'https://bischwiller-echecs.fr', email: 'contact@bischwiller-echecs.fr', verified: true, events12m: 10 },
+  { id: 'club-bischwiller', kind: 'club', name: 'Bischwiller Échecs', country: 'FRA', city: 'Bischwiller', url: 'https://bischwiller-echecs.com/', email: '', verified: true, events12m: 10 },
   { id: 'club-mednyi', kind: 'club', name: 'Mednyi Vsadnik — San Petersburgo', country: 'RUS', city: 'San Petersburgo', url: 'https://mednyi-chess.ru', email: 'info@mednyi-chess.ru', verified: true, events12m: 10 },
   { id: 'club-sibir', kind: 'club', name: 'Sibir — Novosibirsk', country: 'RUS', city: 'Novosibirsk', url: 'https://sibir-chess.ru', email: 'info@sibir-chess.ru', verified: true, events12m: 8 },
   { id: 'club-padova', kind: 'club', name: 'Obiettivo Risarcimento — Padova', country: 'ITA', city: 'Padua', url: 'https://padovascacchi.it', email: 'info@padovascacchi.it', verified: true, events12m: 10 },
