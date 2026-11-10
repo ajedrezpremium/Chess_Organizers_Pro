@@ -31,4 +31,4 @@
 ---
 
 **9/12 cumplido.** Próxima edición: **15 octubre** — Especial Olímpiada Samarcanda.
-[Suscríbete](https://chessorganizers.com/newsletter) · [Archivo completo](/newsletters/2026) · [Unsubscribe](#)
+[Suscríbete](/newsletter) · [Archivo completo](/newsletters/2026) · [Unsubscribe](#)

@@ -31,4 +31,4 @@
 ---
 
 **11/12.** Próxima edición: **15 diciembre** — Balance 2026 + Roadmap 2027.
-[Suscríbete](https://chessorganizers.com/newsletter) · [Archivo completo](/newsletters/2026) · [Unsubscribe](#)
+[Suscríbete](/newsletter) · [Archivo completo](/newsletters/2026) · [Unsubscribe](#)

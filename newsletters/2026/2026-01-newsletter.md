@@ -1,6 +1,6 @@
 # ♛ Chess Organizers Pro — Newsletter Enero 2026
 
-**Edición #01 · 15 de enero de 2026** | [chessorganizers.com/newsletter](https://chessorganizers.com/newsletter) | [Unsubscribe](#)
+**Edición #01 · 15 de enero de 2026** | [Suscríbete](/newsletter) | [Unsubscribe](#)
 
 > Comienza el año con el **lanzamiento oficial de Chess Organizers Pro v1.0** — la plataforma todo-en-uno para árbitros y organizadores. 10 novedades del programa + 10 claves del ajedrez mundial.
 

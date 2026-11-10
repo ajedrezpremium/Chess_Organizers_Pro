@@ -31,4 +31,4 @@
 ---
 
 **¡Gracias por estos 8 meses!** Próxima edición: **15 septiembre** — Especial Candidates + v1.2.
-[Suscríbete](https://chessorganizers.com/newsletter) · [Archivo completo](/newsletters/2026) · [Unsubscribe](#)
+[Suscríbete](/newsletter) · [Archivo completo](/newsletters/2026) · [Unsubscribe](#)

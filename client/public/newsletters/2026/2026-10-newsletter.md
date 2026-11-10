@@ -31,4 +31,4 @@
 ---
 
 **10/12.** Próxima edición: **15 noviembre** — Especial World Championship Singapur.
-[Suscríbete](https://chessorganizers.com/newsletter) · [Archivo completo](/newsletters/2026) · [Unsubscribe](#)
+[Suscríbete](/newsletter) · [Archivo completo](/newsletters/2026) · [Unsubscribe](#)
