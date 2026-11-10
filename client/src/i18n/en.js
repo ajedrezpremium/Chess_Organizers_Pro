@@ -225,7 +225,7 @@ activeFeedTitle: 'Active Tournaments — Pending',
     listening: 'Listening', stopListen: 'tap to stop',
     sttNoSupport: 'Your browser does not support voice dictation', sttDenied: 'Microphone permission denied',
     sttNoSpeech: 'Did not hear you, try again',
-    thinking: 'Thinking…', send: 'Send',
+    regenerate: 'Regenerate last response', exportChat: 'Export conversation (.txt)', clearChat: 'Clear conversation', sendVoiceOnEnd: 'Send voice when finished', exported: 'Conversation exported', cleared: 'Conversation cleared', thinking: 'Thinking…', send: 'Send',
   },
   tour: {
     skip: 'Skip', back: 'Back', next: 'Next', finish: 'Done', stepOf: 'Step {i} of {n}',

@@ -225,7 +225,7 @@ export default {
     listening: 'Höre zu', stopListen: 'zum Stoppen tippen',
     sttNoSupport: 'Dein Browser unterstützt kein Diktieren', sttDenied: 'Mikrofonberechtigung verweigert',
     sttNoSpeech: 'Nichts gehört, versuch es erneut',
-    thinking: 'Denke nach…', send: 'Senden',
+    regenerate: 'Letzte Antwort neu generieren', exportChat: 'Konversation exportieren (.txt)', clearChat: 'Konversation löschen', sendVoiceOnEnd: 'Sprache am Ende senden', exported: 'Konversation exportiert', cleared: 'Konversation gelöscht', thinking: 'Denke nach…', send: 'Senden',
   },
   tour: {
     skip: 'Überspringen', back: 'Zurück', next: 'Weiter', finish: 'Fertig', stepOf: 'Schritt {i} von {n}',

@@ -20,27 +20,27 @@ const FALLBACK_TEXT = {
   es: {
     illegal: { answer: 'Artículo 7.1: Si durante una partida se descubre que una pieza ha sido desplazada por error, o se ha realizado un movimiento ilegal, la posición anterior al error debe restablecerse. Si la posición no puede restablecerse, la partida continuará desde la última posición identificable anterior al error. El árbitro aplicará las sanciones correspondientes.', article: '7.1', title: 'Movimientos ilegales' },
     touched: { answer: 'Artículo 4.3: Si el jugador con el turno toca una pieza propia, debe moverla. Si toca una pieza del oponente, debe capturarla (si es posible). Artículo 4.6: Si es imposible identificar qué pieza se tocó primero, se considera que es la pieza propia del jugador y no la del oponente.', article: '4.3', title: 'Pieza tocada' },
-    generic: 'Consulta las Leyes FIDE 2023 en la sección Artículos de este asistente para obtener información detallada sobre reglas específicas.',
+    generic: 'Puedo ayudarte como árbitro-director: reglamento/bases, participantes, emparejamientos, resultados, clasificaciones e informes FIDE. Indica el aspecto y, si corresponde a un torneo concreto, selecciónalo en el panel o pega los datos.',
   },
   en: {
     illegal: { answer: 'Article 7.1: If during a game it is found that a piece has been displaced by mistake, or an illegal move has been made, the position before the error must be reinstated. If the position cannot be reinstated, the game continues from the last identifiable position before the error. The arbiter shall apply the appropriate penalties.', article: '7.1', title: 'Illegal moves' },
     touched: { answer: 'Article 4.3: If the player having the move touches one of their own pieces, they must move it. If they touch an opponent\'s piece, they must capture it (if possible). Article 4.6: If it is impossible to identify which piece was touched first, it is deemed to be the player\'s own piece and not the opponent\'s.', article: '4.3', title: 'Touched piece' },
-    generic: 'See the FIDE Laws of Chess 2023 in the Articles section of this assistant for detailed information on specific rules.',
+    generic: 'I can help as tournament director: regulations, participants, pairings, results, standings and FIDE reports. State the topic and, if it concerns a specific tournament, select it in the panel or paste the data.',
   },
   fr: {
     illegal: { answer: 'Article 7.1 : Si pendant une partie on constate qu\'une pièce a été déplacée par erreur, ou qu\'un coup illégal a été joué, la position antérieure à l\'erreur doit être rétablie. Si la position ne peut pas être rétablie, la partie continue depuis la dernière position identifiable avant l\'erreur. L\'arbitre appliquera les sanctions appropriées.', article: '7.1', title: 'Coups illégaux' },
     touched: { answer: 'Article 4.3 : Si le joueur ayant le trait touche une de ses propres pièces, il doit la jouer. S\'il touche une pièce adverse, il doit la prendre (si possible). Article 4.6 : S\'il est impossible d\'identifier quelle pièce a été touchée en premier, elle est réputée être la pièce du joueur et non celle de l\'adversaire.', article: '4.3', title: 'Pièce touchée' },
-    generic: 'Consultez les Lois FIDE 2023 dans la section Articles de cet assistant pour des informations détaillées sur des règles spécifiques.',
+    generic: 'Je peux aider comme directeur de tournoi : règlement, participants, appariements, résultats, classements et rapports FIDE. Précisez le sujet et, le cas échéant, sélectionnez le tournoi dans le panneau ou collez les données.',
   },
   de: {
     illegal: { answer: 'Artikel 7.1: Wird während einer Partie festgestellt, dass eine Figur versehentlich verschoben oder ein regelwidriger Zug ausgeführt wurde, muss die Stellung vor dem Fehler wiederhergestellt werden. Kann die Stellung nicht wiederhergestellt werden, wird die Partie ab der letzten identifizierbaren Stellung vor dem Fehler fortgesetzt. Der Schiedsrichter verhängt die entsprechenden Strafen.', article: '7.1', title: 'Regelwidrige Züge' },
     touched: { answer: 'Artikel 4.3: Berührt der am Zug befindliche Spieler eine eigene Figur, muss er sie ziehen. Berührt er eine gegnerische Figur, muss er sie schlagen (falls möglich). Artikel 4.6: Lässt sich nicht feststellen, welche Figur zuerst berührt wurde, gilt sie als eigene Figur des Spielers und nicht als gegnerische.', article: '4.3', title: 'Berührte Figur' },
-    generic: 'Siehe FIDE-Schachregeln 2023 im Abschnitt Artikel dieses Assistenten für Details zu bestimmten Regeln.',
+    generic: 'Ich kann als Turnierleiter helfen: Reglement, Teilnehmer, Paarungen, Ergebnisse, Ranglisten und FIDE-Berichte. Nennen Sie das Thema; falls ein bestimmtes Turnier gemeint ist, wählen Sie es im Panel aus oder fügen Sie die Daten ein.',
   },
   pt: {
     illegal: { answer: 'Artigo 7.1: Se durante uma partida se descobrir que uma peça foi deslocada por erro, ou que um lance ilegal foi feito, a posição anterior ao erro deve ser restabelecida. Se a posição não puder ser restabelecida, a partida continua da última posição identificável anterior ao erro. O árbitro aplicará as sanções correspondentes.', article: '7.1', title: 'Lances ilegais' },
     touched: { answer: 'Artigo 4.3: Se o jogador com o turno tocar uma peça própria, deve movê-la. Se tocar uma peça do oponente, deve capturá-la (se possível). Artigo 4.6: Se for impossível identificar qual peça foi tocada primeiro, considera-se que é a peça do próprio jogador e não a do oponente.', article: '4.3', title: 'Peça tocada' },
-    generic: 'Consulte as Leis FIDE 2023 na seção Artigos deste assistente para informações detalhadas sobre regras específicas.',
+    generic: 'Posso ajudar como diretor de torneio: regulamento, participantes, emparelhamentos, resultados, classificações e relatórios FIDE. Indique o tema e, se for um torneio concreto, selecione-o no painel ou cole os dados.',
   },
 };
 
@@ -121,7 +121,7 @@ async function localAnswer(question, l) {
     const mod = await import('../data/arbiter-cases.js');
     if (mod?.searchArbiterCases) {
       const hits = mod.searchArbiterCases(question, 3);
-      if (hits.length && hits[0]._score >= 10) {
+      if (l === 'es' && hits.length && hits[0]._score >= 10) {
         return {
           answer: hits[0].a, article: hits[0].article, title: hits[0].title,
           confidence: 'high', related: hits.slice(1).map((h) => ({ q: h.topic, article: h.article })),
@@ -140,10 +140,77 @@ async function localAnswer(question, l) {
   return { ...buildFallbackAnswer(question, l), source: 'fallback', lang: l };
 }
 
+let requestCounter = 0;
+
+async function geminiAnswer(question, history, lang) {
+  const l = normalizeAiLang(lang);
+  const apiKey = config.ai.geminiKey;
+  if (!apiKey) throw new Error('no-gemini-key');
+  const model = config.ai.geminiModel || 'gemini-2.0-flash';
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const contents = [];
+  for (const m of (history || []).slice(-20)) {
+    const role = (m.role === 'user') ? 'user' : 'model';
+    const text = typeof m.text === 'string' ? m.text : (m.content || '');
+    if (text) contents.push({ role, parts: [{ text }] });
+  }
+  contents.push({ role: 'user', parts: [{ text: question }] });
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 25000);
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: getSystemPrompt(l) }] },
+        contents,
+        generationConfig: { temperature: 0.3, maxOutputTokens: 1024 },
+      }),
+      signal: ctrl.signal,
+    });
+    if (!res.ok) throw new Error(`Gemini HTTP ${res.status}`);
+    const data = await res.json();
+    const answer = (data.candidates?.[0]?.content?.parts || [])
+      .map((p) => p.text || '').join('').trim();
+    if (!answer) throw new Error('Gemini empty answer');
+    if (looksLikeInternalReasoning(answer)) throw new Error('Gemini leaky answer');
+    return { answer, source: 'gemini', model, lang: l };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function looksLikeInternalReasoning(text) {
+  if (!text) return true;
+  return /\*\*(Analyze|Evaluate|Crucial|Specific Task|Regla aplicable)/i.test(text)
+    || /Analyze the Request/i.test(text)
+    || /User's Question:/i.test(text)
+    || /Evaluate Persona/i.test(text)
+    || /Specific Task:/i.test(text);
+}
+
 export async function askFideRules(question, history = [], lang = 'es') {
   const l = normalizeAiLang(lang);
   const apiKey = config.ai.openrouterKey;
-  if (!apiKey) {
+
+  // 0) Respuesta curada: si hay caso verificado que coincida, se prefiere
+  //    frente a la IA remota para evitar alucinaciones en temas operativos.
+  try {
+    const curated = await localAnswer(question, l);
+    if (curated?.source === 'cases' && l === 'es') return curated;
+  } catch {}
+
+  const geminiKey = config.ai.geminiKey;
+  if (!apiKey && !geminiKey) {
+    return localAnswer(question, l);
+  }
+  if (!apiKey && geminiKey) {
+    try {
+      const g = await geminiAnswer(question, history, l);
+      if (g?.answer) return g;
+    } catch (e) {
+      console.warn('Gemini fallback failed:', e.message);
+    }
     return localAnswer(question, l);
   }
 
@@ -154,10 +221,17 @@ export async function askFideRules(question, history = [], lang = 'es') {
   ];
 
   // Cadena de modelos: prueba en orden (free primero) hasta lograr respuesta.
-  const chain = [...new Set([
+  const baseChain = [...new Set([
     ...(config.ai.models || '').split(',').map((s) => s.trim()).filter(Boolean),
     config.ai.model,
   ].filter(Boolean))];
+
+  // Alternar el modelo principal según el tráfico (round-robin entre los configurados).
+  requestCounter += 1;
+  const shift = baseChain.length ? (requestCounter - 1) % baseChain.length : 0;
+  const chain = shift
+    ? baseChain.slice(shift).concat(baseChain.slice(0, shift))
+    : baseChain;
 
   for (const model of chain) {
     try {
@@ -193,6 +267,10 @@ export async function askFideRules(question, history = [], lang = 'es') {
       const data = await res.json();
       const answer = data.choices?.[0]?.message?.content?.trim();
       if (answer) {
+        if (looksLikeInternalReasoning(answer)) {
+          console.warn(`OpenRouter ${model} leaky answer discarded`);
+          continue;
+        }
         return { answer, source: 'ai', model: data.model || model, lang: l };
       }
       console.warn(`OpenRouter ${model} empty answer`);
@@ -201,10 +279,14 @@ export async function askFideRules(question, history = [], lang = 'es') {
     }
   }
 
-  const local = await getLocalKnowledge();
-  if (local?.getArbiterResponse) {
-    const r = local.getArbiterResponse(question);
-    if (r && r.confidence && r.confidence !== 'low') return { ...r, source: 'local', lang: l };
+  const gk = config.ai.geminiKey;
+  if (gk) {
+    try {
+      const g = await geminiAnswer(question, history, l);
+      if (g?.answer) return g;
+    } catch (e) {
+      console.warn('Gemini fallback failed:', e.message);
+    }
   }
-  return { ...buildFallbackAnswer(question, l), source: 'fallback', lang: l };
+  return await localAnswer(question, l);
 }

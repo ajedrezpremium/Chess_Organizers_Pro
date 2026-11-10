@@ -225,7 +225,7 @@ export default {
     listening: 'Ouvindo', stopListen: 'toque para parar',
     sttNoSupport: 'Seu navegador não suporta ditado por voz', sttDenied: 'Permissão de microfone negada',
     sttNoSpeech: 'Não ouvi você, tente de novo',
-    thinking: 'Pensando…', send: 'Enviar',
+    regenerate: 'Regenerar última resposta', exportChat: 'Exportar conversa (.txt)', clearChat: 'Limpar conversa', sendVoiceOnEnd: 'Enviar voz ao terminar', exported: 'Conversa exportada', cleared: 'Conversa limpa', thinking: 'Pensando…', send: 'Enviar',
   },
   tour: {
     skip: 'Pular', back: 'Voltar', next: 'Avançar', finish: 'Concluir', stepOf: 'Passo {i} de {n}',

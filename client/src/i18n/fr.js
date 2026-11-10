@@ -225,7 +225,7 @@ export default {
     listening: 'Écoute', stopListen: 'touchez pour arrêter',
     sttNoSupport: 'Votre navigateur ne supporte pas la dictée vocale', sttDenied: 'Permission du microphone refusée',
     sttNoSpeech: 'Je ne vous ai pas entendu, réessayez',
-    thinking: 'Réflexion…', send: 'Envoyer',
+    regenerate: 'Régénérer la dernière réponse', exportChat: 'Exporter la conversation (.txt)', clearChat: 'Effacer la conversation', sendVoiceOnEnd: 'Envoyer la voix à la fin', exported: 'Conversation exportée', cleared: 'Conversation effacée', thinking: 'Réflexion…', send: 'Envoyer',
   },
   tour: {
     skip: 'Passer', back: 'Retour', next: 'Suivant', finish: 'Terminer', stepOf: 'Étape {i} sur {n}',

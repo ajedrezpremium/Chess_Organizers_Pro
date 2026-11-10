@@ -6,6 +6,8 @@
  * ante duda prevalece siempre el reglamento específico del torneo.
  */
 
+import { TD_CASES } from './td-cases.js';
+
 export const ARBITER_CASES = [
   // ── INDIVIDUAL: jugada ilegal ──────────────────────────────
   { id: 'IND-01', cat: 'individual', topic: 'Primera jugada ilegal en clásicas',
@@ -299,7 +301,7 @@ export const ARBITER_CASES = [
 ];
 
 function norm(s) {
-  return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 }
 
 function caseWords(c) {
@@ -314,7 +316,8 @@ export function searchArbiterCases(question, limit = 3) {
   const q = norm(question);
   const teamCtx = /(equipo|match|capitan|alineaci|liga|club)/.test(q);
   const scored = [];
-  for (const c of ARBITER_CASES) {
+  const ALL_CASES = TD_CASES.concat(ARBITER_CASES);
+  for (const c of ALL_CASES) {
     let score = 0;
     for (const p of c.patterns) {
       const np = norm(p);

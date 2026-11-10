@@ -60,6 +60,25 @@ const CopyIcon = () => (
   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
 );
 
+// Renderiza negritas (* / **) y cursivas de forma segura.
+function renderMarkdown(text) {
+  const str = String(text || '');
+  const parts = [];
+  const regex = /(\*\*([^*]+)\*\*|\*([^*]+)\*|_([^_]+)_)/g;
+  let last = 0;
+  let m;
+  let key = 0;
+  while ((m = regex.exec(str)) !== null) {
+    if (m.index > last) parts.push(str.slice(last, m.index));
+    if (m[2] !== undefined) parts.push(<strong key={key++}>{m[2]}</strong>);
+    else if (m[3] !== undefined) parts.push(<em key={key++}>{m[3]}</em>);
+    else if (m[4] !== undefined) parts.push(<em key={key++}>{m[4]}</em>);
+    last = regex.lastIndex;
+  }
+  if (last < str.length) parts.push(str.slice(last));
+  return parts.length ? parts : str;
+}
+
 export default function ChatBot() {
   const { t, locale } = useI18n();
 
@@ -82,7 +101,7 @@ export default function ChatBot() {
 
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const [messages, setMessages] = useState([{ role: 'bot', text: t('chat.greeting') }]);
+  const [messages, setMessages] = useState([{ role: 'bot', text: t('chat.greeting'), ts: Date.now() }]);
   const [input, setInput] = useState('');
   const [thinking, setThinking] = useState(false);
   const [showQuick, setShowQuick] = useState(true);
@@ -96,7 +115,7 @@ export default function ChatBot() {
   const [voiceURI, setVoiceURI] = useState(prefs.current.voiceURI || '');
   const [rate, setRate] = useState(prefs.current.rate || 1);
   const [autoRead, setAutoRead] = useState(!!prefs.current.autoRead);
-  const [speakingId, setSpeakingId] = useState(null);
+  const [sendVoiceOnEnd, setSendVoiceOnEnd] = useState(prefs.current.sendVoiceOnEnd !== false);  const [speakingId, setSpeakingId] = useState(null);
   const [voiceOpen, setVoiceOpen] = useState(false);
 
   // ── STT ──
@@ -116,6 +135,7 @@ export default function ChatBot() {
 
   // ── Share ──
   const [shareOpen, setShareOpen] = useState(false);
+  const sendVoiceRef = useRef(sendVoiceOnEnd);
 
   const endRef = useRef(null);
   const inputRef = useRef(null);
@@ -130,7 +150,7 @@ export default function ChatBot() {
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, thinking, open, expanded]);
 
   useEffect(() => {
-    setMessages([{ role: 'bot', text: t('chat.greeting') }]);
+    setMessages([{ role: 'bot', text: t('chat.greeting'), ts: Date.now() }]);
     setShowQuick(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale]);
@@ -147,9 +167,12 @@ export default function ChatBot() {
 
   // Persistir preferencias de voz
   useEffect(() => {
-    prefs.current = { ...prefs.current, gender: voiceGender, voiceURI, rate, autoRead };
+    sendVoiceRef.current = sendVoiceOnEnd;
+  }, [sendVoiceOnEnd]);
+  useEffect(() => {
+    prefs.current = { ...prefs.current, gender: voiceGender, voiceURI, rate, autoRead, sendVoiceOnEnd };
     try { localStorage.setItem('cop-chat-prefs', JSON.stringify(prefs.current)); } catch {}
-  }, [voiceGender, voiceURI, rate, autoRead]);
+  }, [voiceGender, voiceURI, rate, autoRead, sendVoiceOnEnd]);
 
   // Limpieza global
   useEffect(() => () => {
@@ -170,6 +193,9 @@ export default function ChatBot() {
 
   const activeVoice = voices.find((v) => v.voiceURI === voiceURI)
     || pickVoice(voices, locale, voiceGender);
+  const femaleVoices = voices.filter((v) => FEMALE_HINT.test(v.name));
+  const maleVoices = voices.filter((v) => MALE_HINT.test(v.name));
+  const otherVoices = voices.filter((v) => !FEMALE_HINT.test(v.name) && !MALE_HINT.test(v.name));
 
   // ── TTS ──────────────────────────────────────────────
   const stopSpeech = useCallback(() => {
@@ -231,7 +257,7 @@ export default function ChatBot() {
   // ── Envío + IA ───────────────────────────────────────
   const pushBot = useCallback((text) => {
     setMessages((prev) => {
-      const next = [...prev, { role: 'bot', text }];
+      const next = [...prev, { role: 'bot', text, ts: Date.now() }];
       if (autoRead && window.speechSynthesis) {
         const clean = speechClean(text);
         if (clean) {
@@ -268,7 +294,7 @@ export default function ChatBot() {
     stopSpeech();
     setShowQuick(false);
     setShareOpen(false);
-    setMessages((prev) => [...prev, { role: 'user', text: q }]);
+    setMessages((prev) => [...prev, { role: 'user', text: q, ts: Date.now() }]);
     setInput('');
     setInterim('');
     setThinking(true);
@@ -294,19 +320,78 @@ export default function ChatBot() {
   const handleSend = () => sendMessage(input);
   sendRef.current = sendMessage;
 
+  // ── Regenerar última respuesta ──
+  const regenerateLast = useCallback(async () => {
+    if (thinking) return;
+    let lastBotIndex = -1;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === 'bot') { lastBotIndex = i; break; }
+    }
+    if (lastBotIndex <= 0) return;
+    const lastUser = messages[lastBotIndex - 1];
+    if (!lastUser || lastUser.role !== 'user') return;
+    if (messages[lastBotIndex].text === t('chat.greeting') || messages[lastBotIndex].text === t('chat.greetingFaq')) return;
+    const kept = messages.slice(0, lastBotIndex);
+    setMessages(kept);
+    setThinking(true);
+    stopSpeech();
+    const q = lastUser.text;
+    const history = [...kept].slice(-8).map((m) => ({ role: m.role, text: m.text }));
+    try {
+      const resp = await Promise.race([
+        api.askFide(q, history, locale),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 25000)),
+      ]);
+      pushBot(resp && resp.answer ? resp.answer : localAnswer(q));
+    } catch {
+      await new Promise((r) => setTimeout(r, 250));
+      pushBot(localAnswer(q));
+    } finally {
+      setThinking(false);
+    }
+  }, [thinking, messages, locale, stopSpeech, pushBot, localAnswer, t]);
+
+  const exportConversation = useCallback(() => {
+    const text = messages
+      .map((m) => `[${new Date(m.ts || Date.now()).toLocaleString()}] ${m.role === 'user' ? 'Usuario' : 'Asistente'}: ${m.text}`)
+      .join('\n\n');
+    try {
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'chat-chess-organizers-pro.txt';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast(t('chat.exported'));
+    } catch {
+      copyText(text, 'export', t('chat.copied'));
+    }
+  }, [messages, showToast, copyText, t]);
+
+  const clearConversation = useCallback(() => {
+    stopSpeech();
+    setThinking(false);
+    setMessages([{ role: 'bot', text: t('chat.greeting'), ts: Date.now() }]);
+    setShowQuick(true);
+    showToast(t('chat.cleared'));
+  }, [stopSpeech, t, showToast]);
+
   const ask = (question) => {
     const faq = FAQ.find((f) => f.q === question);
     if (!faq) return;
     stopSpeech();
     setShowQuick(false);
-    setMessages((prev) => [...prev, { role: 'user', text: question }, { role: 'bot', text: faq.a }]);
+    setMessages((prev) => [...prev, { role: 'user', text: question, ts: Date.now() }, { role: 'bot', text: faq.a, ts: Date.now() }]);
     if (autoRead) speak(faq.a, `faq-${Date.now()}`);
   };
 
   const resetFAQ = () => {
     stopSpeech();
     setThinking(false);
-    setMessages([{ role: 'bot', text: t('chat.greetingFaq') }]);
+    setMessages([{ role: 'bot', text: t('chat.greetingFaq'), ts: Date.now() }]);
     setShowQuick(true);
   };
 
@@ -320,7 +405,8 @@ export default function ChatBot() {
     const final = sttFinalRef.current.trim();
     sttFinalRef.current = '';
     setInterim('');
-    if (commit && final) setTimeout(() => sendRef.current?.(final), 350);
+    if (commit && final && sendVoiceRef.current) setTimeout(() => sendRef.current?.(final), 350);
+    else if (commit && final) setInput(final);
   }, []);
 
   const startListening = () => {
@@ -365,7 +451,8 @@ export default function ChatBot() {
       const final = sttFinalRef.current.trim();
       sttFinalRef.current = '';
       setInterim('');
-      if (final) setTimeout(() => sendRef.current?.(final), 350);
+      if (final && sendVoiceRef.current) setTimeout(() => sendRef.current?.(final), 350);
+    else if (final) setInput(final);
     };
     recognitionRef.current = rec;
     sttActiveRef.current = true;
@@ -515,18 +602,31 @@ export default function ChatBot() {
                         <input type="checkbox" checked={autoRead} onChange={(e) => setAutoRead(e.target.checked)} className="accent-amber-500" />
                         🔊
                       </label>
+                      <label className="flex items-center gap-1 text-fide-300 cursor-pointer" title={t('chat.sendVoiceOnEnd')}>
+                        <input type="checkbox" checked={sendVoiceOnEnd} onChange={(e) => setSendVoiceOnEnd(e.target.checked)} className="accent-amber-500" />
+                        📤
+                      </label>
                     </div>
                     <div>
                       <div className="text-[10px] text-fide-400 mb-1">{t('chat.voiceLabel')}</div>
                       <select value={voiceURI} onChange={(e) => setVoiceURI(e.target.value)}
                         className="w-full bg-fide-900 border border-fide-600 rounded-lg px-2 py-1.5 text-xs text-white outline-none">
                         <option value="">{t('chat.voiceAuto')} ({activeVoice?.name || '—'})</option>
-                        {voices.filter((v) => (v.lang || '').toLowerCase().startsWith(langPrefix(locale))).map((v) => (
-                          <option key={v.voiceURI} value={v.voiceURI}>{v.name} · {v.lang}</option>
-                        ))}
-                        {voices.filter((v) => !(v.lang || '').toLowerCase().startsWith(langPrefix(locale))).map((v) => (
-                          <option key={v.voiceURI} value={v.voiceURI}>{v.name} · {v.lang}</option>
-                        ))}
+                        <optgroup label={`👩 ${t('chat.voiceFemale')} (${femaleVoices.length})`}>
+                          {femaleVoices.map((v) => (
+                            <option key={v.voiceURI} value={v.voiceURI}>{v.name} · {v.lang}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label={`👨 ${t('chat.voiceMale')} (${maleVoices.length})`}>
+                          {maleVoices.map((v) => (
+                            <option key={v.voiceURI} value={v.voiceURI}>{v.name} · {v.lang}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label={`🎤 ${t('chat.voiceOther') || 'Otras'} (${otherVoices.length})`}>
+                          {otherVoices.map((v) => (
+                            <option key={v.voiceURI} value={v.voiceURI}>{v.name} · {v.lang}</option>
+                          ))}
+                        </optgroup>
                       </select>
                     </div>
                     <div>
@@ -575,6 +675,12 @@ export default function ChatBot() {
                   </div>
                 )}
               </div>
+              {/* Detener lectura */}
+              {speakingId && (
+                <IconBtn title={t('chat.ttsStop')} onClick={stopSpeech}>
+                  <span className="text-xs font-bold">⏹</span>
+                </IconBtn>
+              )}
               {/* Pantalla completa */}
               <IconBtn title={expanded ? t('chat.collapse') : t('chat.expand')} onClick={() => { setExpanded(!expanded); setShareOpen(false); setVoiceOpen(false); }}>
                 {expanded ? (
@@ -599,7 +705,10 @@ export default function ChatBot() {
                     ? 'bg-amber-600 text-white rounded-br-sm'
                     : 'bg-fide-800 text-fide-200 rounded-bl-sm border border-fide-700/50'
                 }`}>
-                  <div>{m.text}</div>
+                  <div className="whitespace-pre-wrap break-words">{renderMarkdown(m.text)}</div>
+                  <div className="text-[9px] opacity-60 mt-1">
+                    {new Date(m.ts || Date.now()).toLocaleTimeString(langTag(locale), { hour: '2-digit', minute: '2-digit' })}
+                  </div>
                   <div className="flex items-center gap-1 mt-1 -mb-0.5 opacity-70 group-hover:opacity-100 transition">
                     {m.role === 'bot' && (
                       <button onClick={() => speak(m.text, i)} title={speakingId === i ? t('chat.ttsStop') : t('chat.tts')}
@@ -662,6 +771,18 @@ export default function ChatBot() {
               <button onClick={copyTranscript}
                 className="text-[10px] bg-fide-800 hover:bg-fide-700 text-fide-300 px-2 py-1 rounded transition" title={t('chat.copyChat')}>
                 {copiedId === 'transcript' ? '✓' : '📋'}
+              </button>
+              <button onClick={regenerateLast} disabled={thinking}
+                className="text-[10px] bg-fide-800 hover:bg-fide-700 text-fide-300 px-2 py-1 rounded transition disabled:opacity-40" title={t('chat.regenerate')}>
+                🔄
+              </button>
+              <button onClick={exportConversation}
+                className="text-[10px] bg-fide-800 hover:bg-fide-700 text-fide-300 px-2 py-1 rounded transition" title={t('chat.exportChat')}>
+                💾
+              </button>
+              <button onClick={clearConversation}
+                className="text-[10px] bg-fide-800 hover:bg-fide-700 text-fide-300 px-2 py-1 rounded transition" title={t('chat.clearChat')}>
+                🗑️
               </button>
               {listening ? (
                 <button onClick={() => stopListening(false)} className="text-[10px] text-red-400 animate-pulse ml-auto font-mono">
