@@ -7,8 +7,8 @@ export const newsletters2026 = [
   { id: '2026-06', month: 'Junio', date: '2026-06-15', title: 'Card foto derecha + World Championship', file: '/newsletters/2026/2026-06-newsletter.md', published: true },
   { id: '2026-07', month: 'Julio', date: '2026-07-15', title: 'Arbiter Center v1.1 + Biel/Dortmund', file: '/newsletters/2026/2026-07-newsletter.md', published: true },
   { id: '2026-08', month: 'Agosto', date: '2026-08-15', title: 'Centro Control + Sinquefield', file: '/newsletters/2026/2026-08-newsletter.md', published: true },
-  { id: '2026-09', month: 'Septiembre', date: '2026-09-15', title: 'v1.2 + Candidates Toronto', file: null, published: false },
-  { id: '2026-10', month: 'Octubre', date: '2026-10-15', title: 'Olímpiada Samarcanda', file: null, published: false },
-  { id: '2026-11', month: 'Noviembre', date: '2026-11-15', title: 'World Championship Singapur', file: null, published: false },
+  { id: '2026-09', month: 'Septiembre', date: '2026-09-15', title: 'v1.2 + Candidates Toronto', file: '/newsletters/2026/2026-09-newsletter.md', published: true },
+  { id: '2026-10', month: 'Octubre', date: '2026-10-15', title: 'Olímpiada Samarcanda', file: '/newsletters/2026/2026-10-newsletter.md', published: true },
+  { id: '2026-11', month: 'Noviembre', date: '2026-11-15', title: 'World Championship Singapur', file: '/newsletters/2026/2026-11-newsletter.md', published: false },
   { id: '2026-12', month: 'Diciembre', date: '2026-12-15', title: 'Balance 2026 + 2027', file: null, published: false },
 ];
